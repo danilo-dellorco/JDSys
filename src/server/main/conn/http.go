@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/rpc"
-	"fmt"
+	"fmt	"
 )
 
 //struttura per il passaggio dei parametri nella RPC
