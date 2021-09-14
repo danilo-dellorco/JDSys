@@ -1,10 +1,9 @@
-package main
+package http
 
 import (
 	"log"
-	"net"
+	"net/http"
 	"net/rpc"
-	"os"
 )
 
 //struttura per il passaggio dei parametri nella RPC
@@ -25,11 +24,10 @@ func main() {
 	arith := new(Arith)
 	rpc.Register(arith)
 
-	listener, err := net.Listen("tcp", ":1234")
-	if err != nil {
-		log.Fatal("Listen error: ", err)
-		os.Exit(1)
-	}
+	rpc.HandleHTTP()
 
-	rpc.Accept(listener)
+	e := http.ListenAndServe(":1234", nil)
+	if e != nil {
+		log.Fatal("Listen error: ", e)
+	}
 }
