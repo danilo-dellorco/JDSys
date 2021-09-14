@@ -1,4 +1,4 @@
-package tcp
+package conn
 
 import (
 	"fmt"
@@ -6,21 +6,20 @@ import (
 	"net/rpc"
 )
 
-type Args struct {
+type Args2 struct {
 	A, B int
 }
 
-func main() {
-	serverAddress := "127.0.0.1"
+func TcpConnect(serverAddress string) {
 	client, err := rpc.Dial("tcp", serverAddress+":1234")
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
 
 	// Synchronous call
-	args := Args{7, 8}
+	args := Args2{7, 8}
 	var reply int
-	err = client.Call("Arith.Multiply", args, &reply)
+	err = client.Call("Arith1.Multiply", args, &reply)
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}

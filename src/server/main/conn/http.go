@@ -1,9 +1,10 @@
-package http
+package conn
 
 import (
 	"log"
 	"net/http"
 	"net/rpc"
+	"fmt"
 )
 
 //struttura per il passaggio dei parametri nella RPC
@@ -20,7 +21,7 @@ func (t *Arith) Multiply(args *Args, reply *int) error {
 	return nil
 }
 
-func main() {
+func ListenHttpConnection() {
 	arith := new(Arith)
 	rpc.Register(arith)
 
@@ -30,4 +31,5 @@ func main() {
 	if e != nil {
 		log.Fatal("Listen error: ", e)
 	}
+	fmt.Printf("Connessione stabilita con il client")
 }

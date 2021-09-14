@@ -1,4 +1,4 @@
-package http
+package conn
 
 import (
 	"fmt"
@@ -6,19 +6,18 @@ import (
 	"net/rpc"
 )
 
-type Args struct {
+type Args1 struct {
 	A, B int
 }
 
-func main() {
-	serverAddress := "127.0.0.1"
+func HttpConnect(serverAddress string) {
 	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
 
 	// Synchronous call
-	args := Args{7, 8}
+	args := Args1{7, 8}
 	var reply int
 	err = client.Call("Arith.Multiply", args, &reply)
 	if err != nil {
