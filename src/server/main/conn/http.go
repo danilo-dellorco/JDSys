@@ -1,10 +1,10 @@
 package conn
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/rpc"
-	"fmt	"
 )
 
 //struttura per il passaggio dei parametri nella RPC
