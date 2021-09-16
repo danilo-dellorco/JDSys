@@ -1,0 +1,20 @@
+[Unit]
+Description=Simple systemd service for progetto-sdcc application setup
+
+[Service]
+Type=simple
+EnvironmentFile=/home/ec2-user/progetto-sdcc/env
+WorkingDirectory=/home/ec2-user/progetto-sdcc
+ExecStart=/home/ec2-user/progetto-sdcc/server http
+ExecStartPre=/usr/bin/yum install golang -y
+ExecStartPre=/usr/bin/go build /home/ec2-user/progetto-sdcc/main/server.go
+
+[Install]
+WantedBy=multi-user.target
+
+#1) copiare il sorgente sul server: scp -i chiave-sdcc.pem -r /home/...../progetto-sdcc/src/server/  \ec2-user@ec2-100-26-189-104.compute-1.amazonaws.com:/home/ec2-user/progetto-sdcc
+#2) copiare il servizio in /etc/systemd/system
+#3) avviare il servizio: 
+	#sudo systemctl daemon-reload
+	#sudo systemctl start progettosdcc.service
+	#sudo systemctl enable progettosdcc.service
