@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"../main/conn"
 	"fmt"
 	"../main/services"
 	"net/rpc"
@@ -17,5 +16,5 @@ func main() {
 	service := services.InitializeService()
 	rpc.Register(service)
 	rpc.HandleHTTP()
-	conn.ListenHttpConnection()
+	services.ListenHttpConnection()
 }
