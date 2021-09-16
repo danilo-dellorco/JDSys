@@ -19,7 +19,7 @@ func HttpConnect(serverAddress string) {
 	// Synchronous call
 	args := Args1{7, 8}
 	var reply int
-	err = client.Call("Arith.Multiply", args, &reply)
+	err = client.Call("ServizioDiProva.ListMethods", args, &reply)
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}

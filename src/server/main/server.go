@@ -4,20 +4,18 @@ import (
 	"os"
 	"../main/conn"
 	"fmt"
+	"../main/services"
+	"net/rpc"
 )
 
 func main() {
-	var mode string
-	var msg string = "Server Listening For Connection:"
-	mode = os.Args[1]
-
-	fmt.Println(msg,mode)
-	
-	if mode == "tcp"{
-		conn.ListenTcpConnection()
+	if len(os.Args)!=1{
+		fmt.Printf("Usage: go run server.go\n")
 	}
+	fmt.Printf("Server Waiting For Connection\n")
 
-	if mode == "http"{
-		conn.ListenHttpConnection()
-	}
+	service := services.InitializeService()
+	rpc.Register(service)
+	rpc.HandleHTTP()
+	conn.ListenHttpConnection()
 }

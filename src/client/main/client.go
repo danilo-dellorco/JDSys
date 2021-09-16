@@ -3,20 +3,16 @@ package main
 import (
 	"../main/conn"
 	"os"
+	"fmt"
 )
 
 func main() {
-	var mode string
 	var addr string
 
-	mode = os.Args[1]
-	addr = os.Args[2]
-	
-	if mode == "tcp"{
-		conn.TcpConnect(addr)
-	}
+	addr = os.Args[1]
 
-	if mode == "http"{
-		conn.HttpConnect(addr)
+	if len(os.Args)!=2 {
+		fmt.Printf("Usage: go run client.go SERVER_IP\n")
 	}
+	conn.HttpConnect(addr)
 }
