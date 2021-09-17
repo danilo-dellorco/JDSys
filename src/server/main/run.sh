@@ -1,2 +1,2 @@
 #!/bin/sh
-sudo /home/ec2-user/progetto-sdcc/src/server/main/server
+sudo go run /home/ec2-user/progetto-sdcc/src/server/main/server.go
