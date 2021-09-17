@@ -1,4 +1,4 @@
-package conn
+package impl
 
 import (
 	"fmt"
@@ -6,22 +6,24 @@ import (
 	"net/rpc"
 )
 
-type Args1 struct {
-	A, B int
-}
+type EmptyArguments struct {}
 
-func HttpConnect(serverAddress string) {
+func HttpConnect(serverAddress string) (*rpc.Client, error){
 	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
+	return client,err
+}
 
-	// Synchronous call
-	args := Args1{7, 8}
-	var reply int
+func GetMethodsList(serverAddress string){
+	args:= EmptyArguments{}
+	var reply string
+
+	client, err:=HttpConnect(serverAddress)
 	err = client.Call("ServizioDiProva.ListMethods", args, &reply)
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}
-	fmt.Printf("Moltiplicazione: %d*%d=%d\n", args.A, args.B, reply)
+	fmt.Printf(reply)
 }

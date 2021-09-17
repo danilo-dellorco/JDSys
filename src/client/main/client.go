@@ -1,18 +1,26 @@
 package main
 
 import (
-	"../main/conn"
+	"../main/impl"
 	"os"
 	"fmt"
 )
 
 func main() {
-	var addr string
-
-	addr = os.Args[1]
-
+	var serverAddress string
+	serverAddress = os.Args[1]
 	if len(os.Args)!=2 {
 		fmt.Printf("Usage: go run client.go SERVER_IP\n")
 	}
-	conn.HttpConnect(addr)
+	impl.GetMethodsList(serverAddress)
+	for {
+		var cmd string
+		fmt.Printf("Inserisci un comando: ")
+		fmt.Scanln(&cmd)
+
+		switch cmd {
+		case "list":
+			impl.GetMethodsList(serverAddress)
+		}
+	}
 }

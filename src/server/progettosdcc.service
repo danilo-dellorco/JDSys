@@ -3,11 +3,11 @@ Description=Simple systemd service for progetto-sdcc application setup
 
 [Service]
 Type=simple
-EnvironmentFile=/home/ec2-user/progetto-sdcc/env
-WorkingDirectory=/home/ec2-user/progetto-sdcc
-ExecStart=/home/ec2-user/progetto-sdcc/server http
+EnvironmentFile=/home/ec2-user/progetto-sdcc/src/server/env
+WorkingDirectory=/home/ec2-user/progetto-sdcc/src/server
+ExecStart=sudo /home/ec2-user/progetto-sdcc/src/server
 ExecStartPre=/usr/bin/yum install golang -y
-ExecStartPre=/usr/bin/go build /home/ec2-user/progetto-sdcc/main/server.go
+ExecStartPre=/usr/bin/go build /home/ec2-user/progetto-sdcc/src/server/main/server.go	
 
 [Install]
 WantedBy=multi-user.target
