@@ -1,18 +1,19 @@
 package main
 
 import (
-	"os"
-	"fmt"
-	"../main/services"
-	"net/rpc"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"net/rpc"
+	"os"
+
+	"../main/services"
 )
 
 func main() {
 	//go ListenHealthPing()
-	if len(os.Args)!=1{
+	if len(os.Args) != 1 {
 		fmt.Printf("Usage: go run server.go\n")
 	}
 	fmt.Printf("Server Waiting For Connection\n")
@@ -22,8 +23,6 @@ func main() {
 	rpc.HandleHTTP()
 	services.ListenHttpConnection()
 }
-
-
 
 func ListenHealthPing() {
 	fmt.Printf("Starting Helth Service\n")
