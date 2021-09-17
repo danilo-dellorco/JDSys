@@ -6,11 +6,21 @@ import (
 	"net/http"
 )
 
+func home_handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Homepage")
+}
+
+func pica_handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Picapage")
+}
+
 func ListenHttpConnection() {
-	e := http.ListenAndServe(":80", nil)
-	if e != nil {
-		log.Fatal("Listen error: ", e)
-	}
+	//gestisce richieste per un preciso percorso tramite l'handler specificato
+	//se il percorso non è opportunamente gestito, viene usato l'handler della root
+	//es. http://IP:80/ennio
+	http.HandleFunc("/", home_handler)
+	http.HandleFunc("/pica", pica_handler)
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
 
 // Struttura per il passaggio dei parametri alla RPC

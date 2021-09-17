@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	go ListenHealthPing()
+	//go ListenHealthPing()
 	if len(os.Args)!=1{
 		fmt.Printf("Usage: go run server.go\n")
 	}
