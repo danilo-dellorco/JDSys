@@ -1,0 +1,4 @@
+import os;
+os.system("sudo cp /home/ec2-user/progetto-sdcc/src/server/progettosdcc$
+os.system("sudo systemctl daemon-reload")
+os.system("sudo systemctl start progettosdcc.service")
