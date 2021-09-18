@@ -6,7 +6,6 @@ Type=simple
 EnvironmentFile=/home/ec2-user/progetto-sdcc/src/server/env
 WorkingDirectory=/home/ec2-user/progetto-sdcc/src/server
 ExecStart=/bin/bash /home/ec2-user/progetto-sdcc/src/server/main/run.sh
-ExecStartPre=/usr/bin/yum install golang -y
 ExecStartPre=/usr/bin/go build /home/ec2-user/progetto-sdcc/src/server/main/server.go	
 
 [Install]
