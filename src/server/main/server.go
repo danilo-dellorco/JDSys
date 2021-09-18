@@ -18,5 +18,5 @@ func main() {
 	rpc.Register(service)
 	rpc.HandleHTTP()
 	go services.ListenWebHttpConnection()
-	go services.ListenCliHttpConnection()
+	services.ListenCliHttpConnection()
 }

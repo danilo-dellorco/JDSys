@@ -25,10 +25,6 @@ func ListenWebHttpConnection() {
 }
 
 func ListenCliHttpConnection() {
-	//gestisce richieste per un preciso percorso tramite l'handler specificato
-	//se il percorso non è opportunamente gestito, viene usato l'handler della root
-	//es. http://IP:80/ennio
-	// NomeDNS/pica renderizza un'altra pagina 
 	log.Fatal(http.ListenAndServe(":1234", nil))
 }
 
