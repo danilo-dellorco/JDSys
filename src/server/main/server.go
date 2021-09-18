@@ -17,6 +17,6 @@ func main() {
 	service := services.InitializeService()
 	rpc.Register(service)
 	rpc.HandleHTTP()
-	services.ListenWebHttpConnection()
-	//services.ListenCliHttpConnection()
+	go services.ListenWebHttpConnection()
+	services.ListenCliHttpConnection()
 }

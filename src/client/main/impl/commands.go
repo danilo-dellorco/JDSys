@@ -9,7 +9,7 @@ import (
 type EmptyArguments struct {}
 
 func HttpConnect(serverAddress string) (*rpc.Client, error){
-	client, err := rpc.DialHTTP("tcp", serverAddress+":80")
+	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
