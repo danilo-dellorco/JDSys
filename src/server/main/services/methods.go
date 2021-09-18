@@ -14,7 +14,7 @@ func pica_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Picapage")
 }
 
-func ListenWebHttpConnection() {
+func ListenHttpConnection() {
 	//gestisce richieste per un preciso percorso tramite l'handler specificato
 	//se il percorso non è opportunamente gestito, viene usato l'handler della root
 	//es. http://IP:80/ennio
@@ -22,10 +22,6 @@ func ListenWebHttpConnection() {
 	http.HandleFunc("/", home_handler)
 	http.HandleFunc("/pica", pica_handler)
 	log.Fatal(http.ListenAndServe(":80", nil))
-}
-
-func ListenCliHttpConnection() {
-	log.Fatal(http.ListenAndServe(":1234", nil))
 }
 
 // Struttura per il passaggio dei parametri alla RPC
