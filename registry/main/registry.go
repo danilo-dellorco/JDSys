@@ -1,41 +1,30 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
-	"progetto-sdcc/client/impl"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-func main() {
-	var serverAddress string
-	serverAddress = os.Args[1]
-	if len(os.Args) != 2 {
-		fmt.Printf("Usage: go run client.go SERVER_IP\n")
-	}
-	//impl.GetMethodsList(serverAddress)
-	fmt.Println("QUI1")
-	getTargetsHealth()
-	//ProvaV2()
-	//stampaAllarmi()
-	//ExampleELB_DescribeInstanceHealth_shared00()
-	fmt.Println("QUI1")
-	for {
-		var cmd string
-		fmt.Printf("Inserisci un comando: ")
-		fmt.Scanln(&cmd)
+type TargetGroup struct {
+	ID   string        `json:"id"`
+	Name string        `json:"name"`
+	Test []interface{} `json:"test"`
+}
 
-		switch cmd {
-		case "list":
-			impl.GetMethodsList(serverAddress)
-		}
-	}
+//TODO marshal del JSON errore primo parametro di unmarshal
+func main() {
+	session := createSession()
+	fmt.Println(session)
+	targetGroupJson := getTargetGroup()
+	var targetGroup TargetGroup
+	json.Unmarshal(targetGroupJson, &targetGroup)
+
 }
 
 func createSession() *session.Session {
@@ -43,16 +32,6 @@ func createSession() *session.Session {
 		Region: aws.String("us-east-1")})
 	fmt.Println(err)
 	return sess
-}
-
-func stampaAllarmi() {
-	sess := createSession()
-	svc := cloudwatch.New(sess)
-	resp, err := svc.DescribeAlarms(nil)
-	for _, alarm := range resp.MetricAlarms {
-		fmt.Println(*alarm.AlarmName)
-	}
-	fmt.Println(err)
 }
 
 func getTargetsHealth() {
@@ -86,7 +65,7 @@ func getTargetsHealth() {
 	fmt.Println(result)
 }
 
-func ProvaV2() {
+func getTargetGroup() *elbv2.DescribeTargetGroupsOutput {
 	sess := createSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetGroupsInput{
@@ -109,10 +88,8 @@ func ProvaV2() {
 			// Message from an error.
 			fmt.Println(err.Error())
 		}
-		return
+		return result
 	}
-
-	fmt.Println(result)
 }
 
 func ExampleELB_DescribeInstanceHealth_shared00() {
