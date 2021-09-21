@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/elb"
 )
 
@@ -19,6 +20,7 @@ func main() {
 	}
 	//impl.GetMethodsList(serverAddress)
 	fmt.Println("QUI1")
+	//stampaAllarmi()
 	ExampleELB_DescribeInstanceHealth_shared00()
 	fmt.Println("QUI1")
 	for {
@@ -33,10 +35,29 @@ func main() {
 	}
 }
 
+func createSession() *session.Session {
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")})
+	fmt.Println(err)
+	return sess
+}
+
+func stampaAllarmi() {
+	sess := createSession()
+	svc := cloudwatch.New(sess)
+	resp, err := svc.DescribeAlarms(nil)
+	for _, alarm := range resp.MetricAlarms {
+		fmt.Println(*alarm.AlarmName)
+	}
+	fmt.Println(err)
+}
+
 func ExampleELB_DescribeInstanceHealth_shared00() {
-	svc := elb.New(session.New())
+	sess := createSession()
+
+	svc := elb.New(sess)
 	input := &elb.DescribeInstanceHealthInput{
-		LoadBalancerName: aws.String("my-load-balancer"),
+		LoadBalancerName: aws.String("ProvaLoadBalancer"),
 	}
 
 	result, err := svc.DescribeInstanceHealth(input)
