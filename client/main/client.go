@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/elb"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
 func main() {
@@ -20,8 +21,9 @@ func main() {
 	}
 	//impl.GetMethodsList(serverAddress)
 	fmt.Println("QUI1")
+	ProvaV2()
 	//stampaAllarmi()
-	ExampleELB_DescribeInstanceHealth_shared00()
+	//ExampleELB_DescribeInstanceHealth_shared00()
 	fmt.Println("QUI1")
 	for {
 		var cmd string
@@ -52,12 +54,41 @@ func stampaAllarmi() {
 	fmt.Println(err)
 }
 
+func ProvaV2() {
+	sess := createSession()
+	svc := elbv2.New(sess)
+	input := &elbv2.DescribeTargetGroupsInput{
+		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"),
+	}
+
+	result, err := svc.DescribeTargetGroups(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case elbv2.ErrCodeLoadBalancerNotFoundException:
+				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+			case elbv2.ErrCodeTargetGroupNotFoundException:
+				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
+}
+
 func ExampleELB_DescribeInstanceHealth_shared00() {
 	sess := createSession()
 
 	svc := elb.New(sess)
 	input := &elb.DescribeInstanceHealthInput{
-		LoadBalancerName: aws.String("ProvaLoadBalancer"),
+		LoadBalancerName: aws.String("NetworkLB"),
 	}
 
 	result, err := svc.DescribeInstanceHealth(input)
