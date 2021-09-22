@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"progetto-sdcc/utils"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -11,19 +13,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-type TargetGroup struct {
-	ID   string        `json:"id"`
-	Name string        `json:"name"`
-	Test []interface{} `json:"test"`
-}
+var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
+var TEST_INSTANCE string = "i-0a7f1097d88fd8d43"
 
 //TODO marshal del JSON errore primo parametro di unmarshal
 func main() {
-	session := createSession()
-	fmt.Println(session)
-	getInstanceInfo()
+	targetGroup := getTargetGroup(ELB_ARN)
+	fmt.Println(targetGroup)
+	//getInstancesFromGroup(targetGroup)
 	//getTargetsHealth()
-	//getTargetGroup()
+	//getInstanceInfo("i-0a7f1097d88fd8d43")
 	//targetGroupJson := getTargetGroup()
 	//var targetGroup TargetGroup
 	//json.Unmarshal(targetGroupJson, &targetGroup)
@@ -37,12 +36,12 @@ func createSession() *session.Session {
 	return sess
 }
 
-func getInstanceInfo() {
+func getInstanceInfo(instanceId string) string {
 	sess := createSession()
 	svc := ec2.New(sess)
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: []*string{
-			aws.String("i-0ce8edd24f5d612a5"),
+			aws.String(instanceId),
 		},
 	}
 
@@ -58,10 +57,9 @@ func getInstanceInfo() {
 			// Message from an error.
 			fmt.Println(err.Error())
 		}
-		return
+		return result.GoString()
 	}
-
-	fmt.Println(result)
+	return "nil"
 }
 
 func getTargetsHealth() {
@@ -95,11 +93,11 @@ func getTargetsHealth() {
 	fmt.Println(result)
 }
 
-func getTargetGroup() *elbv2.DescribeTargetGroupsOutput {
+func getTargetGroup(elbArn string) string {
 	sess := createSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetGroupsInput{
-		LoadBalancerArn: aws.String("arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"),
+		LoadBalancerArn: aws.String(elbArn),
 	}
 
 	result, err := svc.DescribeTargetGroups(input)
@@ -118,9 +116,9 @@ func getTargetGroup() *elbv2.DescribeTargetGroupsOutput {
 			// Message from an error.
 			fmt.Println(err.Error())
 		}
-		return result
+		return result.GoString()
 	}
-	return nil
+	return "nil"
 }
 
 func ExampleELB_DescribeInstanceHealth_shared00() {
@@ -151,4 +149,17 @@ func ExampleELB_DescribeInstanceHealth_shared00() {
 	}
 
 	fmt.Println(result)
+}
+
+func getInstancePublicIp(instanceInfo string) string {
+	return utils.GetStringInBetween(instanceInfo, "PublicIpAddress: ", ",")
+}
+
+func getInstancePrivateIp(instanceInfo string) string {
+	return utils.GetStringInBetween(instanceInfo, "PublicIpAddress: ", ",")
+}
+
+func getInstancesFromGroup(groupResult string) {
+	split := strings.Split(groupResult, "},{")
+	fmt.Println(split[0])
 }
