@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -19,8 +20,7 @@ type TargetGroup struct {
 
 //TODO marshal del JSON errore primo parametro di unmarshal
 func main() {
-	session := createSession()
-	fmt.Println(session)
+	createSession()
 	getInstanceInfo()
 	//getTargetsHealth()
 	//getTargetGroup()
@@ -40,11 +40,7 @@ func createSession() *session.Session {
 func getInstanceInfo() {
 	sess := createSession()
 	svc := ec2.New(sess)
-	input := &ec2.DescribeInstancesInput{
-		InstanceIds: []*string{
-			aws.String("i-0ce8edd24f5d612a5"),
-		},
-	}
+	input := &ec2.DescribeInstancesInput{}
 
 	result, err := svc.DescribeInstances(input)
 	if err != nil {
@@ -61,14 +57,21 @@ func getInstanceInfo() {
 		return
 	}
 
-	fmt.Println(result)
+	//retrieve private and public IP addresses associated to every ec2 instance
+	for i := 0; i < len(result.Reservations); i++ {
+		var list = strings.Fields(result.Reservations[i].String())
+		var private = list[172]
+		var public = list[176]
+		fmt.Println("Private IP: " + private[1:len(private)-2])
+		fmt.Println("Public IP: " + public[1:len(public)-2])
+	}
 }
 
 func getTargetsHealth() {
 	sess := createSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetHealthInput{
-		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-east-1:427788101608:targetgroup/TargetNetworkLB/e94c2d0b4c023ec9"),
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-east-1:806961903927:targetgroup/progetto-sdcc-target-group/4c8603e9d9c32e53"),
 	}
 
 	result, err := svc.DescribeTargetHealth(input)
