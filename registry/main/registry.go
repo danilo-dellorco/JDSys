@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
@@ -21,10 +21,13 @@ type TargetGroup struct {
 func main() {
 	session := createSession()
 	fmt.Println(session)
-	targetGroupJson := getTargetGroup()
-	var targetGroup TargetGroup
-	json.Unmarshal(targetGroupJson, &targetGroup)
-
+	getInstanceInfo()
+	//getTargetsHealth()
+	//getTargetGroup()
+	//targetGroupJson := getTargetGroup()
+	//var targetGroup TargetGroup
+	//json.Unmarshal(targetGroupJson, &targetGroup)
+	return
 }
 
 func createSession() *session.Session {
@@ -32,6 +35,33 @@ func createSession() *session.Session {
 		Region: aws.String("us-east-1")})
 	fmt.Println(err)
 	return sess
+}
+
+func getInstanceInfo() {
+	sess := createSession()
+	svc := ec2.New(sess)
+	input := &ec2.DescribeInstancesInput{
+		InstanceIds: []*string{
+			aws.String("i-0ce8edd24f5d612a5"),
+		},
+	}
+
+	result, err := svc.DescribeInstances(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		return
+	}
+
+	fmt.Println(result)
 }
 
 func getTargetsHealth() {
@@ -90,6 +120,7 @@ func getTargetGroup() *elbv2.DescribeTargetGroupsOutput {
 		}
 		return result
 	}
+	return nil
 }
 
 func ExampleELB_DescribeInstanceHealth_shared00() {
