@@ -66,7 +66,7 @@ func getTargetsHealth() {
 	sess := createSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetHealthInput{
-		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-east-1:427788101608:targetgroup/TargetNetworkLB/e94c2d0b4c023ec9"),
+		TargetGroupArn: aws.String("arn:aws:elasticloadbalancing:us-east-1:806961903927:targetgroup/progetto-sdcc-target-group/4c8603e9d9c32e53"),
 	}
 
 	result, err := svc.DescribeTargetHealth(input)
