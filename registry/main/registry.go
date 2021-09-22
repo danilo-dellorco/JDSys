@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"progetto-sdcc/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,35 +14,30 @@ import (
 
 var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
 var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:806961903927:loadbalancer/net/progetto-sdcc-lb/639e06d499fd2aba"
-var TEST_INSTANCE string = "i-0a7f1097d88fd8d43"
+var ELB string
 
+/**
+* Struttura contenente tutte le informazioni riguardanti un nodo
+**/
 type Instance struct {
 	ID, PrivateIP, PublicIP string
 }
 
-//TODO marshal del JSON errore primo parametro di unmarshal
+//TODO mettere getActiveNodes() in una goroutine periodica, ad esempio ogni minuto
 func main() {
-	nodes := make(map[int]Instance)
-	targetGroup := getTargetGroup(ELB_ARN_J)
-	targetGroupArn := getTargetGroupArn(targetGroup)
-	targetsHealth := getTargetsHealth(targetGroupArn)
-	healthyInstancesList := getHealthyInstancesId(targetsHealth)
-	fmt.Println("Healthy Instances: ")
-	fmt.Println(healthyInstancesList)
-
-	for i := 0; i < len(healthyInstancesList); i++ {
-		instance := getInstanceInfo(healthyInstancesList[i])
-		nodes[i] = getInstanceAddress(instance)
+	if len(os.Args) < 2 {
+		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
+		return
 	}
-
-	fmt.Println("Address Healthy Instances: ")
-	for key, element := range nodes {
-		fmt.Println("Key: ", key, "=>", "Element:", element)
-	}
-
+	setupUser()
+	activeNodes := getActiveNodes()
+	fmt.Println(activeNodes)
 	return
 }
 
+/**
+* Crea una sessione client AWS
+**/
 func createSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")})
@@ -51,13 +47,27 @@ func createSession() *session.Session {
 	return sess
 }
 
+/**
+* Imposta l'utente corretto della sessione AWS
+**/
+func setupUser() {
+	user := os.Args[1]
+	if user == "d" {
+		ELB = ELB_ARN_D
+	} else {
+		ELB = ELB_ARN_J
+	}
+}
+
+/**
+* Ottiene tutte le informazioni relative al Target Group specificato
+**/
 func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
 	sess := createSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetGroupsInput{
 		LoadBalancerArn: aws.String(elbArn),
 	}
-
 	result, err := svc.DescribeTargetGroups(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -70,14 +80,15 @@ func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
 				fmt.Println(aerr.Error())
 			}
 		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
 			fmt.Println(err.Error())
 		}
 	}
 	return result
 }
 
+/**
+* Ottiene lo stato delle istanze collegate al Target Group specificato
+**/
 func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
 	sess := createSession()
 	svc := elbv2.New(sess)
@@ -99,25 +110,22 @@ func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
 				fmt.Println(aerr.Error())
 			}
 		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
 			fmt.Println(err.Error())
 		}
 	}
 	return result
 }
 
+/**
+* Ottiene gli ID associati a tutte le istanze healthy
+**/
 func getHealthyInstancesId(targetHealth *elbv2.DescribeTargetHealthOutput) []string {
-	//retrieve the ID associated to every healthy ec2 instance
 	var healthyNodes []string
 	descriptions := targetHealth.TargetHealthDescriptions
 	for i := 0; i < len(descriptions); i++ {
 		actual := descriptions[i].String()
-		//fmt.Println(actual)
 		id := utils.GetStringInBetween(actual, "Id: \"", "\",")
 		state := utils.GetStringInBetween(actual, "State: \"", "\"")
-		//fmt.Println(id)
-		//fmt.Println(state)
 		if state == "healthy" {
 			healthyNodes = append(healthyNodes, id)
 		}
@@ -125,6 +133,9 @@ func getHealthyInstancesId(targetHealth *elbv2.DescribeTargetHealthOutput) []str
 	return healthyNodes
 }
 
+/**
+* Ottiene tutte le informazioni di una istanza EC2 tramite il suo ID
+**/
 func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 	sess := createSession()
 	svc := ec2.New(sess)
@@ -142,42 +153,45 @@ func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 				fmt.Println(aerr.Error())
 			}
 		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
 			fmt.Println(err.Error())
 		}
 	}
 	return result
 }
 
+/**
+* Ottiene ID, Indirizzo Pubblico e Indirizzo Privato di una istanza EC2
+**/
 func getInstanceAddress(instanceInfo *ec2.DescribeInstancesOutput) Instance {
-	//retrieve private and public IP addresses associated to an ec2 instance
 	descriptions := instanceInfo.Reservations
 	actual := descriptions[0].String()
-	//fmt.Println(actual)
 	id := utils.GetStringInBetween(actual, "InstanceId: \"", "\",")
 	public := utils.GetStringInBetween(actual, "PublicIpAddress: \"", "\"")
 	private := utils.GetStringInBetween(actual, "PrivateIpAddress: \"", "\"")
-	//fmt.Println(id)
-	//fmt.Println(public)
-	//fmt.Println(private)
 	return Instance{id, public, private}
 }
 
-func getInstancePublicIp(instanceInfo string) string {
-	return utils.GetStringInBetween(instanceInfo, "PublicIpAddress: \"", "\",")
-}
+/**
+* Ritorna gli indirizzi IP di tutti i nodi connessi al load balancer
+**/
+func getActiveNodes() map[int]Instance {
+	nodes := make(map[int]Instance)
+	targetGroup := getTargetGroup(ELB)
+	targetGroupArn := utils.GetStringInBetween(targetGroup.String(), "TargetGroupArn: \"", "\",")
+	targetsHealth := getTargetsHealth(targetGroupArn)
+	healthyInstancesList := getHealthyInstancesId(targetsHealth)
+	fmt.Println("Healthy Instances: ")
+	fmt.Println(healthyInstancesList)
 
-func getInstancePrivateIp(instanceInfo string) string {
-	return utils.GetStringInBetween(instanceInfo, "PrivateIpAddress: \"", "\",")
-}
+	for i := 0; i < len(healthyInstancesList); i++ {
+		instance := getInstanceInfo(healthyInstancesList[i])
+		nodes[i] = getInstanceAddress(instance)
+	}
 
-func getTargetGroupArn(targetGroupResult *elbv2.DescribeTargetGroupsOutput) string {
-	return utils.GetStringInBetween(targetGroupResult.String(), "TargetGroupArn: \"", "\",")
-}
+	fmt.Println("Address Healthy Instances: ")
+	for key, element := range nodes {
+		fmt.Println("Key: ", key, "=>", "Element:", element)
+	}
 
-/*
-func getInstancesFromGroup(groupResult *elbv2.DescribeTargetGroupsOutput) {
-	var list = strings.Fields(groupResult.TargetGroups[0].String())
+	return nodes
 }
-*/

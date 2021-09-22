@@ -5,7 +5,7 @@ import (
 	"net/rpc"
 	"os"
 
-	"progetto-sdcc/server/services"
+	"progetto-sdcc/node/services"
 )
 
 func main() {
