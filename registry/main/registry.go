@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
@@ -25,14 +26,18 @@ type Instance struct {
 
 //TODO mettere getActiveNodes() in una goroutine periodica, ad esempio ogni minuto
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
+	getTerminatingScalingActivities(getScalingActivities())
+
+	/*
+		if len(os.Args) < 2 {
+			fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
+			return
+		}
+		setupUser()
+		activeNodes := getActiveNodes()
+		fmt.Println(activeNodes)
 		return
-	}
-	setupUser()
-	activeNodes := getActiveNodes()
-	fmt.Println(activeNodes)
-	return
+	*/
 }
 
 /**
@@ -144,7 +149,6 @@ func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 			aws.String(instanceId),
 		},
 	}
-
 	result, err := svc.DescribeInstances(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -194,4 +198,54 @@ func getActiveNodes() map[int]Instance {
 	}
 
 	return nodes
+}
+
+// Questa funzione andrà utilizzata dal nodo
+func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
+	sess := createSession()
+	svc := autoscaling.New(sess)
+	input := &autoscaling.DescribeScalingActivitiesInput{
+		AutoScalingGroupName: aws.String("SDCC-autoscaling"),
+	}
+
+	result, err := svc.DescribeScalingActivities(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			fmt.Println(err.Error())
+		}
+	}
+	return result
+}
+
+func getTerminatingScalingActivities(activityList *autoscaling.DescribeScalingActivitiesOutput) []autoscaling.Activity {
+	var terminatingNodes []string
+	activities := activityList.Activities
+	TERMINATING_START := "Description: \"Terminating EC2 instance:"
+	TERMINATING_END := " -"
+
+	for i := 0; i < len(activities); i++ {
+		actual := activities[i].String()
+		fmt.Println(actual)
+		progress := utils.GetStringInBetween(actual, "Progress: ", ",")
+		if progress != "100" {
+			status := utils.GetStringInBetween(actual, "StatusCode: \"", "\"\n")
+			if status == "WaitingForELBConnectionDraining" || status == "InProgress" {
+				nodeId := utils.GetStringInBetween(actual, TERMINATING_START, TERMINATING_END)
+				terminatingNodes = append(terminatingNodes, nodeId)
+				fmt.Println("Status: ", status)
+				fmt.Println("nodeId: ", nodeId)
+				terminatingNodes = append(terminatingNodes, nodeId)
+			}
+		}
+	}
+	return nil
 }
