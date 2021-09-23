@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/rpc"
 	"os"
+	"progetto-sdcc/node/services"
 	"progetto-sdcc/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -25,14 +29,24 @@ type Instance struct {
 
 //TODO mettere getActiveNodes() in una goroutine periodica, ad esempio ogni minuto
 func main() {
+	if len(os.Args) != 1 {
+		fmt.Printf("Usage: go run registry.go\n")
+	}
+	fmt.Printf("Server Waiting For Connection\n")
+
+	service := services.InitializeService()
+	rpc.Register(service)
+	rpc.HandleHTTP()
+	services.ListenHttpConnection()
+	log.Fatal(http.ListenAndServe(":1234", nil))
+
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
 		return
 	}
 	setupUser()
-	activeNodes := getActiveNodes()
-	fmt.Println(activeNodes)
-	return
+	instances := getActiveNodes()
+	fmt.Println(instances)
 }
 
 /**
@@ -174,24 +188,35 @@ func getInstanceAddress(instanceInfo *ec2.DescribeInstancesOutput) Instance {
 /**
 * Ritorna gli indirizzi IP di tutti i nodi connessi al load balancer
 **/
-func getActiveNodes() map[int]Instance {
-	nodes := make(map[int]Instance)
+func getActiveNodes() []Instance {
+	var nodes []Instance
 	targetGroup := getTargetGroup(ELB)
 	targetGroupArn := utils.GetStringInBetween(targetGroup.String(), "TargetGroupArn: \"", "\",")
 	targetsHealth := getTargetsHealth(targetGroupArn)
 	healthyInstancesList := getHealthyInstancesId(targetsHealth)
-	fmt.Println("Healthy Instances: ")
-	fmt.Println(healthyInstancesList)
+	//fmt.Println("Healthy Instances: ")
+	//fmt.Println(healthyInstancesList)
 
+	nodes = make([]Instance, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
 		instance := getInstanceInfo(healthyInstancesList[i])
 		nodes[i] = getInstanceAddress(instance)
 	}
 
-	fmt.Println("Address Healthy Instances: ")
-	for key, element := range nodes {
-		fmt.Println("Key: ", key, "=>", "Element:", element)
-	}
-
+	//fmt.Println("Address Healthy Instances: ")
+	//for key, element := range nodes {
+	//fmt.Println("Key: ", key, "=>", "Element:", element)
+	//}
 	return nodes
+}
+
+func mapkey(m map[int]Instance, value Instance) (key int, ok bool) {
+	for k, v := range m {
+		if v == value {
+			key = k
+			ok = true
+			return
+		}
+	}
+	return
 }
