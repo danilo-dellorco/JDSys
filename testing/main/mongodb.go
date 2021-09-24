@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/beevik/ntp"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -14,15 +16,12 @@ var DB_NAME string = "sdcc_storage_sys"
 var COLL_NAME string = "sdcc_storage_local"
 var ID string = "_id"
 var VALUE string = "value"
+var TIME string = "timest"
 
 type mongoEntry struct {
-	_id   string
-	value string
-}
-
-type mongoSearch struct {
-	field string
-	value string
+	_id    string
+	value  string
+	timest primitive.DateTime
 }
 
 type mongoClient struct {
@@ -31,8 +30,8 @@ type mongoClient struct {
 	collection *mongo.Collection
 }
 
-func (db *mongoClient) closeConnection() {
-	err := db.client.Disconnect(context.TODO())
+func (cli *mongoClient) closeConnection() {
+	err := cli.client.Disconnect(context.TODO())
 
 	if err != nil {
 		log.Fatal(err)
@@ -40,13 +39,13 @@ func (db *mongoClient) closeConnection() {
 	fmt.Println("Connection to MongoDB closed.")
 }
 
-func (db *mongoClient) openConnection() {
+func (cli *mongoClient) openConnection() {
 	// Set client options
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
-	db.client = client
+	cli.client = client
 
 	if err != nil {
 		log.Fatal(err)
@@ -60,42 +59,58 @@ func (db *mongoClient) openConnection() {
 	}
 
 	// Inizializza il database e la collection, siamo gia connessi a mongo
-	db.database = client.Database(DB_NAME)
-	db.collection = db.database.Collection(COLL_NAME)
+	cli.database = client.Database(DB_NAME)
+	cli.collection = cli.database.Collection(COLL_NAME)
 	fmt.Println("Connected to MongoDB!")
 }
 
-func (db *mongoClient) getEntry(key string) {
-	coll := db.collection
+func (cli *mongoClient) getEntry(key string) *mongoEntry {
+	coll := cli.collection
 	var result bson.M
 	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
 	if err != nil {
 		fmt.Println("Get Error:", err)
-		return
+		return nil
 	}
 
 	entry := mongoEntry{}
 	id := result[ID].(string)
 	value := result[VALUE].(string)
+	timest := result[TIME].(primitive.DateTime)
 	entry._id = id
 	entry.value = value
+	entry.timest = timest
 	fmt.Println("Get: found", entry)
+	return &entry
 }
 
-func (db *mongoClient) putEntry(n mongoEntry) {
-	coll := db.collection
-	doc := bson.D{{ID, n._id}, {VALUE, n.value}}
+func (cli *mongoClient) putEntry(key string, value string) {
+	coll := cli.collection
+	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
+	doc := bson.D{{ID, key}, {VALUE, value}, {TIME, timestamp}}
 	_, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
 		fmt.Println("Put Error:", err)
 		return
 	}
-	fmt.Println("Put: Entry", n, "inserita correttamente nel DB")
-
+	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
 }
 
-func (db *mongoClient) deleteEntry(key string) {
-	coll := db.collection
+func (cli *mongoClient) updateEntry(key string, newValue string) {
+	old := bson.D{{ID, key}}
+	oldValue := cli.getEntry(key).value
+	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
+	update := bson.D{{"$set", bson.D{{VALUE, newValue}, {TIME, timestamp}}}}
+	_, err := cli.collection.UpdateOne(context.TODO(), old, update)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Update:", key+", changed value from", oldValue, "to", newValue)
+}
+
+func (cli *mongoClient) deleteEntry(key string) {
+	coll := cli.collection
 	entry := bson.D{{ID, key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
 	if err != nil {
@@ -104,32 +119,33 @@ func (db *mongoClient) deleteEntry(key string) {
 	}
 	//TODO vedere return 1 o 0 per vedere se ha cancellato oppure no
 	if result.DeletedCount == 1 {
-		fmt.Println("Delete: Cancellata entry con chiave", key)
+		fmt.Println("Delete: Cancellata", key)
 		return
 	}
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
 }
 
-func (db *mongoClient) dropDatabase() {
-	err := db.database.Drop(context.TODO())
+func (cli *mongoClient) dropDatabase() {
+	err := cli.database.Drop(context.TODO())
 	if err != nil {
 		fmt.Print(err)
 		return
 	}
-	fmt.Println("Drop: Database", db.database.Name(), "dropped successfully")
+	fmt.Println("Drop: Database", cli.database.Name(), "dropped successfully")
+}
+
+func (cli *mongoClient) testQueries() {
+	cli.putEntry("MyKey", "MyValue")
+	cli.getEntry("MyKey")
+	cli.updateEntry("MyKey", "NewValue")
+	cli.getEntry("MyKey")
+	cli.deleteEntry("MyKey")
+	cli.dropDatabase()
 }
 
 func main() {
-	mg := mongoClient{}
-	mg.openConnection()
-
-	// Testing put, get and delete of an entry
-	///*
-	entry := mongoEntry{_id: "MyKey", value: "MyValue"}
-	mg.putEntry(entry)
-	mg.getEntry("MyKey")
-	mg.deleteEntry("MyKey")
-	mg.dropDatabase()
-	//*/
-	mg.closeConnection()
+	client := mongoClient{}
+	client.openConnection()
+	client.testQueries()
+	client.closeConnection()
 }
