@@ -1,0 +1,3 @@
+{"_id":"K1","value":"VAL1","timest":{"$date":"2021-09-26T09:05:09.942Z"}}
+{"_id":"K2","value":"VAL2","timest":{"$date":"2021-09-26T09:05:10.234Z"}}
+{"_id":"MyKey3","value":"NewValue","timest":{"$date":"2021-09-27T12:09:26.139Z"}}

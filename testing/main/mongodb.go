@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"time"
 
 	"github.com/beevik/ntp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,7 +25,7 @@ var TIME string = "timest"
 type mongoEntry struct {
 	_id    string
 	value  string
-	timest primitive.DateTime
+	timest time.Time
 }
 
 type mongoClient struct {
@@ -79,7 +83,7 @@ func (cli *mongoClient) getEntry(key string) *mongoEntry {
 	timest := result[TIME].(primitive.DateTime)
 	entry._id = id
 	entry.value = value
-	entry.timest = timest
+	entry.timest = timest.Time()
 	fmt.Println("Get: found", entry)
 	return &entry
 }
@@ -134,18 +138,92 @@ func (cli *mongoClient) dropDatabase() {
 	fmt.Println("Drop: Database", cli.database.Name(), "dropped successfully")
 }
 
+func (cli *mongoClient) exportCollection(coll string) {
+	app := "mongoexport"
+	arg1 := "--collection=" + coll
+	arg2 := "--db=sdcc_storage_sys"
+	arg3 := "--type=csv"
+	arg4 := "--fields=_id,value,timest"
+	arg5 := "--out=export.csv"
+
+	cmd := exec.Command(app, arg1, arg2, arg3, arg4, arg5)
+	fmt.Println(cmd)
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(string(stdout))
+}
+
+func (cli *mongoClient) importCollection(coll string) {
+	app := "mongoimport"
+	arg1 := "--db=sdcc_storage_sys"
+	arg2 := "--collection=" + coll
+	arg3 := "--file=export.json"
+
+	cmd := exec.Command(app, arg1, arg2, arg3)
+	fmt.Println(cmd)
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(string(stdout))
+}
+
 func (cli *mongoClient) testQueries() {
-	cli.putEntry("MyKey", "MyValue")
-	cli.getEntry("MyKey")
-	cli.updateEntry("MyKey", "NewValue")
-	cli.getEntry("MyKey")
-	cli.deleteEntry("MyKey")
 	cli.dropDatabase()
+	cli.putEntry("MyKey3", "MyValue")
+	cli.getEntry("MyKey3")
+	cli.updateEntry("MyKey3", "NewValue")
+	cli.getEntry("MyKey3")
+	//cli.deleteEntry("MyKey")
+	//cli.dropDatabase()
 }
 
 func main() {
 	client := mongoClient{}
 	client.openConnection()
 	client.testQueries()
+	client.exportCollection(COLL_NAME)
+	localList := ParseCSV("export.csv")
+	updateList := ParseCSV("update.csv")
+	mergeEntries(localList, updateList)
+	// client.dropDatabase()
+	// client.testMerge()
 	client.closeConnection()
+}
+
+func ParseCSV(file string) []mongoEntry {
+	csvFile, err := os.Open(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("Successfully Opened CSV file")
+	defer csvFile.Close()
+
+	csvLines, err := csv.NewReader(csvFile).ReadAll()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	var entryList []mongoEntry
+	i := 0
+	for _, line := range csvLines {
+		if i == 0 {
+			i++
+			continue
+		}
+
+		timeString := line[2]
+		tVal, _ := time.Parse(time.RFC3339, timeString)
+		entry := mongoEntry{_id: line[0], value: line[1], timest: tVal}
+		entryList = append(entryList, entry)
+	}
+	return entryList
+}
+
+func mergeEntries(local []mongoEntry, update []mongoEntry) {
+	//TODO vedere se creare un CSV da importare o avere la lista di entry e fare put di tutte queste
 }
