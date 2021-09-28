@@ -23,9 +23,15 @@ var VALUE string = "value"
 var TIME string = "timest"
 
 type mongoEntry struct {
-	_id    string
-	value  string
-	timest time.Time
+	_id      string
+	value    string
+	timest   time.Time
+	analyzed bool // rende piu efficiente il merge delle entry
+}
+
+func (me *mongoEntry) print() {
+	fmt.Print("{" + me._id + ", " + me.value + ", " + me.timest.String() + "}")
+	fmt.Printf(" %t\n", me.analyzed)
 }
 
 type mongoClient struct {
@@ -185,9 +191,9 @@ func (cli *mongoClient) testQueries() {
 func main() {
 	client := mongoClient{}
 	client.openConnection()
-	client.testQueries()
-	client.exportCollection(COLL_NAME)
-	localList := ParseCSV("export.csv")
+	//client.testQueries()
+	//client.exportCollection(COLL_NAME)
+	localList := ParseCSV("local.csv")
 	updateList := ParseCSV("update.csv")
 	mergeEntries(localList, updateList)
 	// client.dropDatabase()
@@ -218,12 +224,50 @@ func ParseCSV(file string) []mongoEntry {
 
 		timeString := line[2]
 		tVal, _ := time.Parse(time.RFC3339, timeString)
-		entry := mongoEntry{_id: line[0], value: line[1], timest: tVal}
+		entry := mongoEntry{_id: line[0], value: line[1], timest: tVal, analyzed: false}
 		entryList = append(entryList, entry)
 	}
 	return entryList
 }
 
 func mergeEntries(local []mongoEntry, update []mongoEntry) {
-	//TODO vedere se creare un CSV da importare o avere la lista di entry e fare put di tutte queste
+	var mergedEntries []mongoEntry
+
+	for i := 0; i < len(local); i++ {
+		fmt.Printf("LOCAL: ")
+		local[i].print()
+		for j := 0; j < len(update); j++ {
+			fmt.Printf("UPDATE: ")
+			update[j].print()
+			var latestEntry mongoEntry
+			if local[i]._id == update[j]._id {
+				local[i].analyzed = true
+				update[j].analyzed = true
+				fmt.Println("Conflitto trovato!")
+				fmt.Println("local: ", local[i]._id, local[i].value, local[i].timest.String())
+				fmt.Println("update: ", update[j]._id, update[j].value, update[j].timest.String())
+				if local[i].timest.After(latestEntry.timest) {
+					latestEntry = local[i]
+				} else {
+					latestEntry = update[j]
+				}
+				fmt.Println("latest: ", latestEntry._id, latestEntry.value, latestEntry.timest.String())
+
+				mergedEntries = append(mergedEntries, latestEntry)
+			}
+		}
+		if !local[i].analyzed {
+			mergedEntries = append(mergedEntries, local[i])
+		}
+	}
+	for _, u := range update {
+		if !u.analyzed {
+			mergedEntries = append(mergedEntries, u)
+		}
+	}
+
+	fmt.Println("Merged Entries")
+	for _, entry := range mergedEntries {
+		entry.print()
+	}
 }
