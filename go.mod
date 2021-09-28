@@ -4,11 +4,12 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.40.45
+	github.com/beevik/ntp v0.3.0
+	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
 	go.mongodb.org/mongo-driver v1.7.2
 )
 
 require (
-	github.com/beevik/ntp v0.3.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
