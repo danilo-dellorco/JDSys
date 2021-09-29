@@ -27,6 +27,29 @@ type MongoClient struct {
 	Collection *mongo.Collection
 }
 
+/**
+* Apre la connessione con il database, inizializzando la collection utilizzata
+**/
+func (cli *MongoClient) OpenConnection() {
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	cli.Client = client
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = client.Ping(context.TODO(), nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	cli.Database = client.Database(DB_NAME)
+	cli.Collection = cli.Database.Collection(COLL_NAME)
+	fmt.Println("Connected to MongoDB!")
+}
+
+/**
+* Chiude la connessione con il database
+**/
 func (cli *MongoClient) CloseConnection() {
 	err := cli.Client.Disconnect(context.TODO())
 
@@ -36,31 +59,9 @@ func (cli *MongoClient) CloseConnection() {
 	fmt.Println("Connection to MongoDB closed.")
 }
 
-func (cli *MongoClient) OpenConnection() {
-	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	cli.Client = client
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check the connection
-	err = client.Ping(context.TODO(), nil)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Inizializza il database e la collection, siamo gia connessi a mongo
-	cli.Database = client.Database(DB_NAME)
-	cli.Collection = cli.Database.Collection(COLL_NAME)
-	fmt.Println("Connected to MongoDB!")
-}
-
+/**
+* Ritorna una entry specificando la sua chiave
+**/
 func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	coll := cli.Collection
 	var result bson.M
@@ -69,7 +70,6 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 		fmt.Println("Get Error:", err)
 		return nil
 	}
-
 	entry := MongoEntry{}
 	id := result[ID].(string)
 	value := result[VALUE].(string)
@@ -81,6 +81,10 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	return &entry
 }
 
+/**
+* Inserisce un'entry, specificando la chiave ed il suo valore.
+* Al momento del get viene calcolato il timestamp
+**/
 func (cli *MongoClient) PutEntry(key string, value string) {
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
@@ -93,22 +97,10 @@ func (cli *MongoClient) PutEntry(key string, value string) {
 	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
 }
 
-func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
-	coll := cli.Collection
-	key := entry.Key
-	value := entry.Value
-	timestamp := entry.Timest
-
-	doc := bson.D{{ID, key}, {VALUE, value}, {TIME, timestamp}}
-	_, err := coll.InsertOne(context.TODO(), doc)
-	if err != nil {
-		fmt.Println("PutMongoEntry Error:", err)
-		return
-	}
-	fmt.Println("PutMongoEntry: MongoEntry {"+key, value, timestamp.String()+"} inserita correttamente nel database")
-
-}
-
+/**
+* Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
+* Viene inoltre aggiornato il timestamp di quell'entry
+**/
 func (cli *MongoClient) UpdateEntry(key string, newValue string) {
 	old := bson.D{{ID, key}}
 	oldValue := cli.GetEntry(key).Value
@@ -122,6 +114,9 @@ func (cli *MongoClient) UpdateEntry(key string, newValue string) {
 	fmt.Println("Update:", key+", changed value from", oldValue, "to", newValue)
 }
 
+/**
+* Cancella un'entry dal database, specificandone la chiave
+**/
 func (cli *MongoClient) DeleteEntry(key string) {
 	coll := cli.Collection
 	entry := bson.D{{ID, key}}
@@ -130,7 +125,7 @@ func (cli *MongoClient) DeleteEntry(key string) {
 		fmt.Println("Delete Error:", err)
 		return
 	}
-	//TODO vedere return 1 o 0 per vedere se ha cancellato oppure no
+
 	if result.DeletedCount == 1 {
 		fmt.Println("Delete: Cancellata", key)
 		return
@@ -138,6 +133,9 @@ func (cli *MongoClient) DeleteEntry(key string) {
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
 }
 
+/**
+* Cancella un database e tutte le sue collezioni
+**/
 func (cli *MongoClient) DropDatabase() {
 	err := cli.Database.Drop(context.TODO())
 	if err != nil {
@@ -147,6 +145,28 @@ func (cli *MongoClient) DropDatabase() {
 	fmt.Println("Drop: Database", cli.Database.Name(), "dropped successfully")
 }
 
+/**
+* Inserisce un oggetto MongoEntry nel db.
+* Utilizzata durante l'aggiornamento del db a seguito di un update
+**/
+func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
+	coll := cli.Collection
+	key := entry.Key
+	value := entry.Value
+	timestamp := entry.Timest
+
+	doc := bson.D{{ID, key}, {VALUE, value}, {TIME, timestamp}}
+	_, err := coll.InsertOne(context.TODO(), doc)
+	if err != nil {
+		fmt.Println("PutMongoEntry Error:", err)
+		return
+	}
+	fmt.Println("PutMongoEntry: MongoEntry {"+key, value, timestamp.String()+"} inserita correttamente nel database")
+}
+
+/**
+* Esporta una collezione, scrivendola su un file csv
+**/
 func (cli *MongoClient) ExportCollection(filename string) {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
@@ -163,30 +183,4 @@ func (cli *MongoClient) ExportCollection(filename string) {
 		return
 	}
 	fmt.Println(string(stdout))
-}
-
-func (cli *MongoClient) ImportCollection(coll string) {
-	app := "mongoimport"
-	arg1 := "--db=sdcc_storage_sys"
-	arg2 := "--collection=" + coll
-	arg3 := "--file=export.json"
-
-	cmd := exec.Command(app, arg1, arg2, arg3)
-	fmt.Println(cmd)
-	stdout, err := cmd.Output()
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	fmt.Println(string(stdout))
-}
-
-func (cli *MongoClient) TestQueries() {
-	cli.DropDatabase()
-	cli.PutEntry("MyKey3", "MyValue")
-	cli.GetEntry("MyKey3")
-	cli.UpdateEntry("MyKey3", "NewValue")
-	cli.GetEntry("MyKey3")
-	//cli.deleteEntry("MyKey")
-	//cli.dropDatabase()
 }
