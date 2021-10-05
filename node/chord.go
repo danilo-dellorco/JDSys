@@ -15,20 +15,26 @@ import (
 )
 
 //Finger type denoting identifying information about a ChordNode
-type NodeInfo struct {
+type Finger struct {
 	id     [sha256.Size]byte
 	ipaddr string
 }
 
+type request struct {
+	write bool
+	succ  bool
+	index int
+}
+
 //ChordNode type denoting a Chord server.
 type ChordNode struct {
-	predecessor   *NodeInfo
-	successor     *NodeInfo
-	successorList [sha256.Size * 8]NodeInfo
-	fingerTable   [sha256.Size*8 + 1]NodeInfo
+	predecessor   *Finger
+	successor     *Finger
+	successorList [sha256.Size * 8]Finger
+	fingerTable   [sha256.Size*8 + 1]Finger
 
-	chan_finger chan NodeInfo
-	chan_req    chan request
+	finger  chan Finger
+	request chan request
 
 	id     [sha256.Size]byte
 	ipaddr string
@@ -51,12 +57,6 @@ func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 	}
-}
-
-type request struct {
-	write bool
-	succ  bool
-	index int
 }
 
 //Lookup returns the address of the successor of key in the Chord DHT.
@@ -108,7 +108,7 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 	}
 	addr = ft[1].ipaddr
 	msg = pingMsg()
-	_, err = Send(msg, addr)
+	reply, err = Send(msg, addr)
 
 	//this code is executed if the current node's successor has gone missing
 	if err != nil {
@@ -132,7 +132,7 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 				break
 			}
 			msg = pingMsg()
-			_, err = Send(msg, f.ipaddr)
+			reply, err = Send(msg, f.ipaddr)
 			if err != nil { //closest next successor that responds
 				addr = f.ipaddr
 				return
@@ -191,7 +191,7 @@ func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string,
 	}
 	addr = ft[1].ipaddr
 	msg = pingMsg()
-	_, err = node.send(msg, addr)
+	reply, err = node.send(msg, addr)
 
 	//this code is executed if the id's successor has gone missing
 	if err != nil {
@@ -214,7 +214,7 @@ func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string,
 				break
 			}
 			msg = pingMsg()
-			_, err = node.send(msg, f.ipaddr)
+			reply, err = node.send(msg, f.ipaddr)
 			if err != nil { //closest next successor that responds
 				addr = f.ipaddr
 				return
@@ -234,20 +234,20 @@ func Create(myaddr string) *ChordNode {
 	//initialize node information
 	node.id = sha256.Sum256([]byte(myaddr))
 	node.ipaddr = myaddr
-	me := new(NodeInfo)
+	me := new(Finger)
 	me.id = node.id
 	me.ipaddr = node.ipaddr
 	node.fingerTable[0] = *me
-	succ := new(NodeInfo)
+	succ := new(Finger)
 	node.successor = succ
-	pred := new(NodeInfo)
+	pred := new(Finger)
 	node.predecessor = pred
 
 	//set up channels for finger manager
-	c := make(chan NodeInfo)
+	c := make(chan Finger)
 	c2 := make(chan request)
-	node.chan_finger = c
-	node.chan_req = c2
+	node.finger = c
+	node.request = c2
 
 	//initialize listener and network manager threads
 	node.listen(myaddr)
@@ -280,7 +280,7 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 	}
 
 	//update node info to include successor
-	succ := new(NodeInfo)
+	succ := new(Finger)
 	succ.id, err = parseId(reply)
 	if err != nil {
 		return nil, &PeerError{addr, err}
@@ -294,31 +294,29 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 //data manages reads and writes to the node data structure
 func (node *ChordNode) data() {
 	for {
-		req := <-node.chan_req
-		//write req, update finger table, predecessor ... with the new info received
+		req := <-node.request
 		if req.write {
 			if req.succ {
-				node.successorList[req.index] = <-node.chan_finger
+				node.successorList[req.index] = <-node.finger
 			} else {
 				if req.index < 0 {
-					*node.predecessor = <-node.chan_finger
+					*node.predecessor = <-node.finger
 				} else if req.index == 1 {
-					*node.successor = <-node.chan_finger
+					*node.successor = <-node.finger
 					node.fingerTable[1] = *node.successor
 					node.successorList[0] = *node.successor
 				} else {
-					node.fingerTable[req.index] = <-node.chan_finger
+					node.fingerTable[req.index] = <-node.finger
 				}
 			}
-			//read req, send to the cannel the specific key searched
-		} else {
+		} else { //req.read
 			if req.succ {
-				node.chan_finger <- node.successorList[req.index]
+				node.finger <- node.successorList[req.index]
 			} else {
 				if req.index < 0 {
-					node.chan_finger <- *node.predecessor
+					node.finger <- *node.predecessor
 				} else {
-					node.chan_finger <- node.fingerTable[req.index]
+					node.finger <- node.fingerTable[req.index]
 				}
 			}
 		}
@@ -326,15 +324,14 @@ func (node *ChordNode) data() {
 }
 
 //query allows functions to read from or write to the node object
-func (node *ChordNode) query(write bool, succ bool, index int, newf *NodeInfo) NodeInfo {
-	f := new(NodeInfo)
+func (node *ChordNode) query(write bool, succ bool, index int, newf *Finger) Finger {
+	f := new(Finger)
 	req := request{write, succ, index}
-	print("DA ERRORE SOLO A QUESTE QUERY DI STAMPA DIOCANE NON SO PERCHE")
-	node.chan_req <- req
+	node.request <- req
 	if write {
-		node.chan_finger <- *newf
+		node.finger <- *newf
 	} else {
-		*f = <-node.chan_finger
+		*f = <-node.finger
 	}
 
 	return *f
@@ -367,7 +364,7 @@ func (node *ChordNode) stabilize() {
 
 	//check to see if successor is still around
 	msg := pingMsg()
-	_, err := node.send(msg, successor.ipaddr)
+	reply, err := node.send(msg, successor.ipaddr)
 	if err != nil {
 		//successor failed to respond
 		//check in successor list for next available successor.
@@ -377,7 +374,7 @@ func (node *ChordNode) stabilize() {
 				continue
 			}
 			msg := pingMsg()
-			_, err = node.send(msg, successor.ipaddr)
+			reply, err = node.send(msg, successor.ipaddr)
 			if err == nil {
 				break
 			} else {
@@ -392,7 +389,7 @@ func (node *ChordNode) stabilize() {
 
 	//everything is OK, update successor list
 	msg = getsuccessorsMsg()
-	reply, err := node.send(msg, successor.ipaddr)
+	reply, err = node.send(msg, successor.ipaddr)
 	if err != nil {
 		return
 	}
@@ -428,7 +425,7 @@ func (node *ChordNode) stabilize() {
 	}
 
 	//claim to be predecessor of succ
-	me := new(NodeInfo)
+	me := new(Finger)
 	me.id = node.id
 	me.ipaddr = node.ipaddr
 	msg = claimpredMsg(*me)
@@ -451,7 +448,7 @@ func (node *ChordNode) Register(id byte, app ChordApp) bool {
 
 }
 
-func (node *ChordNode) notify(newPred NodeInfo) {
+func (node *ChordNode) notify(newPred Finger) {
 	node.query(true, false, -1, &newPred)
 	//update predecessor
 	successor := node.query(false, false, 1, nil)
@@ -481,6 +478,9 @@ func (node *ChordNode) checkPred() {
 		predecessor.ipaddr = ""
 		node.query(true, false, -1, &predecessor)
 	}
+
+	return
+
 }
 
 func (node *ChordNode) fix(which int) {
@@ -508,7 +508,7 @@ func (node *ChordNode) fix(which int) {
 		return
 	}
 
-	newfinger := new(NodeInfo)
+	newfinger := new(Finger)
 	newfinger.ipaddr = newip
 	newfinger.id, _ = parseId(reply)
 	node.query(true, false, which, newfinger)
@@ -592,11 +592,11 @@ func target(me [sha256.Size]byte, which int) []byte {
 	return bytes[:sha256.Size]
 }
 
-func (f NodeInfo) String() string {
-	return fmt.Sprintf(f.ipaddr)
+func (f Finger) String() string {
+	return fmt.Sprintf("%s", f.ipaddr)
 }
 
-func (f NodeInfo) zero() bool {
+func (f Finger) zero() bool {
 	if f.ipaddr == "" {
 		return true
 	} else {
@@ -626,10 +626,9 @@ func (node *ChordNode) String() string {
 
 //ShowFingers returns a string representation of the ChordNode's finger table.
 func (node *ChordNode) ShowFingers() string {
-	//fmt.Println(node.fingerTable)
 	retval := ""
-	finger := new(NodeInfo)
-	prevfinger := new(NodeInfo)
+	finger := new(Finger)
+	prevfinger := new(Finger)
 	ctr := 0
 	for i := 0; i < sha256.Size*8+1; i++ {
 		*finger = node.query(false, false, i, nil)
@@ -647,8 +646,8 @@ func (node *ChordNode) ShowFingers() string {
 //ShowSucc returns a string representation of the ChordNode's successor list.
 func (node *ChordNode) ShowSucc() string {
 	table := ""
-	finger := new(NodeInfo)
-	prevfinger := new(NodeInfo)
+	finger := new(Finger)
+	prevfinger := new(Finger)
 	for i := 0; i < sha256.Size*8; i++ {
 		*finger = node.query(false, true, i, nil)
 		if finger.ipaddr != "" {

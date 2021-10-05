@@ -31,7 +31,7 @@ func getfingersMsg() []byte {
 	return data
 }
 
-func sendfingersMsg(fingers []NodeInfo) []byte {
+func sendfingersMsg(fingers []Finger) []byte {
 
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
@@ -132,7 +132,7 @@ func getpredMsg() []byte {
 }
 
 //TODO: rewrite
-func sendpredMsg(finger NodeInfo) []byte {
+func sendpredMsg(finger Finger) []byte {
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
 	chordMsg := new(internal.ChordMessage)
@@ -160,7 +160,7 @@ func sendpredMsg(finger NodeInfo) []byte {
 	return data
 }
 
-func claimpredMsg(finger NodeInfo) []byte {
+func claimpredMsg(finger Finger) []byte {
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
 	chordMsg := new(internal.ChordMessage)
@@ -301,8 +301,8 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		c <- pongMsg()
 		return
 	case cmd == internal.ChordMessage_Command_value["GetPred"]:
-		node.chan_req <- request{false, false, -1}
-		pred := <-node.chan_finger
+		node.request <- request{false, false, -1}
+		pred := <-node.finger
 		if pred.zero() {
 			c <- nullMsg()
 		} else {
@@ -313,11 +313,11 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		c <- sendidMsg(node.id[:32])
 		return
 	case cmd == internal.ChordMessage_Command_value["GetFingers"]:
-		table := make([]NodeInfo, 32*8+1)
+		table := make([]Finger, 32*8+1)
 		//fmt.Printf("Fingers of node %s:\n", node.ipaddr)
 		for i := range table {
-			node.chan_req <- request{false, false, i}
-			f := <-node.chan_finger
+			node.request <- request{false, false, i}
+			f := <-node.finger
 			//fmt.Printf("\t%s\n", f.String())
 			table[i] = f
 		}
@@ -332,8 +332,8 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 			c <- nullMsg()
 			break
 		}
-		node.chan_req <- request{false, false, -1}
-		pred := <-node.chan_finger
+		node.request <- request{false, false, -1}
+		pred := <-node.finger
 
 		if pred.zero() || InRange(newPred.id, pred.id, node.id) {
 			go node.notify(newPred)
@@ -342,10 +342,10 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		//update finger table
 		return
 	case cmd == internal.ChordMessage_Command_value["GetSucc"]:
-		table := make([]NodeInfo, 32*8)
+		table := make([]Finger, 32*8)
 		for i := range table {
-			node.chan_req <- request{false, true, i}
-			f := <-node.chan_finger
+			node.request <- request{false, true, i}
+			f := <-node.finger
 			table[i] = f
 		}
 
@@ -359,7 +359,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 //parseFingers can be called to return a finger table from a received
 //parseFingers can be called to return a finger table from a received
 //message after a getfingers call.
-func parseFingers(data []byte) (ft []NodeInfo, err error) {
+func parseFingers(data []byte) (ft []Finger, err error) {
 	msg := new(internal.NetworkMessage)
 	err = proto.Unmarshal(data, msg)
 	if msg.GetProto() != 1 {
@@ -379,9 +379,9 @@ func parseFingers(data []byte) (ft []NodeInfo, err error) {
 	}
 	sfmsg := chordmsg.GetSfmsg()
 	fingers := sfmsg.GetFingers()
-	prevfinger := new(NodeInfo)
+	prevfinger := new(Finger)
 	for _, finger := range fingers {
-		newfinger := new(NodeInfo)
+		newfinger := new(Finger)
 		copy(newfinger.id[:], []byte(*finger.Id))
 		newfinger.ipaddr = *finger.Address
 		if !newfinger.zero() && newfinger.ipaddr != prevfinger.ipaddr {
@@ -392,7 +392,7 @@ func parseFingers(data []byte) (ft []NodeInfo, err error) {
 	return
 }
 
-func parseFinger(data []byte) (f NodeInfo, err error) {
+func parseFinger(data []byte) (f Finger, err error) {
 	msg := new(internal.NetworkMessage)
 	err = proto.Unmarshal(data, msg)
 	checkError(err)
