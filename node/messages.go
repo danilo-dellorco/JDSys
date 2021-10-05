@@ -31,7 +31,7 @@ func getfingersMsg() []byte {
 	return data
 }
 
-func sendfingersMsg(fingers []Finger) []byte {
+func sendfingersMsg(fingers []NodeInfo) []byte {
 
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
@@ -132,7 +132,7 @@ func getpredMsg() []byte {
 }
 
 //TODO: rewrite
-func sendpredMsg(finger Finger) []byte {
+func sendpredMsg(finger NodeInfo) []byte {
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
 	chordMsg := new(internal.ChordMessage)
@@ -160,7 +160,7 @@ func sendpredMsg(finger Finger) []byte {
 	return data
 }
 
-func claimpredMsg(finger Finger) []byte {
+func claimpredMsg(finger NodeInfo) []byte {
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
 	chordMsg := new(internal.ChordMessage)
@@ -313,7 +313,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		c <- sendidMsg(node.id[:32])
 		return
 	case cmd == internal.ChordMessage_Command_value["GetFingers"]:
-		table := make([]Finger, 32*8+1)
+		table := make([]NodeInfo, 32*8+1)
 		//fmt.Printf("Fingers of node %s:\n", node.ipaddr)
 		for i := range table {
 			node.request <- request{false, false, i}
@@ -342,7 +342,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		//update finger table
 		return
 	case cmd == internal.ChordMessage_Command_value["GetSucc"]:
-		table := make([]Finger, 32*8)
+		table := make([]NodeInfo, 32*8)
 		for i := range table {
 			node.request <- request{false, true, i}
 			f := <-node.finger
@@ -359,7 +359,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 //parseFingers can be called to return a finger table from a received
 //parseFingers can be called to return a finger table from a received
 //message after a getfingers call.
-func parseFingers(data []byte) (ft []Finger, err error) {
+func parseFingers(data []byte) (ft []NodeInfo, err error) {
 	msg := new(internal.NetworkMessage)
 	err = proto.Unmarshal(data, msg)
 	if msg.GetProto() != 1 {
@@ -379,9 +379,9 @@ func parseFingers(data []byte) (ft []Finger, err error) {
 	}
 	sfmsg := chordmsg.GetSfmsg()
 	fingers := sfmsg.GetFingers()
-	prevfinger := new(Finger)
+	prevfinger := new(NodeInfo)
 	for _, finger := range fingers {
-		newfinger := new(Finger)
+		newfinger := new(NodeInfo)
 		copy(newfinger.id[:], []byte(*finger.Id))
 		newfinger.ipaddr = *finger.Address
 		if !newfinger.zero() && newfinger.ipaddr != prevfinger.ipaddr {
@@ -392,7 +392,7 @@ func parseFingers(data []byte) (ft []Finger, err error) {
 	return
 }
 
-func parseFinger(data []byte) (f Finger, err error) {
+func parseFinger(data []byte) (f NodeInfo, err error) {
 	msg := new(internal.NetworkMessage)
 	err = proto.Unmarshal(data, msg)
 	checkError(err)

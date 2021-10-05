@@ -62,7 +62,7 @@ func main() {
 
 	//check active instances contacting the service registry
 	//result := JoinDHT(os.Args[1])
-	result := JoinDHT("10.0.1.12")
+	result := JoinDHT("3.80.56.169")
 	fmt.Println(result)
 
 	//one active instance, me, so create a new ring

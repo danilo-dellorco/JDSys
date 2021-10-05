@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-//Finger type denoting identifying information about a ChordNode
-type Finger struct {
+//NodeInfo type denoting identifying information about a ChordNode
+type NodeInfo struct {
 	id     [sha256.Size]byte
 	ipaddr string
 }
@@ -28,12 +28,12 @@ type request struct {
 
 //ChordNode type denoting a Chord server.
 type ChordNode struct {
-	predecessor   *Finger
-	successor     *Finger
-	successorList [sha256.Size * 8]Finger
-	fingerTable   [sha256.Size*8 + 1]Finger
+	predecessor   *NodeInfo
+	successor     *NodeInfo
+	successorList [sha256.Size * 8]NodeInfo
+	fingerTable   [sha256.Size*8 + 1]NodeInfo
 
-	finger  chan Finger
+	finger  chan NodeInfo
 	request chan request
 
 	id     [sha256.Size]byte
@@ -234,17 +234,17 @@ func Create(myaddr string) *ChordNode {
 	//initialize node information
 	node.id = sha256.Sum256([]byte(myaddr))
 	node.ipaddr = myaddr
-	me := new(Finger)
+	me := new(NodeInfo)
 	me.id = node.id
 	me.ipaddr = node.ipaddr
 	node.fingerTable[0] = *me
-	succ := new(Finger)
+	succ := new(NodeInfo)
 	node.successor = succ
-	pred := new(Finger)
+	pred := new(NodeInfo)
 	node.predecessor = pred
 
 	//set up channels for finger manager
-	c := make(chan Finger)
+	c := make(chan NodeInfo)
 	c2 := make(chan request)
 	node.finger = c
 	node.request = c2
@@ -280,7 +280,7 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 	}
 
 	//update node info to include successor
-	succ := new(Finger)
+	succ := new(NodeInfo)
 	succ.id, err = parseId(reply)
 	if err != nil {
 		return nil, &PeerError{addr, err}
@@ -324,8 +324,8 @@ func (node *ChordNode) data() {
 }
 
 //query allows functions to read from or write to the node object
-func (node *ChordNode) query(write bool, succ bool, index int, newf *Finger) Finger {
-	f := new(Finger)
+func (node *ChordNode) query(write bool, succ bool, index int, newf *NodeInfo) NodeInfo {
+	f := new(NodeInfo)
 	req := request{write, succ, index}
 	node.request <- req
 	if write {
@@ -425,7 +425,7 @@ func (node *ChordNode) stabilize() {
 	}
 
 	//claim to be predecessor of succ
-	me := new(Finger)
+	me := new(NodeInfo)
 	me.id = node.id
 	me.ipaddr = node.ipaddr
 	msg = claimpredMsg(*me)
@@ -448,7 +448,7 @@ func (node *ChordNode) Register(id byte, app ChordApp) bool {
 
 }
 
-func (node *ChordNode) notify(newPred Finger) {
+func (node *ChordNode) notify(newPred NodeInfo) {
 	node.query(true, false, -1, &newPred)
 	//update predecessor
 	successor := node.query(false, false, 1, nil)
@@ -508,7 +508,7 @@ func (node *ChordNode) fix(which int) {
 		return
 	}
 
-	newfinger := new(Finger)
+	newfinger := new(NodeInfo)
 	newfinger.ipaddr = newip
 	newfinger.id, _ = parseId(reply)
 	node.query(true, false, which, newfinger)
@@ -592,11 +592,11 @@ func target(me [sha256.Size]byte, which int) []byte {
 	return bytes[:sha256.Size]
 }
 
-func (f Finger) String() string {
+func (f NodeInfo) String() string {
 	return fmt.Sprintf("%s", f.ipaddr)
 }
 
-func (f Finger) zero() bool {
+func (f NodeInfo) zero() bool {
 	if f.ipaddr == "" {
 		return true
 	} else {
@@ -627,8 +627,8 @@ func (node *ChordNode) String() string {
 //ShowFingers returns a string representation of the ChordNode's finger table.
 func (node *ChordNode) ShowFingers() string {
 	retval := ""
-	finger := new(Finger)
-	prevfinger := new(Finger)
+	finger := new(NodeInfo)
+	prevfinger := new(NodeInfo)
 	ctr := 0
 	for i := 0; i < sha256.Size*8+1; i++ {
 		*finger = node.query(false, false, i, nil)
@@ -646,8 +646,8 @@ func (node *ChordNode) ShowFingers() string {
 //ShowSucc returns a string representation of the ChordNode's successor list.
 func (node *ChordNode) ShowSucc() string {
 	table := ""
-	finger := new(Finger)
-	prevfinger := new(Finger)
+	finger := new(NodeInfo)
+	prevfinger := new(NodeInfo)
 	for i := 0; i < sha256.Size*8; i++ {
 		*finger = node.query(false, true, i, nil)
 		if finger.ipaddr != "" {

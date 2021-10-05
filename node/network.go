@@ -27,8 +27,8 @@ func Send(msg []byte, addr string) (reply []byte, err error) {
 		return
 	}
 	raddr := new(net.TCPAddr)
-	raddr.IP = net.ParseIP(strings.Split(addr, ":")[0])
-	raddr.Port, err = strconv.Atoi(strings.Split(addr, ":")[1])
+	raddr.IP = net.ParseIP(addr)
+	raddr.Port, err = strconv.Atoi("8888")
 	if err != nil {
 		return
 	}
