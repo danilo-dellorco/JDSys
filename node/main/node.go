@@ -70,7 +70,7 @@ func main() {
 		me = chord.Create(*addressPtr)
 	} else {
 		//found active instances, join the ring contacting a random node
-		*joinPtr = result[rand.Intn(len(result))]
+		*joinPtr = result[rand.Intn(len(result))] + ":8888"
 		fmt.Println(*joinPtr)
 		me, _ = chord.Join(*addressPtr, *joinPtr)
 	}
