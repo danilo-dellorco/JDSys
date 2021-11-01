@@ -55,7 +55,9 @@ func main() {
 	flag.Parse()
 
 	//get IP of the host used in the VPC
-	*addressPtr = GetOutboundIP().String() + ":4567"
+	//*addressPtr = GetOutboundIP().String() + ":4567"
+	*addressPtr = "mio IP"
+	*joinPtr = "IP nodo tramite cui entrare nella rete chord"
 	me := new(chord.ChordNode)
 
 	//check active instances contacting the service registry
@@ -70,7 +72,7 @@ func main() {
 	//found active instances, join the ring contacting a random node
 	//*joinPtr = result[rand.Intn(len(result))] + ":4567"
 	//fmt.Println(*joinPtr)
-	me, _ = chord.Join(*addressPtr, *joinPtr)
+	//me, _ = chord.Join(*addressPtr, *joinPtr)
 	//}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)

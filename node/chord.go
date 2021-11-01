@@ -66,7 +66,7 @@ func checkError(err error) {
 //
 //If the start address is unreachable, the error is of type PeerError.
 func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
-
+	//usiamo questa funzione per ricercare dov'è la chiave del sistema di storage
 	addr = start
 
 	msg := getfingersMsg()
@@ -295,7 +295,6 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 func (node *ChordNode) data() {
 	for {
 		req := <-node.request
-		fmt.Println("arrivata req")
 		if req.write {
 			if req.succ {
 				node.successorList[req.index] = <-node.finger
@@ -328,8 +327,6 @@ func (node *ChordNode) data() {
 func (node *ChordNode) query(write bool, succ bool, index int, newf *NodeInfo) NodeInfo {
 	f := new(NodeInfo)
 	req := request{write, succ, index}
-	fmt.Println("WEEEEE")
-	fmt.Println(node.id)
 	node.request <- req
 	if write {
 		node.finger <- *newf
