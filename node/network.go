@@ -20,19 +20,15 @@ func Send(msg []byte, addr string) (reply []byte, err error) {
 		return nil, err
 	}
 
-	laddr := new(net.TCPAddr)
-	laddr.IP = net.ParseIP("127.0.0.1")
-	laddr.Port = 0
-	if err != nil {
-		return
-	}
 	raddr := new(net.TCPAddr)
 	raddr.IP = net.ParseIP(strings.Split(addr, ":")[0])
 	raddr.Port, err = strconv.Atoi(strings.Split(addr, ":")[1])
 	if err != nil {
 		return
 	}
-	newconn, err := net.DialTCP("tcp", laddr, raddr)
+	//open a TCP connection with raddr, laddr is chosen automatically
+	//so we don't need to set a specific port and check if it's used
+	newconn, err := net.DialTCP("tcp", nil, raddr)
 	if err != nil {
 		return
 	}

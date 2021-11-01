@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"net"
 	"net/rpc"
 	chord "progetto-sdcc/node"
@@ -53,28 +52,28 @@ func main() {
 	//setup flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
 	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
+	flag.Parse()
 
 	//get IP of the host used in the VPC
-	*addressPtr = GetOutboundIP().String() + ":8888"
-
-	flag.Parse()
+	*addressPtr = GetOutboundIP().String() + ":4567"
 	me := new(chord.ChordNode)
 
 	//check active instances contacting the service registry
 	//result := JoinDHT(os.Args[1])
-	result := JoinDHT("3.80.56.169")
-	fmt.Println(result)
+	//result := JoinDHT("3.95.38.29")
+	//fmt.Println(result)
 
 	//one active instance, me, so create a new ring
-	if len(result) == 1 {
-		me = chord.Create(*addressPtr)
-	} else {
-		//found active instances, join the ring contacting a random node
-		*joinPtr = result[rand.Intn(len(result))] + ":8888"
-		fmt.Println(*joinPtr)
-		me, _ = chord.Join(*addressPtr, *joinPtr)
-	}
+	//if len(result) == 1 {
+	me = chord.Create(*addressPtr)
+	//} else {
+	//found active instances, join the ring contacting a random node
+	//*joinPtr = result[rand.Intn(len(result))] + ":4567"
+	//fmt.Println(*joinPtr)
+	me, _ = chord.Join(*addressPtr, *joinPtr)
+	//}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
+	fmt.Printf("Join address is: %s.\n", *joinPtr)
 
 	//block until receive input
 Loop:
