@@ -36,7 +36,7 @@ func InitializeService() *DHThandler {
 
 func checkActiveNodes() []services.Instance {
 	instances := services.GetActiveNodes()
-	fmt.Println("Info Healthy Instances:")
+	fmt.Println("Healthy Instances:")
 	fmt.Println(instances)
 	return instances
 }

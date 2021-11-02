@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -14,7 +15,7 @@ import (
 )
 
 var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
-var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/af7c3e0a0644224d"
+var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var ELB string
 
 /**
@@ -29,7 +30,8 @@ type Instance struct {
 **/
 func createSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")})
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewSharedCredentials("/home/jacopo/.aws/credentials", "default")})
 	if err != nil {
 		fmt.Println(err)
 	}
