@@ -46,9 +46,10 @@ func checkActiveNodes() {
 func checkTerminatingNodes() {
 	for {
 		terminating := services.GetTerminatingInstances()
-		for t := range terminating {
+		for _, t := range terminating {
 			// [TODO] Invia un segnale per dirgli che sta terminando e quindi che dovrà
 			// inviare il suo DB al successore prima di morire
+			fmt.Println(t.PrivateIP)
 		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"net/rpc"
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/mongo/core"
@@ -19,6 +20,9 @@ func main() {
 	//	fmt.Println("Wrong usage: Specify registry IP address")
 	//	return
 	//}
+
+	http.HandleFunc("/", home_handler)
+	go http.ListenAndServe(":80", nil)
 
 	//setup flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
@@ -72,6 +76,10 @@ Loop:
 
 	}
 	me.Finalize()
+}
+
+func home_handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Homepage")
 }
 
 func HttpConnect(serverAddress string) (*rpc.Client, error) {
