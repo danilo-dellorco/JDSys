@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
@@ -150,7 +151,7 @@ func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 /**
 * Ottiene ID, Indirizzo Pubblico e Indirizzo Privato di una istanza EC2
 **/
-func getInstanceAddress(instanceInfo *ec2.DescribeInstancesOutput) Instance {
+func getInstance(instanceInfo *ec2.DescribeInstancesOutput) Instance {
 	descriptions := instanceInfo.Reservations
 	actual := descriptions[0].String()
 	id := utils.GetStringInBetween(actual, "InstanceId: \"", "\",")
@@ -176,7 +177,7 @@ func GetActiveNodes() []Instance {
 	nodes = make([]Instance, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
 		instance := getInstanceInfo(healthyInstancesList[i])
-		nodes[i] = getInstanceAddress(instance)
+		nodes[i] = getInstance(instance)
 	}
 
 	//fmt.Println("Address Healthy Instances: ")
@@ -184,4 +185,62 @@ func GetActiveNodes() []Instance {
 	//	fmt.Println("Key: ", key, "=>", "Element:", element)
 	//}
 	return nodes
+}
+
+/**
+* Ottiene dal Load Balancer la lista delle attività schedulate in termini di ScaleIN e ScaleOUT.
+**/
+func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
+	sess := createSession()
+	svc := autoscaling.New(sess)
+	input := &autoscaling.DescribeScalingActivitiesInput{
+		AutoScalingGroupName: aws.String("SDCC-autoscaling"),
+	}
+
+	result, err := svc.DescribeScalingActivities(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case autoscaling.ErrCodeInvalidNextToken:
+				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+			case autoscaling.ErrCodeResourceContentionFault:
+				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			fmt.Println(err.Error())
+		}
+	}
+	return result
+}
+
+/**
+* Ottiene tutte gli ID di tutte le istanze che sono nello stato di terminazione
+**/
+func GetTerminatingInstances() []Instance {
+	activityList := getScalingActivities()
+
+	var terminatingNodes []Instance
+	activities := activityList.Activities
+	TERMINATING_START := "Description: \"Terminating EC2 instance:"
+	TERMINATING_END := " -"
+
+	for i := 0; i < len(activities); i++ {
+		actual := activities[i].String()
+		fmt.Println(actual)
+		progress := utils.GetStringInBetween(actual, "Progress: ", ",")
+		if progress != "100" {
+			status := utils.GetStringInBetween(actual, "StatusCode: \"", "\"\n")
+			if status == "WaitingForELBConnectionDraining" || status == "InProgress" {
+				nodeId := utils.GetStringInBetween(actual, TERMINATING_START, TERMINATING_END)
+				fmt.Println("Status: ", status)
+				fmt.Println("nodeId: ", nodeId)
+				instanceInfo := getInstanceInfo(nodeId)
+				instance := getInstance(instanceInfo)
+				terminatingNodes = append(terminatingNodes, instance)
+			}
+		}
+	}
+	return terminatingNodes
 }

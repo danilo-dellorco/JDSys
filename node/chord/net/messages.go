@@ -3,7 +3,7 @@ package chord
 import (
 	"fmt"
 	"log"
-	"progetto-sdcc/node/internal"
+	"progetto-sdcc/node/chord/internal"
 
 	"github.com/golang/protobuf/proto"
 )

@@ -7,43 +7,14 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-	chord "progetto-sdcc/node"
+	chord "progetto-sdcc/node/chord/net"
+	mongo "progetto-sdcc/node/mongo/core"
 )
 
 type EmptyArgs struct{}
 
-func HttpConnect(serverAddress string) (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
-	if err != nil {
-		log.Fatal("Connection error: ", err)
-	}
-	return client, err
-}
-
-func JoinDHT(serverAddress string) []string {
-	args := EmptyArgs{}
-	var reply []string
-
-	client, _ := HttpConnect(serverAddress)
-	err := client.Call("DHThandler.JoinRing", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	return reply
-}
-
-// Get preferred outbound ip of this machine
-func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP
-}
-
 func main() {
+
 	//if len(os.Args) < 2 {
 	//	fmt.Println("Wrong usage: Specify registry IP address")
 	//	return
@@ -77,7 +48,10 @@ func main() {
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
 
-	//block until receive input
+	//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
+	mongo.InitLocalSystem()
+
+	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comeandi da riga di comando ma tramite RPC
 Loop:
 	for {
 		var cmd string
@@ -98,4 +72,35 @@ Loop:
 
 	}
 	me.Finalize()
+}
+
+func HttpConnect(serverAddress string) (*rpc.Client, error) {
+	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
+	if err != nil {
+		log.Fatal("Connection error: ", err)
+	}
+	return client, err
+}
+
+func JoinDHT(serverAddress string) []string {
+	args := EmptyArgs{}
+	var reply []string
+
+	client, _ := HttpConnect(serverAddress)
+	err := client.Call("DHThandler.JoinRing", args, &reply)
+	if err != nil {
+		log.Fatal("RPC error: ", err)
+	}
+	return reply
+}
+
+// Get preferred outbound ip of this machine
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP
 }

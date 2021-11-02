@@ -34,20 +34,22 @@ func InitializeService() *DHThandler {
 	return service
 }
 
-func home_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Homepage")
-}
-
-func pica_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Picapage")
-}
-
-func PeriodicCheck() {
+func checkActiveNodes() {
 	for {
 		instances = services.GetActiveNodes()
 		fmt.Println("Info Healthy Instances:")
 		fmt.Println(instances)
 		time.Sleep(time.Second * 10)
+	}
+}
+
+func checkTerminatingNodes() {
+	for {
+		terminating := services.GetTerminatingInstances()
+		for t := range terminating {
+			// [TODO] Invia un segnale per dirgli che sta terminando e quindi che dovrà
+			// inviare il suo DB al successore prima di morire
+		}
 	}
 }
 
@@ -57,7 +59,7 @@ func main() {
 		return
 	}
 	services.SetupUser()
-	go PeriodicCheck()
+	go checkActiveNodes()
 	//diocane := services.GetActiveNodes()
 	//fmt.Println("Info Healthy Instances:")
 	//fmt.Println(diocane)

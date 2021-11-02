@@ -1,28 +1,28 @@
-package main
+package core
 
 import (
 	"context"
 	"encoding/csv"
 	"fmt"
 	"os"
-	"progetto-sdcc/node-database/communication"
-	"progetto-sdcc/node-database/structures"
+	"progetto-sdcc/node/mongo/communication"
+	"progetto-sdcc/node/mongo/structures"
 	"time"
 )
 
-// TODO fare bene gestione update perche il receiver deve aggiornare ora non lo fa
-func main() {
+func InitLocalSystem() {
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
-	mode := os.Args[1]
+	// Lancio della Goroutine che permette al nodo di restare in attesa perenne
+	go ListenUpdates(client)
 
-	// Da togliere, ora utile per il DEBUG
-	if mode == "r" {
-		ListenUpdates(client)
-	} else {
-		SendUpdate(client)
-	}
+	/*[TODO] Fare gestione di quando inviare gli aggiornamenti
+	1) Ogni Tot Minuti per avere la consistenza finale
+	2) Quando un nodo ESCE dall'anello deve inviare il suo db per fare merge
+	==> SendUpdate non và chiamata nel main di default, ma invocata in risposta agli eventi (1) e (2)
+	SendUpdate(client)
+	*/
 
 	client.CloseConnection()
 }
@@ -85,6 +85,9 @@ func mergeEntries(local []structures.MongoEntry, update []structures.MongoEntry)
 	return mergedEntries
 }
 
+/**
+* Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
+**/
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
@@ -101,7 +104,7 @@ func ListenUpdates(cli structures.MongoClient) {
 * Si mette in attesa di ricevere aggiornamenti remoti. Ogni volta che si riceve un CSV viene aggiornato il database locale,
 **/
 func UpdateCollection(cli structures.MongoClient) {
-	// local db dump
+
 	cli.ExportCollection("local/" + structures.LOCAL_CSV) // Export del LOCAL da mettere dopo la ricezione di update.csv, forse è meglio
 
 	localList := ParseCSV("local/" + structures.LOCAL_CSV)
