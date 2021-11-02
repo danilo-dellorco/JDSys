@@ -50,6 +50,7 @@ func main() {
 		}
 	}
 	fmt.Println(result)
+	fmt.Println(len(result))
 
 	//one active instance, me, so create a new ring
 	if len(result) == 1 {

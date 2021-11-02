@@ -19,8 +19,8 @@ type DHThandler int
 // Metodo 1 dell'interfaccia
 // Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
 func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
-	var list = make([]string, 10)
 	instances := checkActiveNodes()
+	var list = make([]string, len(instances))
 	for i := 0; i < len(instances); i++ {
 		list[i] = instances[i].PrivateIP
 	}
