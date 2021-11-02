@@ -31,7 +31,7 @@ type Instance struct {
 func createSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewSharedCredentials("/home/jacopo/.aws/credentials", "default")})
+		Credentials: credentials.NewSharedCredentials("/home/ec2-user/.aws/credentials", "default")})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -173,8 +173,8 @@ func GetActiveNodes() []Instance {
 	targetsHealth := getTargetsHealth(targetGroupArn)
 	//fmt.Println(targetsHealth)
 	healthyInstancesList := getHealthyInstancesId(targetsHealth)
-	fmt.Println("Healthy Instances: ")
-	fmt.Println(healthyInstancesList)
+	//fmt.Println("Healthy Instances: ")
+	//fmt.Println(healthyInstancesList)
 
 	nodes = make([]Instance, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
