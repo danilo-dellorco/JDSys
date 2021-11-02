@@ -70,7 +70,15 @@ func main() {
 	me := new(chord.ChordNode)
 
 	//check active instances contacting the service registry
+	//do it while there is at least one healthy instance
 	result := JoinDHT("54.236.129.142")
+	for {
+		if len(result) == 0 {
+			result = JoinDHT("54.236.129.142")
+		} else {
+			break
+		}
+	}
 	fmt.Println(result)
 
 	//one active instance, me, so create a new ring
