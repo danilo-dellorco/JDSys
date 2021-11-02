@@ -7,10 +7,7 @@ import (
 	"net/rpc"
 	"os"
 	"progetto-sdcc/registry/services"
-	"time"
 )
-
-var instances []services.Instance
 
 // Struttura per il passaggio dei parametri alla RPC
 type Args struct{}
@@ -20,8 +17,10 @@ type Args struct{}
 type DHThandler int
 
 // Metodo 1 dell'interfaccia
+// Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
 func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
 	var list = make([]string, 10)
+	instances := checkActiveNodes()
 	for i := 0; i < len(instances); i++ {
 		list[i] = instances[i].PrivateIP
 	}
@@ -34,13 +33,11 @@ func InitializeService() *DHThandler {
 	return service
 }
 
-func checkActiveNodes() {
-	for {
-		instances = services.GetActiveNodes()
-		fmt.Println("Info Healthy Instances:")
-		fmt.Println(instances)
-		time.Sleep(time.Second * 10)
-	}
+func checkActiveNodes() []services.Instance {
+	instances := services.GetActiveNodes()
+	fmt.Println("Info Healthy Instances:")
+	fmt.Println(instances)
+	return instances
 }
 
 func checkTerminatingNodes() {
@@ -60,10 +57,6 @@ func main() {
 		return
 	}
 	services.SetupUser()
-	go checkActiveNodes()
-	//diocane := services.GetActiveNodes()
-	//fmt.Println("Info Healthy Instances:")
-	//fmt.Println(diocane)
 	fmt.Printf("Server Waiting For Connection... \n")
 	service := InitializeService()
 	rpc.Register(service)
