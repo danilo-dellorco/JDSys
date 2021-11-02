@@ -3,13 +3,13 @@ module progetto-sdcc
 go 1.17
 
 require (
+	// Gestione del DB Locale
 	github.com/aws/aws-sdk-go v1.40.45
 	github.com/beevik/ntp v0.3.0
-	github.com/jlaffaye/ftp v0.0.0-20210307004419-5d4190119067
+	github.com/golang/protobuf v1.5.2
 	go.mongodb.org/mongo-driver v1.7.2
-)
 
-require (
+	// Gestione di Chord
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -24,4 +24,5 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
 	golang.org/x/text v0.3.6 // indirect
+	google.golang.org/protobuf v1.26.0 // indirect
 )
