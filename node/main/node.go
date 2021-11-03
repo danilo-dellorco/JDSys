@@ -11,6 +11,7 @@ import (
 	"net/rpc"
 	"os"
 	chord "progetto-sdcc/node/chord/net"
+	"time"
 )
 
 type EmptyArgs struct{}
@@ -24,6 +25,9 @@ func main() {
 
 	//start receiving heartbeats from LB
 	go HealthyCheck()
+
+	//wait to be healthy for the LB
+	time.Sleep(40 * time.Second)
 
 	//setup flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
