@@ -43,6 +43,8 @@ func ListenUpdates(cli structures.MongoClient) {
 		received := <-fileChannel
 		if received == "rcvd" {
 			cli.UpdateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
+			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 		}
 	}
 }

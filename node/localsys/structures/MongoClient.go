@@ -101,6 +101,8 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 		cli.downloadEntryFromS3(key)
 		cli.UpdateCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
 		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
+		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
+		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
 	}
 
 	coll := cli.Collection

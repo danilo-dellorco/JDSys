@@ -1,6 +1,10 @@
 package utils
 
-import "strings"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 func GetStringInBetween(str string, startS string, endS string) (result string) {
 	s := strings.Index(str, startS)
@@ -35,4 +39,18 @@ func RemoveElement(slice []string, remove string) []string {
 
 	slice[i] = slice[len(slice)-1]
 	return slice[:len(slice)-1]
+}
+
+func ClearDir(dir string) error {
+	files, err := filepath.Glob(filepath.Join(dir, "*"))
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		err = os.RemoveAll(file)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
