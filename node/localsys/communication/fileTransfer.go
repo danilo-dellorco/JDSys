@@ -9,14 +9,12 @@ import (
 	"strings"
 )
 
-//TODO cambiare sender e server cambiando le connessioni etc etc perche cosi invia il server ma insomma fa un po schifo
-
 // Dimensione del buffer per trasferire il file di aggiornamento
 const BUFFERSIZE = 1024
 
-/**
-* Goroutine in cui ogni nodo è in attesa di connessioni. Quando viene contattato
-**/
+/*
+Goroutine in cui ogni nodo è in attesa di connessioni. Quando viene contattato
+*/
 func StartReceiver(fileChannel chan string) {
 	server, err := net.Listen("tcp", "localhost:27001")
 	if err != nil {
@@ -36,10 +34,10 @@ func StartReceiver(fileChannel chan string) {
 	}
 }
 
-/**
-* Il ricevente contatta il mittente per ottenere il file
-* Nell'anello quindi il nodo contatta il suo successore per chiedere le sue entry
-**/
+/*
+Il ricevente contatta il mittente per ottenere il file
+nell'anello quindi il nodo contatta il suo successore per chiedere le sue entry
+*/
 func StartSender(filename string) {
 	connection, err := net.Dial("tcp", "localhost:27001")
 	if err != nil {
@@ -49,6 +47,9 @@ func StartSender(filename string) {
 	sendFile(connection, filename)
 }
 
+/*
+Utility per ricevere un file tramite il canale
+*/
 func receiveFile(connection net.Conn, fileChannel chan string) {
 	fmt.Println("A client connected, start receiving the file name and file size")
 	bufferFileName := make([]byte, 64)
@@ -81,6 +82,9 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 	fileChannel <- "rcvd"
 }
 
+/*
+Utility per inviare un file tramite il canale
+*/
 func sendFile(connection net.Conn, filename string) {
 	fmt.Println("Connected to the server!")
 	defer connection.Close()
@@ -113,6 +117,9 @@ func sendFile(connection net.Conn, filename string) {
 	return
 }
 
+/*
+Riempie una stringa per raggiungere una lunghezza data
+*/
 func fillString(retunString string, toLength int) string {
 	for {
 		lengtString := len(retunString)

@@ -2,7 +2,7 @@
 This package is a collection of structures and functions associated
 with the Chord distributed lookup protocol.
 */
-package chord
+package net
 
 import (
 	"crypto/sha256"
