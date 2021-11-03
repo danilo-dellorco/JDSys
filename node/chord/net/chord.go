@@ -478,9 +478,6 @@ func (node *ChordNode) checkPred() {
 		predecessor.ipaddr = ""
 		node.query(true, false, -1, &predecessor)
 	}
-
-	return
-
 }
 
 func (node *ChordNode) fix(which int) {

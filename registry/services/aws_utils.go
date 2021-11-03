@@ -7,14 +7,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
-var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:806961903927:loadbalancer/net/progetto-sdcc-lb/639e06d499fd2aba"
 var ELB string
 
 /**
@@ -29,7 +28,8 @@ type Instance struct {
 **/
 func CreateSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")})
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewSharedCredentials(utils.AWS_CRED_PATH, "default")})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -42,9 +42,9 @@ func CreateSession() *session.Session {
 func SetupUser() {
 	user := os.Args[1]
 	if user == "d" {
-		ELB = ELB_ARN_D
+		ELB = utils.ELB_ARN_D
 	} else {
-		ELB = ELB_ARN_J
+		ELB = utils.ELB_ARN_J
 	}
 }
 
@@ -171,8 +171,8 @@ func GetActiveNodes() []Instance {
 	targetsHealth := getTargetsHealth(targetGroupArn)
 	//fmt.Println(targetsHealth)
 	healthyInstancesList := getHealthyInstancesId(targetsHealth)
-	fmt.Println("Healthy Instances: ")
-	fmt.Println(healthyInstancesList)
+	//fmt.Println("Healthy Instances: ")
+	//fmt.Println(healthyInstancesList)
 
 	nodes = make([]Instance, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
