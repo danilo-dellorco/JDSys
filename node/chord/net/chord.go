@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"progetto-sdcc/utils"
 	"time"
 )
 
@@ -232,7 +233,7 @@ func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string,
 func Create(myaddr string) *ChordNode {
 	node := new(ChordNode)
 	//initialize node information
-	node.id = sha256.Sum256([]byte(myaddr))
+	node.id = utils.HashString(myaddr)
 	node.ipaddr = myaddr
 	me := new(NodeInfo)
 	me.id = node.id
