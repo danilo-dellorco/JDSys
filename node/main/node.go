@@ -11,8 +11,6 @@ import (
 	"net/rpc"
 	"os"
 	chord "progetto-sdcc/node/chord/net"
-	mongo "progetto-sdcc/node/mongo/core"
-	"time"
 )
 
 type EmptyArgs struct{}
@@ -35,9 +33,6 @@ func main() {
 	//get IP of the host used in the VPC
 	*addressPtr = GetOutboundIP().String() + ":4567"
 	me := new(chord.ChordNode)
-
-	//wait to become healthy before join the Chord Network
-	time.Sleep(time.Minute)
 
 	//check active instances contacting the service registry
 	//do it while there is at least one healthy instance
@@ -72,7 +67,7 @@ func main() {
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
 
 	//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
-	mongo.InitLocalSystem()
+	//mongo.InitLocalSystem()
 
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
