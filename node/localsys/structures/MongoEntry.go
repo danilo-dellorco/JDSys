@@ -13,6 +13,7 @@ type MongoEntry struct {
 	Key      string
 	Value    string
 	Timest   time.Time
+	LastAcc  time.Time
 	Conflict bool // rende piu efficiente il merge delle entry
 }
 

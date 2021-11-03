@@ -7,14 +7,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
-var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:806961903927:loadbalancer/net/progetto-sdcc-lb/639e06d499fd2aba"
 var ELB string
 
 /**
@@ -27,9 +26,10 @@ type Instance struct {
 /**
 * Crea una sessione client AWS
 **/
-func createSession() *session.Session {
+func CreateSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")})
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewSharedCredentials(utils.AWS_CRED_PATH, "default")})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -42,9 +42,9 @@ func createSession() *session.Session {
 func SetupUser() {
 	user := os.Args[1]
 	if user == "d" {
-		ELB = ELB_ARN_D
+		ELB = utils.ELB_ARN_D
 	} else {
-		ELB = ELB_ARN_J
+		ELB = utils.ELB_ARN_J
 	}
 }
 
@@ -52,7 +52,7 @@ func SetupUser() {
 * Ottiene tutte le informazioni relative al Target Group specificato
 **/
 func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
-	sess := createSession()
+	sess := CreateSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetGroupsInput{
 		LoadBalancerArn: aws.String(elbArn),
@@ -79,7 +79,7 @@ func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
 * Ottiene lo stato delle istanze collegate al Target Group specificato
 **/
 func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
-	sess := createSession()
+	sess := CreateSession()
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeTargetHealthInput{
 		TargetGroupArn: aws.String(targetGroupArn),
@@ -126,7 +126,7 @@ func getHealthyInstancesId(targetHealth *elbv2.DescribeTargetHealthOutput) []str
 * Ottiene tutte le informazioni di una istanza EC2 tramite il suo ID
 **/
 func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
-	sess := createSession()
+	sess := CreateSession()
 	svc := ec2.New(sess)
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: []*string{
@@ -171,8 +171,8 @@ func GetActiveNodes() []Instance {
 	targetsHealth := getTargetsHealth(targetGroupArn)
 	//fmt.Println(targetsHealth)
 	healthyInstancesList := getHealthyInstancesId(targetsHealth)
-	fmt.Println("Healthy Instances: ")
-	fmt.Println(healthyInstancesList)
+	//fmt.Println("Healthy Instances: ")
+	//fmt.Println(healthyInstancesList)
 
 	nodes = make([]Instance, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
@@ -191,7 +191,7 @@ func GetActiveNodes() []Instance {
 * Ottiene dal Load Balancer la lista delle attività schedulate in termini di ScaleIN e ScaleOUT.
 **/
 func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
-	sess := createSession()
+	sess := CreateSession()
 	svc := autoscaling.New(sess)
 	input := &autoscaling.DescribeScalingActivitiesInput{
 		AutoScalingGroupName: aws.String("SDCC-autoscaling"),
