@@ -11,13 +11,14 @@ import (
 	"net/rpc"
 	"os"
 	chord "progetto-sdcc/node/chord/net"
-	"time"
+	mongo "progetto-sdcc/node/localsys"
 )
 
 type EmptyArgs struct{}
 
 func main() {
 
+	mongo.InitLocalSystem()
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify registry private IP address")
 		return
