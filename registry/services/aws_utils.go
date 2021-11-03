@@ -14,8 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
-var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var ELB string
 
 /**
@@ -31,7 +29,7 @@ type Instance struct {
 func CreateSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewSharedCredentials("/home/ec2-user/.aws/credentials", "default")})
+		Credentials: credentials.NewSharedCredentials(utils.AWS_CRED_PATH, "default")})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -44,9 +42,9 @@ func CreateSession() *session.Session {
 func SetupUser() {
 	user := os.Args[1]
 	if user == "d" {
-		ELB = ELB_ARN_D
+		ELB = utils.ELB_ARN_D
 	} else {
-		ELB = ELB_ARN_J
+		ELB = utils.ELB_ARN_J
 	}
 }
 
