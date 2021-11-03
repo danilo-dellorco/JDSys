@@ -15,3 +15,24 @@ func GetStringInBetween(str string, startS string, endS string) (result string) 
 	result = newS[:e]
 	return result
 }
+
+func StringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func RemoveElement(slice []string, remove string) []string {
+	var i int
+	for i = 0; i < len(slice); i++ {
+		if slice[i] == remove {
+			break
+		}
+	}
+
+	slice[i] = slice[len(slice)-1]
+	return slice[:len(slice)-1]
+}

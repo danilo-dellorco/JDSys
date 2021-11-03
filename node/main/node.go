@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"net/rpc"
 	chord "progetto-sdcc/node/chord/net"
-	mongo "progetto-sdcc/node/mongo/core"
+	mongo "progetto-sdcc/node/localsys"
 )
 
 type EmptyArgs struct{}
 
 func main() {
+
+	mongo.InitLocalSystem()
 
 	//if len(os.Args) < 2 {
 	//	fmt.Println("Wrong usage: Specify registry IP address")
