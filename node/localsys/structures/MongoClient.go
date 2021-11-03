@@ -28,6 +28,9 @@ var VALUE string = "value"
 var TIME string = "timest"
 var LAST_ACC string = "lastAcc"
 
+/*
+Struttura che mantiene una connessione verso una specifica collezione MongoDB
+*/
 type MongoClient struct {
 	Client     *mongo.Client
 	Database   *mongo.Database
@@ -35,34 +38,9 @@ type MongoClient struct {
 	CloudKeys  []string
 }
 
-func (cli *MongoClient) CheckRarelyAccessed() {
-	opts := options.Find().SetSort(bson.D{{"_id", 1}})
-	cursor, err := cli.Collection.Find(context.TODO(), bson.D{}, opts)
-	var results []bson.M
-
-	if err = cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("\n===== Check Rarely Accessed Files =====")
-	for _, result := range results {
-		key := result[ID].(string)
-		entry := cli.ReadEntry(key)
-		if entry != nil {
-			timeNow, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
-			diff := timeNow.Sub(entry.LastAcc)
-			fmt.Println("Key", key, "non-accessed since:", diff)
-			if diff >= utils.MAX_TIME {
-				fmt.Println("Elemento Non acceduto da tanto, Migrazione su cloud...")
-				cli.uploadToS3(entry.Key)
-			}
-		}
-	}
-	fmt.Print("=======================\n\n")
-}
-
-/**
-* Apre la connessione con il database, inizializzando la collection utilizzata
-**/
+/*
+Apre la connessione con il database, inizializzando la collection utilizzata
+*/
 func (cli *MongoClient) OpenConnection() {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -80,9 +58,9 @@ func (cli *MongoClient) OpenConnection() {
 	fmt.Println("Connected to MongoDB!")
 }
 
-/**
-* Chiude la connessione con il database
-**/
+/*
+Chiude la connessione con il database
+*/
 func (cli *MongoClient) CloseConnection() {
 	err := cli.Client.Disconnect(context.TODO())
 
@@ -92,9 +70,9 @@ func (cli *MongoClient) CloseConnection() {
 	fmt.Println("Connection to MongoDB closed.")
 }
 
-/**
-* Ritorna una entry specificando la sua chiave
-**/
+/*
+Ritorna una entry specificando la sua chiave
+*/
 func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
@@ -129,9 +107,10 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	return &entry
 }
 
-/**
-* Legge una entry senza effettuare un accesso
-**/
+/*
+Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per
+la identificare le entry raramente utilizzate
+*/
 func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
 	coll := cli.Collection
 	var result bson.M
@@ -154,10 +133,10 @@ func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
 	return &entry
 }
 
-/**
-* Inserisce un'entry, specificando la chiave ed il suo valore.
-* Al momento del get viene calcolato il timestamp
-**/
+/*
+Inserisce un'entry, specificando la chiave ed il suo valore.
+Al momento del get viene calcolato il timestamp
+*/
 func (cli *MongoClient) PutEntry(key string, value string) {
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
@@ -176,10 +155,10 @@ func (cli *MongoClient) PutEntry(key string, value string) {
 	fmt.Println("Put: Entry {" + key + "} inserita correttamente nel database")
 }
 
-/**
-* Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
-* Viene inoltre aggiornato il timestamp di quell'entry
-**/
+/*
+Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
+Viene inoltre aggiornato il timestamp di quell'entry
+*/
 func (cli *MongoClient) UpdateEntry(key string, newValue string) {
 	old := bson.D{{ID, key}}
 	oldValue := cli.GetEntry(key).Value
@@ -193,9 +172,9 @@ func (cli *MongoClient) UpdateEntry(key string, newValue string) {
 	fmt.Println("Update:", key+", changed value from", oldValue, "to", newValue)
 }
 
-/**
-* Cancella un'entry dal database, specificandone la chiave
-**/
+/*
+Cancella un'entry dal database, specificandone la chiave
+*/
 func (cli *MongoClient) DeleteEntry(key string) {
 	coll := cli.Collection
 	entry := bson.D{{ID, key}}
@@ -212,9 +191,9 @@ func (cli *MongoClient) DeleteEntry(key string) {
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
 }
 
-/**
-* Cancella un database e tutte le sue collezioni
-**/
+/*
+Cancella un database e tutte le sue collezioni
+*/
 func (cli *MongoClient) DropDatabase() {
 	err := cli.Database.Drop(context.TODO())
 	if err != nil {
@@ -224,10 +203,10 @@ func (cli *MongoClient) DropDatabase() {
 	fmt.Println("Drop: Database", cli.Database.Name(), "dropped successfully")
 }
 
-/**
-* Inserisce un oggetto MongoEntry nel db.
-* Utilizzata durante l'aggiornamento del db a seguito di un update
-**/
+/*
+Inserisce un oggetto MongoEntry nel db.
+Utilizzata durante l'aggiornamento delle entry del DB locale
+*/
 func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
 	coll := cli.Collection
 	key := entry.Key
@@ -243,9 +222,9 @@ func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
 	}
 }
 
-/**
-* Esporta una collezione, scrivendola su un file csv
-**/
+/*
+Esporta una collezione, scrivendola su un file csv
+*/
 func (cli *MongoClient) ExportCollection(filename string) {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
@@ -262,9 +241,9 @@ func (cli *MongoClient) ExportCollection(filename string) {
 	}
 }
 
-/**
-* Esporta una entry specifica in CSV.
-**/
+/*
+Esporta una entry specifica in formato CSV.
+*/
 func (cli *MongoClient) ExportDocument(key string, filename string) {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
@@ -282,6 +261,9 @@ func (cli *MongoClient) ExportDocument(key string, filename string) {
 	}
 }
 
+/*
+Carica una chiave sul bucket s3, rimuovendola dal database locale
+*/
 func (cli *MongoClient) uploadToS3(key string) {
 	filename := key + ".csv"
 	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+filename)
@@ -316,6 +298,9 @@ func (cli *MongoClient) uploadToS3(key string) {
 	cli.DeleteEntry(key)
 }
 
+/*
+Ottiene la chiave specificata dal bucket S3, salvandola in un file locale
+*/
 func (cli *MongoClient) downloadEntryFromS3(key string) {
 	// The session the S3 Downloader will use
 	sess := services.CreateSession()
@@ -343,9 +328,10 @@ func (cli *MongoClient) downloadEntryFromS3(key string) {
 	fmt.Printf("file downloaded, %d bytes\n", n)
 }
 
-/**
-* Si mette in attesa di ricevere aggiornamenti remoti. Ogni volta che si riceve un CSV viene aggiornato il database locale,
-**/
+/*
+Goroutine in attesa di ricevere aggiornamenti remoti. Ogni volta che si riceve un CSV da un
+nodo remoto viene aggiornato il database locale.
+*/
 func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string) {
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
@@ -356,4 +342,33 @@ func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string)
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
+}
+
+/*
+Routine che periodicamente controlla tutte le entry per vedere se è possibile
+effettuare una migrazione delle risorse verso il cloud S3
+*/
+func (cli *MongoClient) CheckRarelyAccessed() {
+	opts := options.Find().SetSort(bson.D{{"_id", 1}})
+	cursor, err := cli.Collection.Find(context.TODO(), bson.D{}, opts)
+	var results []bson.M
+
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("\n===== Check Rarely Accessed Files =====")
+	for _, result := range results {
+		key := result[ID].(string)
+		entry := cli.ReadEntry(key)
+		if entry != nil {
+			timeNow, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
+			diff := timeNow.Sub(entry.LastAcc)
+			fmt.Println("Key", key, "non-accessed since:", diff)
+			if diff >= utils.MAX_TIME {
+				fmt.Println("Elemento Non acceduto da tanto, Migrazione su cloud...")
+				cli.uploadToS3(entry.Key)
+			}
+		}
+	}
+	fmt.Print("=======================\n\n")
 }

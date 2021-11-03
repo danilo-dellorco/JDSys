@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/sha256"
 	"os"
 	"path/filepath"
 	"strings"
@@ -53,4 +54,8 @@ func ClearDir(dir string) error {
 		}
 	}
 	return nil
+}
+
+func HashString(str string) [32]byte {
+	return sha256.Sum256([]byte(str))
 }

@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-/**
-* Unisce le Entry tenendo in caso di conflitti sempre quella piu recente
-**/
+/*
+Unisce le Entry tenendo in caso di conflitti sempre quella piu recente
+*/
 func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 	var mergedEntries []MongoEntry
 
@@ -39,9 +39,9 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 	return mergedEntries
 }
 
-/**
-* Ottiene una lista di Entry partendo da un file CSV
-**/
+/*
+Ottiene una lista di Entry partendo da un file CSV
+*/
 func ParseCSV(file string) []MongoEntry {
 	csvFile, err := os.Open(file)
 	if err != nil {
