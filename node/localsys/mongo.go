@@ -7,6 +7,10 @@ import (
 	"progetto-sdcc/utils"
 )
 
+/*
+Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
+i listener e le routine per la gestione degli updates.
+*/
 func InitLocalSystem() {
 	client := structures.MongoClient{}
 	client.OpenConnection()
@@ -20,6 +24,8 @@ func InitLocalSystem() {
 	==> SendUpdate non và chiamata nel main di default, ma invocata in risposta agli eventi (1) e (2)
 	SendUpdate(client)
 	*/
+
+	// ***************** TEST *********************
 	client.PutEntry("TestKey", "TestValue")
 	client.PutEntry("TestKey1", "TestValue1")
 	client.PutEntry("TestKey2", "TestValue2")
@@ -30,11 +36,12 @@ func InitLocalSystem() {
 	client.GetEntry("TestKey2")
 	client.GetEntry("TestKey3")
 	client.CloseConnection()
+	// ********************************************
 }
 
-/**
-* Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
-**/
+/*
+Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
+*/
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
@@ -49,11 +56,13 @@ func ListenUpdates(cli structures.MongoClient) {
 	}
 }
 
-/**
-* Esporta il file CSV e lo invia al nodo remoto
-**/
+/*
+Esporta il file CSV e lo invia al nodo remoto
+*/
 func SendUpdate(cli structures.MongoClient) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
+
+	//[TODO] aggiungere indirizzo ip come parametro modificand la funzione StartSender
 	communication.StartSender(file)
 }

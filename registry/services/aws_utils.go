@@ -16,16 +16,16 @@ import (
 
 var ELB string
 
-/**
-* Struttura contenente tutte le informazioni riguardanti un nodo
-**/
+/*
+Struttura contenente tutte le informazioni riguardanti un'istanza EC2
+*/
 type Instance struct {
 	ID, PrivateIP string
 }
 
-/**
-* Crea una sessione client AWS
-**/
+/*
+Crea una sessione client AWS
+*/
 func CreateSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
@@ -36,9 +36,9 @@ func CreateSession() *session.Session {
 	return sess
 }
 
-/**
-* Imposta l'utente corretto della sessione AWS
-**/
+/*
+Imposta l'utente corretto della sessione AWS
+*/
 func SetupUser() {
 	user := os.Args[1]
 	if user == "d" {
@@ -48,9 +48,9 @@ func SetupUser() {
 	}
 }
 
-/**
-* Ottiene tutte le informazioni relative al Target Group specificato
-**/
+/*
+Ottiene tutte le informazioni relative al Target Group specificato
+*/
 func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
 	sess := CreateSession()
 	svc := elbv2.New(sess)
@@ -75,9 +75,9 @@ func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
 	return result
 }
 
-/**
-* Ottiene lo stato delle istanze collegate al Target Group specificato
-**/
+/*
+Ottiene lo stato delle istanze collegate al Target Group specificato
+*/
 func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
 	sess := CreateSession()
 	svc := elbv2.New(sess)
@@ -105,9 +105,9 @@ func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
 	return result
 }
 
-/**
-* Ottiene gli ID associati a tutte le istanze healthy
-**/
+/*
+Ottiene gli ID associati a tutte le istanze healthy
+*/
 func getHealthyInstancesId(targetHealth *elbv2.DescribeTargetHealthOutput) []string {
 	var healthyNodes []string
 	descriptions := targetHealth.TargetHealthDescriptions
@@ -122,9 +122,9 @@ func getHealthyInstancesId(targetHealth *elbv2.DescribeTargetHealthOutput) []str
 	return healthyNodes
 }
 
-/**
-* Ottiene tutte le informazioni di una istanza EC2 tramite il suo ID
-**/
+/*
+Ottiene tutte le informazioni di una istanza EC2 tramite il suo ID
+*/
 func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 	sess := CreateSession()
 	svc := ec2.New(sess)
@@ -148,9 +148,9 @@ func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 	return result
 }
 
-/**
-* Ottiene ID, Indirizzo Pubblico e Indirizzo Privato di una istanza EC2
-**/
+/*
+Ottiene ID, Indirizzo Pubblico e Indirizzo Privato di una istanza EC2
+*/
 func getInstance(instanceInfo *ec2.DescribeInstancesOutput) Instance {
 	descriptions := instanceInfo.Reservations
 	actual := descriptions[0].String()
@@ -159,37 +159,27 @@ func getInstance(instanceInfo *ec2.DescribeInstancesOutput) Instance {
 	return Instance{id, private}
 }
 
-/**
-* Ritorna gli indirizzi IP di tutti i nodi connessi al load balancer
-**/
+/*
+Ritorna gli indirizzi IP di tutti i nodi connessi al load balancer
+*/
 func GetActiveNodes() []Instance {
 	var nodes []Instance
 	targetGroup := getTargetGroup(ELB)
-	//fmt.Println(targetGroup)
 	targetGroupArn := utils.GetStringInBetween(targetGroup.String(), "TargetGroupArn: \"", "\",")
-	//fmt.Println(targetGroupArn)
 	targetsHealth := getTargetsHealth(targetGroupArn)
-	//fmt.Println(targetsHealth)
 	healthyInstancesList := getHealthyInstancesId(targetsHealth)
-	//fmt.Println("Healthy Instances: ")
-	//fmt.Println(healthyInstancesList)
 
 	nodes = make([]Instance, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
 		instance := getInstanceInfo(healthyInstancesList[i])
 		nodes[i] = getInstance(instance)
 	}
-
-	//fmt.Println("Address Healthy Instances: ")
-	//for key, element := range nodes {
-	//	fmt.Println("Key: ", key, "=>", "Element:", element)
-	//}
 	return nodes
 }
 
-/**
-* Ottiene dal Load Balancer la lista delle attività schedulate in termini di ScaleIN e ScaleOUT.
-**/
+/*
+Ottiene dal Load Balancer la lista delle attività schedulate relative a ScaleIN e ScaleOUT.
+*/
 func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 	sess := CreateSession()
 	svc := autoscaling.New(sess)
@@ -215,9 +205,9 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 	return result
 }
 
-/**
-* Ottiene tutte gli ID di tutte le istanze che sono nello stato di terminazione
-**/
+/*
+Ottiene gli ID di tutte le istanze che sono nello stato di terminazione
+*/
 func GetTerminatingInstances() []Instance {
 	activityList := getScalingActivities()
 

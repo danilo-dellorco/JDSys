@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+/*
+Restituisce la sottostringa tramite stringa di inizio e fine specificate
+*/
 func GetStringInBetween(str string, startS string, endS string) (result string) {
 	s := strings.Index(str, startS)
 	if s == -1 {
@@ -21,6 +24,9 @@ func GetStringInBetween(str string, startS string, endS string) (result string) 
 	return result
 }
 
+/*
+Indica se una sottostringa è presente o meno all'interno di una Slice
+*/
 func StringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -30,6 +36,9 @@ func StringInSlice(a string, list []string) bool {
 	return false
 }
 
+/*
+Rimuove un elemento da una slice
+*/
 func RemoveElement(slice []string, remove string) []string {
 	var i int
 	for i = 0; i < len(slice); i++ {
@@ -42,6 +51,9 @@ func RemoveElement(slice []string, remove string) []string {
 	return slice[:len(slice)-1]
 }
 
+/*
+Elimina tutti i file contenuti in una cartella specificata
+*/
 func ClearDir(dir string) error {
 	files, err := filepath.Glob(filepath.Join(dir, "*"))
 	if err != nil {
@@ -56,6 +68,9 @@ func ClearDir(dir string) error {
 	return nil
 }
 
+/*
+Effettua l'hashing sha256 di una stringa
+*/
 func HashString(str string) [32]byte {
 	return sha256.Sum256([]byte(str))
 }

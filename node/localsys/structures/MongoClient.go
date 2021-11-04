@@ -267,11 +267,8 @@ Carica una chiave sul bucket s3, rimuovendola dal database locale
 func (cli *MongoClient) uploadToS3(key string) {
 	filename := key + ".csv"
 	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+filename)
-
 	fmt.Println("Starting S3 Upload")
 	sess := services.CreateSession()
-
-	// Create an uploader with the session and default options
 	uploader := s3manager.NewUploader(sess)
 
 	f, err := os.Open(utils.CLOUD_EXPORT_PATH + filename)
@@ -281,7 +278,7 @@ func (cli *MongoClient) uploadToS3(key string) {
 		return
 	}
 
-	// Upload the file to S3.
+	// Carica il file su S3
 	result, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String("sdcc-cloud-keys"),
 		Key:    aws.String(filename),
@@ -302,21 +299,18 @@ func (cli *MongoClient) uploadToS3(key string) {
 Ottiene la chiave specificata dal bucket S3, salvandola in un file locale
 */
 func (cli *MongoClient) downloadEntryFromS3(key string) {
-	// The session the S3 Downloader will use
 	sess := services.CreateSession()
 	filename := key + utils.CSV
-
-	// Create a downloader with the session and default options
 	downloader := s3manager.NewDownloader(sess)
 
-	// Create a file to write the S3 Object contents to.
+	// Crea il file in cui verrà scritto l'oggetto scaricato da S3
 	f, err := os.Create(utils.CLOUD_RECEIVE_PATH + filename)
 	if err != nil {
 		fmt.Printf("failed to create file %q, %v", filename, err)
 		return
 	}
 
-	// Write the contents of S3 Object to the file
+	// Scrive il contenuto dell'oggetto S3 sul file
 	n, err := downloader.Download(f, &s3.GetObjectInput{
 		Bucket: aws.String("sdcc-cloud-keys"),
 		Key:    aws.String(filename),
