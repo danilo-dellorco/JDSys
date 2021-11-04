@@ -1,6 +1,5 @@
 /**
-This package is a collection of structures and functions associated
-with the Chord distributed lookup protocol.
+Insieme di strutture e metodi per implementare l'algoritmo Chord
 */
 package net
 
@@ -15,7 +14,9 @@ import (
 	"time"
 )
 
-//NodeInfo type denoting identifying information about a ChordNode
+/*
+Mantiene le informazioni riguardo un Nodo Chord
+*/
 type NodeInfo struct {
 	id     [sha256.Size]byte
 	ipaddr string
@@ -27,7 +28,9 @@ type request struct {
 	index int
 }
 
-//ChordNode type denoting a Chord server.
+/*
+Identifica un server chord che partecipa all'algoritmo di lookup
+*/
 type ChordNode struct {
 	predecessor   *NodeInfo
 	successor     *NodeInfo
@@ -53,21 +56,23 @@ func (e *PeerError) Error() string {
 	return fmt.Sprintf("Failed to connect to peer: %s. Cause of failure: %s.", e.Address, e.Err)
 }
 
-//error checking function
+/*
+Funzione che controlla gli errori
+*/
 func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 	}
 }
 
-//Lookup returns the address of the successor of key in the Chord DHT.
-//The lookup process is iterative. Beginning with the address of a
-//Chord node, start, this function will request the finger tables of
-//the closest preceeding Chord node to key until the successor is found.
-//
-//If the start address is unreachable, the error is of type PeerError.
+/* Ritorna l'indirizzo del successore dellachiave nella DHT Chord.
+Il processo di lookup è iterativo. Iniziando da un nodo specificato (start)
+questa funzione richiede la finger table del nodo più vicino che precede la chiave,
+finchè il successore della stessa non viene identificato
+
+Se l'indirizzo di 'start' non è raggiungibile si ha un PeerError
+*/
 func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
-	//usiamo questa funzione per ricercare dov'è la chiave del sistema di storage
 	addr = start
 
 	msg := getfingersMsg()
@@ -93,7 +98,7 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 		return
 	}
 
-	//loop through finger table and see what the closest finger is
+	// Ciclo sulla Finger Table
 	for i := len(ft) - 1; i > 0; i-- {
 		f := ft[i]
 		if i == 0 {
@@ -111,9 +116,8 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 	msg = pingMsg()
 	reply, err = Send(msg, addr)
 
-	//this code is executed if the current node's successor has gone missing
+	// Chiede al nodo la sua successor list
 	if err != nil {
-		//ask node for its successor list
 		msg = getsuccessorsMsg()
 		reply, err = Send(msg, current.ipaddr)
 		if err != nil {
@@ -229,7 +233,9 @@ func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string,
 	return
 }
 
-//Create will start a new Chord DHT and return the original ChordNode
+/*
+Crea un nuovo Chord DHT e ritorna il ChordNode originale
+*/
 func Create(myaddr string) *ChordNode {
 	node := new(ChordNode)
 	//initialize node information
@@ -261,11 +267,11 @@ func Create(myaddr string) *ChordNode {
 	return node
 }
 
-//Join will add a new ChordNode to an existing DHT. It looks up the successor
-//of the new node starting at an existing Chord node specified by addr. Join
-//returns the new ChordNode when completed.
-//
-//If the start address is unreachable, the error is of type PeerError.
+/*
+Aggiunge un nuovo nodo ad un anello esistente. Inizia cercando il successore del nodo specificato in input.
+Ritorna il nuovo ChordNode dopo che è stato inserito nella DHT.
+Se l'indirizzo di partenza non è raggiungibile si ha un PeerError.
+*/
 func Join(myaddr string, addr string) (*ChordNode, error) {
 	node := Create(myaddr)
 	successor, err := Lookup(node.id, addr)
@@ -273,14 +279,14 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 		return nil, &PeerError{addr, err}
 	}
 
-	//find id of node
+	// Trova l'ID del nodo
 	msg := getidMsg()
 	reply, err := Send(msg, successor)
 	if err != nil {
 		return nil, &PeerError{addr, err}
 	}
 
-	//update node info to include successor
+	// Aggiorna il nodo includendo il suo successore
 	succ := new(NodeInfo)
 	succ.id, err = parseId(reply)
 	if err != nil {
@@ -292,7 +298,9 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 	return node, nil
 }
 
-//data manages reads and writes to the node data structure
+/*
+Gestisce le operazioni di lettura e scrittura sulla struttura dati del nodo
+*/
 func (node *ChordNode) data() {
 	for {
 		req := <-node.request
@@ -324,7 +332,9 @@ func (node *ChordNode) data() {
 	}
 }
 
-//query allows functions to read from or write to the node object
+/*
+Permette ad una funzione di leggere o scrivere un oggetto del nodo
+*/
 func (node *ChordNode) query(write bool, succ bool, index int, newf *NodeInfo) NodeInfo {
 	f := new(NodeInfo)
 	req := request{write, succ, index}
@@ -338,7 +348,9 @@ func (node *ChordNode) query(write bool, succ bool, index int, newf *NodeInfo) N
 	return *f
 }
 
-//maintain will periodically perform maintenance operations
+/*
+Esegue periodicamente operazioni di mantenimento
+*/
 func (node *ChordNode) maintain() {
 	ctr := 0
 	for {
@@ -354,8 +366,9 @@ func (node *ChordNode) maintain() {
 	}
 }
 
-//stablize ensures that the node's successor's predecessor is itself
-//If not, it updates its successor's predecessor.
+/*
+Garantisce che per ogni nodo il successore del predecessore sia il nodo stesso
+*/
 func (node *ChordNode) stabilize() {
 	successor := node.query(false, false, 1, nil)
 
@@ -363,7 +376,6 @@ func (node *ChordNode) stabilize() {
 		return
 	}
 
-	//check to see if successor is still around
 	msg := pingMsg()
 	reply, err := node.send(msg, successor.ipaddr)
 	if err != nil {
@@ -434,12 +446,14 @@ func (node *ChordNode) stabilize() {
 
 }
 
-//Register allows chord applications to register themselves and receive notifications
-//and messages through the Chord DHT.
-//
-//A Chord node registers an application app and forwards all messages with the
-//identifier id by calling the interface method Message. Applications will also
-//be notified of any changes in the underlying node's predecessor.
+/*
+Permette ad una applicazione di un nodo chord di registrarsi per ricevere notifiche e messaggi
+tramite il DHT Chord.
+
+Un nodo chord registra un'app e propaga tutti i messaggi chiamanda il metodo dell'interfaccia Message.
+Le applicazioni saranno anche notificate di ogni cambiamento fatto nel predecessore del nodo
+*/
+
 func (node *ChordNode) Register(id byte, app ChordApp) bool {
 	if _, ok := node.applications[id]; ok {
 		return false
@@ -513,17 +527,19 @@ func (node *ChordNode) fix(which int) {
 
 }
 
-//Finalize stops all communication and removes the ChordNode from the DHT.
+/*
+Termina tutte le comunicazioni e rimuove il ChordNode dall'anello
+*/
 func (node *ChordNode) Finalize() {
 	//send message to all children to terminate
 
 	fmt.Printf("Exiting...\n")
 }
 
-//InRange is a helper function that returns true if the value x is between the values (min, max)
+/*
+Funzione ausiliaria che ritorna true se il valore x è compreso tra (min,max)
+*/
 func InRange(x [sha256.Size]byte, min [sha256.Size]byte, max [sha256.Size]byte) bool {
-	//There are 3 cases: min < x and x < max,
-	//x < max and max < min, max < min and min < x
 	xint := new(big.Int)
 	maxint := new(big.Int)
 	minint := new(big.Int)
@@ -546,7 +562,9 @@ func InRange(x [sha256.Size]byte, min [sha256.Size]byte, max [sha256.Size]byte) 
 	return false
 }
 
-//target returns the target id used by the fix function
+/*
+Ritorna il target ID usato dalla funzione fix
+*/
 func target(me [sha256.Size]byte, which int) []byte {
 	meint := new(big.Int)
 	meint.SetBytes(me[:sha256.Size])
@@ -604,7 +622,9 @@ func (f NodeInfo) zero() bool {
 
 /** Printouts of information **/
 
-//String returns a string containing the node's ip address, sucessor, and predecessor.
+/*
+Ritorna una stringa contenente l'indirizzo ip del nodo, il successore ed il predecessore
+*/
 func (node *ChordNode) String() string {
 	var succ, pred string
 	successor := node.query(false, false, 1, nil)
@@ -622,7 +642,9 @@ func (node *ChordNode) String() string {
 	return fmt.Sprintf("%s\t%s\t%s\n", node.ipaddr, succ, pred)
 }
 
-//ShowFingers returns a string representation of the ChordNode's finger table.
+/*
+Ritorna una stringa che rappresenta la finger table del ChordNode
+*/
 func (node *ChordNode) ShowFingers() string {
 	retval := ""
 	finger := new(NodeInfo)
@@ -641,7 +663,9 @@ func (node *ChordNode) ShowFingers() string {
 	return retval + fmt.Sprintf("Total fingers: %d.\n", ctr)
 }
 
-//ShowSucc returns a string representation of the ChordNode's successor list.
+/*
+Ritorna una stringa che rappresenta la lista dei successori del ChordNode
+*/
 func (node *ChordNode) ShowSucc() string {
 	table := ""
 	finger := new(NodeInfo)
@@ -660,7 +684,9 @@ func (node *ChordNode) ShowSucc() string {
 
 /** Chord application interface and methods **/
 
-//ChordApp is an interface for applications to run on top of a Chord DHT.
+/*
+Interfaccia per le applicazioni che devono essere eseguite sopra un Chord DHT
+*/
 type ChordApp interface {
 
 	//Notify will alert the application of changes in the ChordNode's predecessor

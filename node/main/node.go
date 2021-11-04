@@ -19,28 +19,28 @@ type EmptyArgs struct{}
 
 func main() {
 
-	mongo.InitLocalSystem()
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify registry private IP address")
 		return
 	}
 
-	//start receiving heartbeats from LB
-	go HealthyCheck()
+	// TODO invece che aspettare 40 secondi forse dopo aver farto partire il listener degli heartbeat
+	// possiamo inizializzare il database locale invece di fare una sleep facciamo tutta la config locale che comunque
+	// ci mette tempo!!
+	InitHealthyNode()
+	mongo.InitLocalSystem()
 
-	//wait to be healthy for the LB
-	time.Sleep(40 * time.Second)
-
-	//setup flags
+	// Setup dei Flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
 	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
 	flag.Parse()
 
-	//get IP of the host used in the VPC
+	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
 	*addressPtr = GetOutboundIP().String() + ":4567"
 	me := new(chord.ChordNode)
 
-	//check active instances contacting the service registry
+	// Controlla le Istanze attive contattando il Service Registry
+
 	//do it while there is at least one healthy instance
 	result := JoinDHT(os.Args[1])
 	for {
@@ -53,11 +53,11 @@ func main() {
 	fmt.Println(result)
 	fmt.Println(len(result))
 
-	//one active instance, me, so create a new ring
+	// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
 	if len(result) == 1 {
 		me = chord.Create(*addressPtr)
 	} else {
-		//found active instances, join the ring contacting a random node excluse me
+		// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
 		*joinPtr = result[rand.Intn(len(result))]
 		for {
 			if *joinPtr == *addressPtr {
@@ -98,18 +98,23 @@ Loop:
 	me.Finalize()
 }
 
+// TODO probabilmente da togliere
 func home_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
 }
 
-// On port 8888, the node receives heartbeats from LB, configured on the aws target group
-// sulla porta 80 serviremo le rpc dell'app
-func HealthyCheck() {
+/*
+Sulla porta 8888 il Nodo riceve gli HeartBeat del Load Balancer, così come configurato su AWS.
+Sulla porta 80 serviremo le rpc dell'app
+*/
+func StartHeartBeatListener() {
 	http.HandleFunc("/", home_handler)
 	http.ListenAndServe(":8888", nil)
 }
 
-// Get preferred outbound ip of this machine
+/*
+Restituisce l'indirizzo IP in uscita preferito della macchina che hosta il nodo
+*/
 func GetOutboundIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
@@ -120,6 +125,9 @@ func GetOutboundIP() net.IP {
 	return localAddr.IP
 }
 
+/*
+Permette di instaurare una connessione HTTP con il server all'indirizzo specificato.
+*/
 func HttpConnect(serverAddress string) (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
 	if err != nil {
@@ -128,6 +136,9 @@ func HttpConnect(serverAddress string) (*rpc.Client, error) {
 	return client, err
 }
 
+/*
+Permette al nodo di inserirsi nell'anello chord contattando il server specificato
+*/
 func JoinDHT(serverAddress string) []string {
 	args := EmptyArgs{}
 	var reply []string
@@ -138,4 +149,16 @@ func JoinDHT(serverAddress string) []string {
 		log.Fatal("RPC error: ", err)
 	}
 	return reply
+}
+
+/*
+Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer.
+Inizia anche una routine che è sempre in ascolto per la ricezione degli HeartBeat
+*/
+func InitHealthyNode() {
+	// Inizia a ricevere gli HeartBeat
+	go StartHeartBeatListener()
+
+	// Attende di diventare healthy per il Load Balancer
+	time.Sleep(40 * time.Second)
 }

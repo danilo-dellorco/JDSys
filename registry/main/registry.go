@@ -9,15 +9,21 @@ import (
 	"progetto-sdcc/registry/services"
 )
 
-// Struttura per il passaggio dei parametri alla RPC
+/*
+Struttura per il passaggio dei parametri alla RPC
+*/
 type Args struct{}
 
-// Pseudo-Interfaccia che verrà registrata dal server in modo tale che il client possa invocare i metodi tramite RPC
-// ciò che si registra realmente è un oggetto che prevede l'implementazione di quei metodi specifici!
+/*
+Pseudo-Interfaccia che verrà registrata dal server in modo tale che il client possa invocare i metodi tramite RPC
+ciò che si registra realmente è un oggetto che prevede l'implementazione di quei metodi specifici!
+*/
 type DHThandler int
 
-// Metodo 1 dell'interfaccia
-// Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
+/*
+Metodo 1 dell'interfaccia
+Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
+*/
 func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
 	instances := checkActiveNodes()
 	var list = make([]string, len(instances))
@@ -28,6 +34,7 @@ func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
 	return nil
 }
 
+//[TODO] commentare tutta sta roba
 func InitializeService() *DHThandler {
 	service := new(DHThandler)
 	return service

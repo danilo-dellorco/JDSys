@@ -37,6 +37,7 @@ func StartReceiver(fileChannel chan string) {
 /*
 Il ricevente contatta il mittente per ottenere il file
 nell'anello quindi il nodo contatta il suo successore per chiedere le sue entry
+[TODO] aggiungere ip_address come parametro in quanto andrà inviato ad un nodo remoto
 */
 func StartSender(filename string) {
 	connection, err := net.Dial("tcp", "localhost:27001")
@@ -118,7 +119,7 @@ func sendFile(connection net.Conn, filename string) {
 }
 
 /*
-Riempie una stringa per raggiungere una lunghezza data
+Riempie una stringa per raggiungere una lunghezza specificata
 */
 func fillString(retunString string, toLength int) string {
 	for {
