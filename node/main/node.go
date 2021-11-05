@@ -99,25 +99,24 @@ func main() {
 	select {}
 }
 
-type test_struct struct {
-	Test string
+type term_message struct {
+	Status string
 }
 
-// TODO non legge correttamente il JSON in cui ricevo il segnale per cui il nodo sta terminando
+// TODO Legge correttamente il messaggio di terminazione, implementare l'azione da fare
 func handle_term_signal(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
 	if r.Method == "POST" {
 		fmt.Println("Ricevuta Richiesta di Post!")
-		fmt.Println(r.Body)
-		decoder := json.NewDecoder(r.Body)
-		fmt.Println(decoder)
-		var t test_struct
-		err := decoder.Decode(&t)
+		var m term_message
+		err := json.NewDecoder(r.Body).Decode(&m)
 		if err != nil {
 			panic(err)
 		}
-		log.Println(t.Test)
-
+		status := m.Status
+		if status == "terminating" {
+			// TODO invia il database del nodo al suo successore
+		}
 	}
 }
 

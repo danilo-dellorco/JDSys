@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/rpc"
@@ -12,6 +13,10 @@ import (
 	"progetto-sdcc/utils"
 	"time"
 )
+
+type term_message struct {
+	Status string `json:"status"`
+}
 
 /*
 Struttura per il passaggio dei parametri alla RPC
@@ -72,22 +77,45 @@ func checkTerminatingNodes() {
 	}
 }
 
-func sendTerminatingSignal(ip string) *http.Response {
-	values := map[string]string{"status": "terminating"}
-	jsonValue, _ := json.Marshal(values)
+func sendTerminatingSignal(ip string) {
+	body := &term_message{Status: "terminating"}
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(body)
+	url := "http://" + ip + utils.HEARTBEAT_PORT
+	req, _ := http.NewRequest("POST", url, buf)
 
-	proto := "http://"
-	port := utils.HEARTBEAT_PORT
-	resp, err := http.Post(proto+ip+port, "application/json", bytes.NewBuffer(jsonValue))
-
-	if err != nil {
-		fmt.Println(err)
-		return nil
+	client := &http.Client{}
+	res, e := client.Do(req)
+	if e != nil {
+		log.Fatal(e)
 	}
+
+	defer res.Body.Close()
+
+	fmt.Println("response Status:", res.Status)
+
+	// Print the body to the stdout
+	io.Copy(os.Stdout, res.Body)
+}
+
+func sendTest(ip string) *http.Response {
+	var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast."}`)
+	url := "http://" + ip + utils.HEARTBEAT_PORT
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req.Header.Set("X-Custom-Header", "myvalue")
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
 	return resp
 }
 
 func main() {
+	//sendTest("localhost")
 	sendTerminatingSignal("localhost")
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
