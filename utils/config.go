@@ -24,3 +24,4 @@ var CHECK_TERMINATING_INTERVAL time.Duration = 60000 // Ogni quanto effettuare i
 
 // Port Settings
 var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
+var UPDATES_PORT string = ":27001"  // Porta su cui il nodo ascorta l'update mongo da altri nodi

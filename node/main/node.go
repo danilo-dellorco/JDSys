@@ -2,17 +2,26 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/rpc"
 	"os"
+	chord "progetto-sdcc/node/chord/net"
+	mongo "progetto-sdcc/node/localsys"
+	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
 	"time"
 )
 
 type EmptyArgs struct{}
+
+var mongoClient structures.MongoClient
+var me *chord.ChordNode
 
 func main() {
 
@@ -26,76 +35,74 @@ func main() {
 	// ci mette tempo!!
 	InitHealthyNode()
 
-	/*
-			mongo.InitLocalSystem()
+	mongoClient = mongo.InitLocalSystem()
 
-			// Setup dei Flags
-			addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
-			joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
-			flag.Parse()
+	// Setup dei Flags
+	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
+	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
+	flag.Parse()
 
-			// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
-			*addressPtr = GetOutboundIP().String() + ":4567"
-			me := new(chord.ChordNode)
+	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
+	*addressPtr = GetOutboundIP().String() + ":4567"
+	me = new(chord.ChordNode)
 
-			// Controlla le Istanze attive contattando il Service Registry
+	// Controlla le Istanze attive contattando il Service Registry
 
-			//do it while there is at least one healthy instance
-			result := JoinDHT(os.Args[1])
-			for {
-				if len(result) == 0 {
-					result = JoinDHT(os.Args[1])
-				} else {
-					break
-				}
-			}
-			fmt.Println(result)
-			fmt.Println(len(result))
+	// Continua finchè c'è almeno una istanza attiva
+	result := JoinDHT(os.Args[1])
+	for {
+		if len(result) == 0 {
+			result = JoinDHT(os.Args[1])
+		} else {
+			break
+		}
+	}
+	fmt.Println(result)
+	fmt.Println(len(result))
 
-			// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
-			if len(result) == 1 {
-				me = chord.Create(*addressPtr)
-			} else {
-				// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
+	// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
+	if len(result) == 1 {
+		me = chord.Create(*addressPtr)
+	} else {
+		// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
+		*joinPtr = result[rand.Intn(len(result))]
+		for {
+			if *joinPtr == *addressPtr {
 				*joinPtr = result[rand.Intn(len(result))]
-				for {
-					if *joinPtr == *addressPtr {
-						*joinPtr = result[rand.Intn(len(result))]
-					} else {
-						break
-					}
-				}
-				*joinPtr = *joinPtr + ":4567"
-				me, _ = chord.Join(*addressPtr, *joinPtr)
+			} else {
+				break
 			}
-			fmt.Printf("My address is: %s.\n", *addressPtr)
-			fmt.Printf("Join address is: %s.\n", *joinPtr)
+		}
+		*joinPtr = *joinPtr + ":4567"
+		me, _ = chord.Join(*addressPtr, *joinPtr)
+	}
+	fmt.Printf("My address is: %s.\n", *addressPtr)
+	fmt.Printf("Join address is: %s.\n", *joinPtr)
 
-			//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
-			//mongo.InitLocalSystem()
+	//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
+	//mongo.InitLocalSystem()
 
-			// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
-		Loop:
-			for {
-				var cmd string
-				_, err := fmt.Scan(&cmd)
-				switch {
-				case cmd == "print":
-					//print out successor and predecessor
-					fmt.Printf("%s", me.String())
-				case cmd == "fingers":
-					//print out finger table
-					fmt.Printf("%s", me.ShowFingers())
-				case cmd == "succ":
-					//print out successor list
-					fmt.Printf("%s", me.ShowSucc())
-				case err == io.EOF:
-					break Loop
-				}
+	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
+Loop:
+	for {
+		var cmd string
+		_, err := fmt.Scan(&cmd)
+		switch {
+		case cmd == "print":
+			//print out successor and predecessor
+			fmt.Printf("%s", me.String())
+		case cmd == "fingers":
+			//print out finger table
+			fmt.Printf("%s", me.ShowFingers())
+		case cmd == "succ":
+			//print out successor list
+			fmt.Printf("%s", me.ShowSucc())
+		case err == io.EOF:
+			break Loop
+		}
 
-			}
-			me.Finalize()
-	*/
+	}
+	me.Finalize()
 	select {}
 }
 
@@ -104,7 +111,7 @@ type term_message struct {
 }
 
 // TODO Legge correttamente il messaggio di terminazione, implementare l'azione da fare
-func handle_term_signal(w http.ResponseWriter, r *http.Request) {
+func terminate_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
 	if r.Method == "POST" {
 		fmt.Println("Ricevuta Richiesta di Post!")
@@ -115,17 +122,23 @@ func handle_term_signal(w http.ResponseWriter, r *http.Request) {
 		}
 		status := m.Status
 		if status == "terminating" {
-			// TODO invia il database del nodo al suo successore
+			//[TODO] da testare, comunque qui invio al nodo successore (o pred??) l'update se sto per essere killato
+			//pred := me.GetPedecessor()
+			succ := me.GetSuccessor()
+			ip := succ.GetIpAddr()
+			mongo.SendUpdate(mongoClient, ip)
+
 		}
 	}
 }
 
 /*
-Sulla porta 8888 il Nodo riceve gli HeartBeat del Load Balancer, così come configurato su AWS.
+Sulla porta 8888 il Nodo riceve gli HeartBeat del Load Balancer, ed ii segnali di terminazione dal
+service registry.
 Sulla porta 80 serviremo le rpc dell'app
 */
 func StartHeartBeatListener() {
-	http.HandleFunc("/", handle_term_signal)
+	http.HandleFunc("/", terminate_handler)
 	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
 
@@ -133,7 +146,7 @@ func StartHeartBeatListener() {
 Restituisce l'indirizzo IP in uscita preferito della macchina che hosta il nodo
 */
 func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+	conn, err := net.Dial("udp", "8.8.8.f:80")
 	if err != nil {
 		log.Fatal(err)
 	}

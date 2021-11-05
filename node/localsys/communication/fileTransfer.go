@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"progetto-sdcc/utils"
 	"strconv"
 	"strings"
 )
@@ -39,8 +40,8 @@ Il ricevente contatta il mittente per ottenere il file
 nell'anello quindi il nodo contatta il suo successore per chiedere le sue entry
 [TODO] aggiungere ip_address come parametro in quanto andrà inviato ad un nodo remoto
 */
-func StartSender(filename string) {
-	connection, err := net.Dial("tcp", "localhost:27001")
+func StartSender(filename string, address string) {
+	connection, err := net.Dial("tcp", address+utils.UPDATES_PORT)
 	if err != nil {
 		panic(err)
 	}

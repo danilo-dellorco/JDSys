@@ -14,12 +14,18 @@ import (
 	"time"
 )
 
+//TODO il ChordNode può mantenere un riferimento al MongoClient direttamente, viene assegnato in fase di startup in node.go!!
+
 /*
 Mantiene le informazioni riguardo un Nodo Chord
 */
 type NodeInfo struct {
 	id     [sha256.Size]byte
 	ipaddr string
+}
+
+func (info *NodeInfo) GetIpAddr() string {
+	return info.ipaddr
 }
 
 type request struct {
@@ -149,6 +155,20 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 	}
 
 	return
+}
+
+/*
+Restituisce il successore del nodo
+*/
+func (node *ChordNode) GetSuccessor() *NodeInfo {
+	return node.successor
+}
+
+/*
+Restituisce il predecessore del nodo
+*/
+func (node *ChordNode) GetPedecessor() *NodeInfo {
+	return node.predecessor
 }
 
 //Lookup returns the address of the ChordNode that is responsible
