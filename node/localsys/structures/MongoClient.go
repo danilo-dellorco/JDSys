@@ -358,7 +358,7 @@ func (cli *MongoClient) CheckRarelyAccessed() {
 			timeNow, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 			diff := timeNow.Sub(entry.LastAcc)
 			fmt.Println("Key", key, "non-accessed since:", diff)
-			if diff >= utils.MAX_TIME {
+			if diff >= utils.RARELY_ACCESSED_TIME {
 				fmt.Println("Elemento Non acceduto da tanto, Migrazione su cloud...")
 				cli.uploadToS3(entry.Key)
 			}

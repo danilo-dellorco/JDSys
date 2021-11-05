@@ -20,7 +20,7 @@ func HttpConnect(serverAddress string) (*rpc.Client, error) {
 }
 
 /*
-RPC che permettedi ottenere la lista dei metodi disponibili nel nodo remoto
+RPC che permette di ottenere la lista dei metodi disponibili nel nodo remoto
 */
 func GetMethodsList(serverAddress string) {
 	args := EmptyArguments{}

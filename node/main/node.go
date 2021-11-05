@@ -1,17 +1,14 @@
 package main
 
 import (
-	"flag"
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/rpc"
 	"os"
-	chord "progetto-sdcc/node/chord/net"
-	mongo "progetto-sdcc/node/localsys"
+	"progetto-sdcc/utils"
 	"time"
 )
 
@@ -28,79 +25,100 @@ func main() {
 	// possiamo inizializzare il database locale invece di fare una sleep facciamo tutta la config locale che comunque
 	// ci mette tempo!!
 	InitHealthyNode()
-	mongo.InitLocalSystem()
 
-	// Setup dei Flags
-	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
-	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
-	flag.Parse()
+	/*
+			mongo.InitLocalSystem()
 
-	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
-	*addressPtr = GetOutboundIP().String() + ":4567"
-	me := new(chord.ChordNode)
+			// Setup dei Flags
+			addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
+			joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
+			flag.Parse()
 
-	// Controlla le Istanze attive contattando il Service Registry
+			// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
+			*addressPtr = GetOutboundIP().String() + ":4567"
+			me := new(chord.ChordNode)
 
-	//do it while there is at least one healthy instance
-	result := JoinDHT(os.Args[1])
-	for {
-		if len(result) == 0 {
-			result = JoinDHT(os.Args[1])
-		} else {
-			break
-		}
-	}
-	fmt.Println(result)
-	fmt.Println(len(result))
+			// Controlla le Istanze attive contattando il Service Registry
 
-	// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
-	if len(result) == 1 {
-		me = chord.Create(*addressPtr)
-	} else {
-		// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
-		*joinPtr = result[rand.Intn(len(result))]
-		for {
-			if *joinPtr == *addressPtr {
-				*joinPtr = result[rand.Intn(len(result))]
-			} else {
-				break
+			//do it while there is at least one healthy instance
+			result := JoinDHT(os.Args[1])
+			for {
+				if len(result) == 0 {
+					result = JoinDHT(os.Args[1])
+				} else {
+					break
+				}
 			}
-		}
-		*joinPtr = *joinPtr + ":4567"
-		me, _ = chord.Join(*addressPtr, *joinPtr)
-	}
-	fmt.Printf("My address is: %s.\n", *addressPtr)
-	fmt.Printf("Join address is: %s.\n", *joinPtr)
+			fmt.Println(result)
+			fmt.Println(len(result))
 
-	//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
-	//mongo.InitLocalSystem()
+			// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
+			if len(result) == 1 {
+				me = chord.Create(*addressPtr)
+			} else {
+				// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
+				*joinPtr = result[rand.Intn(len(result))]
+				for {
+					if *joinPtr == *addressPtr {
+						*joinPtr = result[rand.Intn(len(result))]
+					} else {
+						break
+					}
+				}
+				*joinPtr = *joinPtr + ":4567"
+				me, _ = chord.Join(*addressPtr, *joinPtr)
+			}
+			fmt.Printf("My address is: %s.\n", *addressPtr)
+			fmt.Printf("Join address is: %s.\n", *joinPtr)
 
-	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
-Loop:
-	for {
-		var cmd string
-		_, err := fmt.Scan(&cmd)
-		switch {
-		case cmd == "print":
-			//print out successor and predecessor
-			fmt.Printf("%s", me.String())
-		case cmd == "fingers":
-			//print out finger table
-			fmt.Printf("%s", me.ShowFingers())
-		case cmd == "succ":
-			//print out successor list
-			fmt.Printf("%s", me.ShowSucc())
-		case err == io.EOF:
-			break Loop
-		}
+			//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
+			//mongo.InitLocalSystem()
 
-	}
-	me.Finalize()
+			// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
+		Loop:
+			for {
+				var cmd string
+				_, err := fmt.Scan(&cmd)
+				switch {
+				case cmd == "print":
+					//print out successor and predecessor
+					fmt.Printf("%s", me.String())
+				case cmd == "fingers":
+					//print out finger table
+					fmt.Printf("%s", me.ShowFingers())
+				case cmd == "succ":
+					//print out successor list
+					fmt.Printf("%s", me.ShowSucc())
+				case err == io.EOF:
+					break Loop
+				}
+
+			}
+			me.Finalize()
+	*/
+	select {}
 }
 
-// TODO probabilmente da togliere
-func home_handler(w http.ResponseWriter, r *http.Request) {
+type test_struct struct {
+	Test string
+}
+
+// TODO non legge correttamente il JSON in cui ricevo il segnale per cui il nodo sta terminando
+func handle_term_signal(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
+	if r.Method == "POST" {
+		fmt.Println("Ricevuta Richiesta di Post!")
+		fmt.Println(r.Body)
+		decoder := json.NewDecoder(r.Body)
+		fmt.Println(decoder)
+		var t test_struct
+		err := decoder.Decode(&t)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(t.Test)
+
+	}
 }
 
 /*
@@ -108,8 +126,8 @@ Sulla porta 8888 il Nodo riceve gli HeartBeat del Load Balancer, così come conf
 Sulla porta 80 serviremo le rpc dell'app
 */
 func StartHeartBeatListener() {
-	http.HandleFunc("/", home_handler)
-	http.ListenAndServe(":8888", nil)
+	http.HandleFunc("/", handle_term_signal)
+	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
 
 /*
@@ -160,5 +178,5 @@ func InitHealthyNode() {
 	go StartHeartBeatListener()
 
 	// Attende di diventare healthy per il Load Balancer
-	time.Sleep(40 * time.Second)
+	time.Sleep(utils.NODE_HEALTHY_TIME)
 }

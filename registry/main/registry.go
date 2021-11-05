@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/rpc"
 	"os"
 	"progetto-sdcc/registry/services"
+	"progetto-sdcc/utils"
+	"time"
 )
 
 /*
@@ -21,7 +25,6 @@ ciò che si registra realmente è un oggetto che prevede l'implementazione di qu
 type DHThandler int
 
 /*
-Metodo 1 dell'interfaccia
 Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
 */
 func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
@@ -34,12 +37,17 @@ func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
 	return nil
 }
 
-//[TODO] commentare tutta sta roba
+/*
+Inizializza il servizio DHT
+*/
 func InitializeService() *DHThandler {
 	service := new(DHThandler)
 	return service
 }
 
+/*
+Restituisce tutte le istanze healthy presenti
+*/
 func checkActiveNodes() []services.Instance {
 	instances := services.GetActiveNodes()
 	fmt.Println("Healthy Instances:")
@@ -47,18 +55,40 @@ func checkActiveNodes() []services.Instance {
 	return instances
 }
 
+/*
+Controlla ogni tot secondi quali sono le istanze in terminaione. Invia a queste un segnale in modo che prima
+di terminare possano inviare le proprie entry ad un altro nodo
+*/
 func checkTerminatingNodes() {
 	for {
 		terminating := services.GetTerminatingInstances()
 		for _, t := range terminating {
 			// [TODO] Invia un segnale per dirgli che sta terminando e quindi che dovrà
 			// inviare il suo DB al successore prima di morire
+			sendTerminatingSignal(t.PrivateIP)
 			fmt.Println(t.PrivateIP)
 		}
+		time.Sleep(utils.CHECK_TERMINATING_INTERVAL)
 	}
 }
 
+func sendTerminatingSignal(ip string) *http.Response {
+	values := map[string]string{"status": "terminating"}
+	jsonValue, _ := json.Marshal(values)
+
+	proto := "http://"
+	port := utils.HEARTBEAT_PORT
+	resp, err := http.Post(proto+ip+port, "application/json", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return resp
+}
+
 func main() {
+	sendTerminatingSignal("localhost")
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
 		return
