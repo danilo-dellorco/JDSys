@@ -25,7 +25,7 @@ type Args struct{}
 
 /*
 Pseudo-Interfaccia che verrà registrata dal server in modo tale che il client possa invocare i metodi tramite RPC
-ciò che si registra realmente è un oggetto che prevede l'implementazione di quei metodi specifici!
+ciò che si registra realmente è un oggetto che prevede l'implementazione di quei metodi specifici
 */
 type DHThandler int
 

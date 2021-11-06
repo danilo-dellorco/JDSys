@@ -9,7 +9,7 @@ import (
 type EmptyArguments struct{}
 
 /*
-Instaura una connessione HTTP con il server/nodo specificato in input
+Instaura una connessione HTTP con il Load Balancer, specificando in input il suo url
 */
 func HttpConnect(serverAddress string) (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", serverAddress+":80")
@@ -20,7 +20,7 @@ func HttpConnect(serverAddress string) (*rpc.Client, error) {
 }
 
 /*
-RPC che permette di ottenere la lista dei metodi disponibili nel nodo remoto
+RPC che permette di ottenere la lista dei metodi disponibili sul nodo remoto contattato
 */
 func GetMethodsList(serverAddress string) {
 	args := EmptyArguments{}

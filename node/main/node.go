@@ -34,53 +34,12 @@ func main() {
 	// possiamo inizializzare il database locale invece di fare una sleep facciamo tutta la config locale che comunque
 	// ci mette tempo!!
 	InitHealthyNode()
+	InitChordDHT()
+	service := InitServiceRPC()
 
-	mongoClient = mongo.InitLocalSystem()
-
-	// Setup dei Flags
-	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
-	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
-	flag.Parse()
-
-	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
-	*addressPtr = GetOutboundIP().String() + ":4567"
-	me = new(chord.ChordNode)
-
-	// Controlla le Istanze attive contattando il Service Registry
-
-	// Continua finchè c'è almeno una istanza attiva
-	result := JoinDHT(os.Args[1])
-	for {
-		if len(result) == 0 {
-			result = JoinDHT(os.Args[1])
-		} else {
-			break
-		}
-	}
-	fmt.Println(result)
-	fmt.Println(len(result))
-
-	// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
-	if len(result) == 1 {
-		me = chord.Create(*addressPtr)
-	} else {
-		// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
-		*joinPtr = result[rand.Intn(len(result))]
-		for {
-			if *joinPtr == *addressPtr {
-				*joinPtr = result[rand.Intn(len(result))]
-			} else {
-				break
-			}
-		}
-		*joinPtr = *joinPtr + ":4567"
-		me, _ = chord.Join(*addressPtr, *joinPtr)
-	}
-	fmt.Printf("My address is: %s.\n", *addressPtr)
-	fmt.Printf("Join address is: %s.\n", *joinPtr)
-
-	//[TODO] Vedere bene dove metterlo. inizializza il database locale e tutte le routine di aggiornamento.
-	//mongo.InitLocalSystem()
+	rpc.Register(service)
+	rpc.HandleHTTP()
+	//service.ListenHttpConnection()
 
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
@@ -110,7 +69,9 @@ type term_message struct {
 	Status string
 }
 
-// TODO Legge correttamente il messaggio di terminazione, implementare l'azione da fare
+/*
+Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
+*/
 func terminate_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
 	if r.Method == "POST" {
@@ -122,20 +83,19 @@ func terminate_handler(w http.ResponseWriter, r *http.Request) {
 		}
 		status := m.Status
 		if status == "terminating" {
+			fmt.Println("Node Scheduled to Terminating...")
 			//[TODO] da testare, comunque qui invio al nodo successore (o pred??) l'update se sto per essere killato
 			//pred := me.GetPedecessor()
 			succ := me.GetSuccessor()
 			ip := succ.GetIpAddr()
 			mongo.SendUpdate(mongoClient, ip)
-
 		}
 	}
 }
 
 /*
-Sulla porta 8888 il Nodo riceve gli HeartBeat del Load Balancer, ed ii segnali di terminazione dal
-service registry.
-Sulla porta 80 serviremo le rpc dell'app
+Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat del Load Balancer,
+ed i segnali di terminazione dal service registry.
 */
 func StartHeartBeatListener() {
 	http.HandleFunc("/", terminate_handler)
@@ -189,6 +149,59 @@ func InitHealthyNode() {
 	// Inizia a ricevere gli HeartBeat
 	go StartHeartBeatListener()
 
+	// Inizia a configurare il sistema di storage locale
+	//mongoClient = mongo.InitLocalSystem()
+
 	// Attende di diventare healthy per il Load Balancer
 	time.Sleep(utils.NODE_HEALTHY_TIME)
+}
+
+func InitChordDHT() {
+	// Setup dei Flags
+	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
+	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
+	flag.Parse()
+
+	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
+	*addressPtr = GetOutboundIP().String() + ":4567"
+	me = new(chord.ChordNode)
+
+	// Controlla le Istanze attive contattando il Service Registry
+
+	// Continua finchè c'è almeno una istanza attiva
+	result := JoinDHT(os.Args[1])
+	for {
+		if len(result) == 0 {
+			result = JoinDHT(os.Args[1])
+		} else {
+			break
+		}
+	}
+	fmt.Println(result)
+	fmt.Println(len(result))
+
+	// Se c'è solo un'istanza attiva, il nodo stesso crea il DHT Chord
+	if len(result) == 1 {
+		me = chord.Create(*addressPtr)
+	} else {
+		// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
+		*joinPtr = result[rand.Intn(len(result))]
+		for {
+			if *joinPtr == *addressPtr {
+				*joinPtr = result[rand.Intn(len(result))]
+			} else {
+				break
+			}
+		}
+		*joinPtr = *joinPtr + ":4567"
+		me, _ = chord.Join(*addressPtr, *joinPtr)
+	}
+	fmt.Printf("My address is: %s.\n", *addressPtr)
+	fmt.Printf("Join address is: %s.\n", *joinPtr)
+}
+
+func InitServiceRPC() *RPCservice {
+	service := new(RPCservice)
+	service.node = *me
+	return service
 }

@@ -19,7 +19,7 @@ var AWS_CRED_PATH string = "/home/danilo/.aws/credentials"
 
 // Time Settings
 var RARELY_ACCESSED_TIME time.Duration = 10          // Dopo quanto tempo un'entry viene migrata sul cloud
-var NODE_HEALTHY_TIME time.Duration = 40000          // Tempo di attesa di un nodo prima che diventi healthy
+var NODE_HEALTHY_TIME time.Duration = 20000          // Tempo di attesa di un nodo prima che diventi healthy
 var CHECK_TERMINATING_INTERVAL time.Duration = 60000 // Ogni quanto effettuare il controllo sulle istanze in terminazione
 
 // Port Settings
