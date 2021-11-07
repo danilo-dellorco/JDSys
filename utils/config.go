@@ -16,6 +16,8 @@ var UPDATES_RECEIVE_FILE string = UPDATES_RECEIVE_PATH + "received.csv"
 var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
 var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
+var AUTOSCALING_NAME string = "sdcc-autoscaling"
+var BUCKET_NAME string = "sdcc-cloud-keys"
 
 // Time Settings
 var RARELY_ACCESSED_TIME time.Duration = 10          // Dopo quanto tempo un'entry viene migrata sul cloud

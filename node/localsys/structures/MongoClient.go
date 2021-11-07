@@ -280,7 +280,7 @@ func (cli *MongoClient) uploadToS3(key string) {
 
 	// Carica il file su S3
 	result, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String("sdcc-cloud-keys"),
+		Bucket: aws.String(utils.BUCKET_NAME),
 		Key:    aws.String(filename),
 		Body:   f,
 	})
@@ -312,7 +312,7 @@ func (cli *MongoClient) downloadEntryFromS3(key string) {
 
 	// Scrive il contenuto dell'oggetto S3 sul file
 	n, err := downloader.Download(f, &s3.GetObjectInput{
-		Bucket: aws.String("sdcc-cloud-keys"),
+		Bucket: aws.String(utils.BUCKET_NAME),
 		Key:    aws.String(filename),
 	})
 	if err != nil {
