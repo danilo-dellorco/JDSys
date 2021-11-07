@@ -35,10 +35,10 @@ func main() {
 	// ci mette tempo!!
 	InitHealthyNode()
 	InitChordDHT()
-	service := InitServiceRPC()
+	//service := InitServiceRPC()
 
-	rpc.Register(service)
-	rpc.HandleHTTP()
+	//rpc.Register(service)
+	//rpc.HandleHTTP()
 	//service.ListenHttpConnection()
 
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
@@ -201,8 +201,10 @@ func InitChordDHT() {
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
 }
 
+/*
 func InitServiceRPC() *RPCservice {
 	service := new(RPCservice)
 	service.node = *me
 	return service
 }
+*/
