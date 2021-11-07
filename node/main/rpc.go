@@ -36,7 +36,23 @@ Effettua la RPC per la Get di una key.
 */
 func (s *RPCservice) GetRPC(args *Args1, reply *[]string) error {
 	node := s.node
-	addr, err := chord.Lookup(utils.HashString(args.key), node.GetSuccessor().GetIpAddr())
+	// TODO vedere se può partire anche dal nodo stesso invece di node.GetSuccessor().GetIpAddr()
+	addr, err := chord.Lookup(utils.HashString(args.key), node.GetIpAddress())
+	// [TODO] rpc.call(GetFuncRPC,addr)
+	fmt.Println(addr, err)
+
+	return nil
+}
+
+/*
+Effettua la RPC per la Get di una key.
+ 1) Lookup per trovare il nodo che hosta una risorsa
+ 2) RPC effettiva di GET verso quel nodo chord
+*/
+func (s *RPCservice) PutRPC(args *Args1, reply *[]string) error {
+	node := s.node
+	// TODO vedere se può partire anche dal nodo stesso invece di node.GetSuccessor().GetIpAddr()
+	addr, err := chord.Lookup(utils.HashString(args.key), node.GetIpAddress())
 	// [TODO] rpc.call(GetFuncRPC,addr)
 	fmt.Println(addr, err)
 

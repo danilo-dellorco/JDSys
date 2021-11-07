@@ -171,6 +171,13 @@ func (node *ChordNode) GetPedecessor() *NodeInfo {
 	return node.predecessor
 }
 
+/*
+Restituisce l'indirizzo IP del nodo
+*/
+func (node *ChordNode) GetIpAddress() string {
+	return node.ipaddr
+}
+
 //Lookup returns the address of the ChordNode that is responsible
 //for the key. The procedure begins at the address denoted by start.
 func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string, err error) {
