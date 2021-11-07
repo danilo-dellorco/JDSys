@@ -150,6 +150,7 @@ func InitHealthyNode() {
 	go StartHeartBeatListener()
 
 	// Inizia a configurare il sistema di storage locale
+	// TODO decommentare
 	//mongoClient = mongo.InitLocalSystem()
 
 	// Attende di diventare healthy per il Load Balancer
