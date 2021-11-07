@@ -137,7 +137,7 @@ func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
 Inserisce un'entry, specificando la chiave ed il suo valore.
 Al momento del get viene calcolato il timestamp
 */
-func (cli *MongoClient) PutEntry(key string, value string) {
+func (cli *MongoClient) PutEntry(key string, value string) error {
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 	doc := bson.D{{ID, key}, {VALUE, value}, {TIME, timestamp}, {LAST_ACC, timestamp}}
@@ -150,9 +150,10 @@ func (cli *MongoClient) PutEntry(key string, value string) {
 		} else {
 			fmt.Println("Put Error:", err)
 		}
-		return
+		return err
 	}
 	fmt.Println("Put: Entry {" + key + "} inserita correttamente nel database")
+	return nil
 }
 
 /*

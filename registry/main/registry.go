@@ -66,13 +66,13 @@ di terminare possano inviare le proprie entry ad un altro nodo
 */
 func checkTerminatingNodes() {
 	fmt.Println("Starting Check Terminating Nodes Routine....")
+	go services.Start_cache_flush_service()
 	for {
 		terminating := services.GetTerminatingInstances()
 		for _, t := range terminating {
 			// [TODO] Invia un segnale per dirgli che sta terminando e quindi che dovrà
 			// inviare il suo DB al successore prima di morire
 			sendTerminatingSignal(t.PrivateIP)
-			fmt.Println(t.PrivateIP)
 		}
 		time.Sleep(utils.CHECK_TERMINATING_INTERVAL)
 	}

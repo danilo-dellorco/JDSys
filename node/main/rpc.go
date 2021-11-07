@@ -94,8 +94,31 @@ func (s *RPCservice) DeleteRPC(args *Args1, reply *[]string) error {
 	return nil
 }
 
-func (s *RPCservice) get_impl(args *Args1, reply *[]string) error {
-	s.db.GetEntry(args.key)
+/*
+Effettua il get. Scrive in reply la stringa contenente l'entry richiesta. Se l'entry
+non è stata trovata restituisce un messaggio di errore.
+*/
+func (s *RPCservice) get_impl(args *Args1, reply string) {
+	//entry := s.db.GetEntry(args.key)
+	//reply =
+}
 
-	return nil
+/*
+Effettua il PUT. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
+*/
+func (s *RPCservice) put_impl(args *Args2) error {
+	arg1 := args.key
+	arg2 := args.value
+	err := s.db.PutEntry(arg1, arg2)
+	return err
+}
+
+func (s *RPCservice) update_impl(args *Args1, reply *structures.MongoEntry) {
+	entry := s.db.GetEntry(args.key)
+	reply = entry
+}
+
+func (s *RPCservice) delete_impl(args *Args1, reply *structures.MongoEntry) {
+	entry := s.db.GetEntry(args.key)
+	reply = entry
 }
