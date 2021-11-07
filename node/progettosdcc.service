@@ -6,7 +6,8 @@ Type=simple
 EnvironmentFile=/home/ec2-user/go/src/env
 WorkingDirectory=/home/ec2-user/go/src
 ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/node/run.sh
-ExecStartPre=/usr/bin/git clone --branch=jacopo https://www.github.com/danilo-dellorco/progetto-sdcc /home/ec2-user/go/src/progetto-sdcc/	
+ExecStartPre=/usr/bin/git clone --branch=jacopo https://www.github.com/danilo-dellorco/progetto-sdcc /home/ec2-user/go/src/progetto-sdcc/
+ExecStartPre=/usr/bin/sleep 10
 
 [Install]
 WantedBy=multi-user.target
