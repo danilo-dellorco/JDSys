@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"progetto-sdcc/utils"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -15,6 +16,8 @@ import (
 )
 
 var ELB string
+var CRS string
+var AUS string
 
 /*
 Struttura contenente tutte le informazioni riguardanti un'istanza EC2
@@ -24,12 +27,17 @@ type Instance struct {
 }
 
 /*
+Lista che tiene tutte le attività di terminazione già processate
+*/
+var activity_cache []string
+
+/*
 Crea una sessione client AWS
 */
 func CreateSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewSharedCredentials(utils.AWS_CRED_PATH, "default")})
+		Credentials: credentials.NewSharedCredentials(CRS, "default")})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -43,8 +51,12 @@ func SetupUser() {
 	user := os.Args[1]
 	if user == "d" {
 		ELB = utils.ELB_ARN_D
+		CRS = utils.AWS_CRED_PATH_D
+		AUS = utils.AUTOSCALING_NAME_D
 	} else {
 		ELB = utils.ELB_ARN_J
+		CRS = utils.AWS_CRED_PATH
+		AUS = utils.AUTOSCALING_NAME_J
 	}
 }
 
@@ -184,7 +196,7 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 	sess := CreateSession()
 	svc := autoscaling.New(sess)
 	input := &autoscaling.DescribeScalingActivitiesInput{
-		AutoScalingGroupName: aws.String(utils.AUTOSCALING_NAME),
+		AutoScalingGroupName: aws.String(AUS),
 	}
 
 	result, err := svc.DescribeScalingActivities(input)
@@ -213,25 +225,40 @@ func GetTerminatingInstances() []Instance {
 
 	var terminatingNodes []Instance
 	activities := activityList.Activities
-	TERMINATING_START := "Description: \"Terminating EC2 instance:"
+	TERMINATING_START := "Description: \"Terminating EC2 instance: "
 	TERMINATING_END := " -"
 
 	for i := 0; i < len(activities); i++ {
 		actual := activities[i].String()
-		fmt.Println(actual)
 		progress := utils.GetStringInBetween(actual, "Progress: ", ",")
 		if progress != "100" {
 			status := utils.GetStringInBetween(actual, "StatusCode: \"", "\"\n")
-			if status == "WaitingForELBConnectionDraining" || status == "InProgress" {
-				fmt.Println("\n__________Found Terminating Instance__________")
+			if status == "WaitingForELBConnectionDraining" {
 				nodeId := utils.GetStringInBetween(actual, TERMINATING_START, TERMINATING_END)
+				if utils.StringInSlice(nodeId, activity_cache) {
+					fmt.Println("DEBUG| instance already terminating:", nodeId)
+					continue
+				}
+				fmt.Println("\n__________Found Terminating Instance__________")
 				fmt.Println("Status: ", status)
 				fmt.Println("nodeId: ", nodeId)
 				instanceInfo := getInstanceInfo(nodeId)
 				instance := getInstance(instanceInfo)
 				terminatingNodes = append(terminatingNodes, instance)
+				activity_cache = append(activity_cache, nodeId)
 			}
 		}
 	}
 	return terminatingNodes
+}
+
+/*
+Pulisce periodicamente la cache sulle istanze in terminazione
+*/
+func Start_cache_flush_service() {
+	for {
+		time.Sleep(utils.ACTIVITY_CACHE_FLUSH_INTERVAL)
+		fmt.Println("Activity Cache Flushed")
+		activity_cache = nil
+	}
 }
