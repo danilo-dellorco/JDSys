@@ -218,11 +218,12 @@ func GetTerminatingInstances() []Instance {
 
 	for i := 0; i < len(activities); i++ {
 		actual := activities[i].String()
+		fmt.Println(actual)
 		progress := utils.GetStringInBetween(actual, "Progress: ", ",")
 		if progress != "100" {
 			status := utils.GetStringInBetween(actual, "StatusCode: \"", "\"\n")
 			if status == "WaitingForELBConnectionDraining" || status == "InProgress" {
-				fmt.Println("__________Found Terminating Instance__________")
+				fmt.Println("\n__________Found Terminating Instance__________")
 				nodeId := utils.GetStringInBetween(actual, TERMINATING_START, TERMINATING_END)
 				fmt.Println("Status: ", status)
 				fmt.Println("nodeId: ", nodeId)

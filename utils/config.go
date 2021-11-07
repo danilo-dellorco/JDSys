@@ -20,9 +20,9 @@ var AUTOSCALING_NAME string = "sdcc-autoscaling"
 var BUCKET_NAME string = "sdcc-cloud-keys"
 
 // Time Settings
-var RARELY_ACCESSED_TIME time.Duration = 10          // Dopo quanto tempo un'entry viene migrata sul cloud
-var NODE_HEALTHY_TIME time.Duration = 20000          // Tempo di attesa di un nodo prima che diventi healthy
-var CHECK_TERMINATING_INTERVAL time.Duration = 60000 // Ogni quanto effettuare il controllo sulle istanze in terminazione
+var RARELY_ACCESSED_TIME time.Duration = 10                     // Dopo quanto tempo (ms) un'entry viene migrata sul cloud
+var NODE_HEALTHY_TIME time.Duration = 20 * time.Second          // Tempo di attesa di un nodo prima che diventi healthy
+var CHECK_TERMINATING_INTERVAL time.Duration = 60 * time.Second // Ogni quanto effettuare il controllo sulle istanze in terminazione
 
 // Port Settings
 var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
