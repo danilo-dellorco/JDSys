@@ -83,9 +83,9 @@ func terminate_handler(w http.ResponseWriter, r *http.Request) {
 		}
 		status := m.Status
 		if status == "terminating" {
+
+			// Invio al nodo successore l'intero database del nodo in terminazione
 			fmt.Println("Node Scheduled to Terminating...")
-			//[TODO] da testare, comunque qui invio al nodo successore (o pred??) l'update se sto per essere killato
-			//pred := me.GetPedecessor()
 			succ := me.GetSuccessor()
 			ip := succ.GetIpAddr()
 			mongo.SendUpdate(mongoClient, ip)

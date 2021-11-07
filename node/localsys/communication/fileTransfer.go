@@ -38,9 +38,9 @@ func StartReceiver(fileChannel chan string) {
 /*
 Il ricevente contatta il mittente per ottenere il file
 nell'anello quindi il nodo contatta il suo successore per chiedere le sue entry
-[TODO] aggiungere ip_address come parametro in quanto andrà inviato ad un nodo remoto
 */
 func StartSender(filename string, address string) {
+	fmt.Println("Start Sending:", filename)
 	connection, err := net.Dial("tcp", address+utils.UPDATES_PORT)
 	if err != nil {
 		panic(err)
