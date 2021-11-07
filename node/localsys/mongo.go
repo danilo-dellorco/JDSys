@@ -11,7 +11,7 @@ import (
 Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
 i listener e le routine per la gestione degli updates.
 */
-func InitLocalSystem() {
+func InitLocalSystem() structures.MongoClient {
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
@@ -26,17 +26,20 @@ func InitLocalSystem() {
 	*/
 
 	// ***************** TEST *********************
-	client.PutEntry("TestKey", "TestValue")
-	client.PutEntry("TestKey1", "TestValue1")
-	client.PutEntry("TestKey2", "TestValue2")
-	client.PutEntry("TestKey3", "TestValue3")
-	client.CheckRarelyAccessed()
-	client.GetEntry("TestKey")
-	client.GetEntry("TestKey1")
-	client.GetEntry("TestKey2")
-	client.GetEntry("TestKey3")
-	client.CloseConnection()
+	/*
+		client.PutEntry("TestKey", "TestValue")
+		client.PutEntry("TestKey1", "TestValue1")
+		client.PutEntry("TestKey2", "TestValue2")
+		client.PutEntry("TestKey3", "TestValue3")
+		client.CheckRarelyAccessed()
+		client.GetEntry("TestKey")
+		client.GetEntry("TestKey1")
+		client.GetEntry("TestKey2")
+		client.GetEntry("TestKey3")
+		client.CloseConnection()
+	*/
 	// ********************************************
+	return client
 }
 
 /*
@@ -59,10 +62,9 @@ func ListenUpdates(cli structures.MongoClient) {
 /*
 Esporta il file CSV e lo invia al nodo remoto
 */
-func SendUpdate(cli structures.MongoClient) {
+func SendUpdate(cli structures.MongoClient, address string) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
 
-	//[TODO] aggiungere indirizzo ip come parametro modificand la funzione StartSender
-	communication.StartSender(file)
+	communication.StartSender(file, address)
 }
