@@ -42,7 +42,7 @@ type MongoClient struct {
 Apre la connessione con il database, inizializzando la collection utilizzata
 */
 func (cli *MongoClient) OpenConnection() {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOptions := options.Client().ApplyURI("mongodb://127.0.0.1:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	cli.Client = client
 	if err != nil {
