@@ -65,6 +65,7 @@ Controlla ogni tot secondi quali sono le istanze in terminaione. Invia a queste 
 di terminare possano inviare le proprie entry ad un altro nodo
 */
 func checkTerminatingNodes() {
+	fmt.Println("Starting Check Terminating Nodes Routine....")
 	for {
 		terminating := services.GetTerminatingInstances()
 		for _, t := range terminating {
@@ -78,6 +79,7 @@ func checkTerminatingNodes() {
 }
 
 func sendTerminatingSignal(ip string) {
+	fmt.Println("Sending Terminating Message to node:", ip)
 	body := &term_message{Status: "terminating"}
 	buf := new(bytes.Buffer)
 	json.NewEncoder(buf).Encode(body)
@@ -91,9 +93,6 @@ func sendTerminatingSignal(ip string) {
 	}
 
 	defer res.Body.Close()
-
-	fmt.Println("response Status:", res.Status)
-
 	// Print the body to the stdout
 	io.Copy(os.Stdout, res.Body)
 }
