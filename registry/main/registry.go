@@ -115,13 +115,12 @@ func sendTest(ip string) *http.Response {
 }
 
 func main() {
-	//sendTest("localhost")
-	sendTerminatingSignal("localhost")
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
 		return
 	}
 	services.SetupUser()
+	go checkTerminatingNodes()
 	fmt.Printf("Server Waiting For Connection... \n")
 	service := InitializeService()
 	rpc.Register(service)

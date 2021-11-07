@@ -336,6 +336,7 @@ func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string)
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
+	fmt.Println("Local DB ReceivedCorrectly")
 }
 
 /*

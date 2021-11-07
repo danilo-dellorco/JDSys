@@ -48,7 +48,7 @@ Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
-	fmt.Println("diocane")
+	fmt.Println("Start Mongo Update Listener")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
