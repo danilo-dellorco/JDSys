@@ -98,6 +98,7 @@ Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat de
 ed i segnali di terminazione dal service registry.
 */
 func StartHeartBeatListener() {
+	fmt.Println("Start Listening Messages on port:", utils.HEARTBEAT_PORT)
 	http.HandleFunc("/", terminate_handler)
 	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
@@ -106,7 +107,7 @@ func StartHeartBeatListener() {
 Restituisce l'indirizzo IP in uscita preferito della macchina che hosta il nodo
 */
 func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.f:80")
+	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -151,13 +152,16 @@ func InitHealthyNode() {
 
 	// Inizia a configurare il sistema di storage locale
 	// TODO decommentare
-	//mongoClient = mongo.InitLocalSystem()
+	mongoClient = mongo.InitLocalSystem()
 
 	// Attende di diventare healthy per il Load Balancer
+	fmt.Println("Waiting for ELB Health Checking...")
 	time.Sleep(utils.NODE_HEALTHY_TIME)
+	fmt.Println("EC2 Node Up & Running")
 }
 
 func InitChordDHT() {
+	fmt.Println("Initializing Chord DHT")
 	// Setup dei Flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
 	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
@@ -199,6 +203,7 @@ func InitChordDHT() {
 	}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
+	fmt.Println("Chord Node Started Succesfully")
 }
 
 /*

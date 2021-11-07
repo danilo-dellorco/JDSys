@@ -12,11 +12,12 @@ Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanc
 i listener e le routine per la gestione degli updates.
 */
 func InitLocalSystem() structures.MongoClient {
+	fmt.Println("Starting Mongo Local System...")
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
 	// Lancio della Goroutine che permette al nodo di restare in attesa perenne
-	//go ListenUpdates(client)
+	go ListenUpdates(client)
 
 	/*[TODO] Fare gestione di quando inviare gli aggiornamenti
 	1) Ogni Tot Minuti per avere la consistenza finale
@@ -39,6 +40,7 @@ func InitLocalSystem() structures.MongoClient {
 		client.CloseConnection()
 	*/
 	// ********************************************
+	fmt.Println("Done...")
 	return client
 }
 
@@ -48,7 +50,7 @@ Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
-	fmt.Println("Start Mongo Update Listener")
+	fmt.Println("Start Update Listening Service...")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
