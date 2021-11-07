@@ -184,7 +184,7 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 	sess := CreateSession()
 	svc := autoscaling.New(sess)
 	input := &autoscaling.DescribeScalingActivitiesInput{
-		AutoScalingGroupName: aws.String("SDCC-autoscaling"),
+		AutoScalingGroupName: aws.String(utils.AUTOSCALING_NAME),
 	}
 
 	result, err := svc.DescribeScalingActivities(input)

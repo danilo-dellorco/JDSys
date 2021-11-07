@@ -45,9 +45,9 @@ func (s *RPCservice) GetRPC(args *Args1, reply *[]string) error {
 }
 
 /*
-Effettua la RPC per la Get di una key.
- 1) Lookup per trovare il nodo che hosta una risorsa
- 2) RPC effettiva di GET verso quel nodo chord
+Effettua la RPC per inserire un'entry nello storage.
+ 1) Lookup per trovare il nodo che deve hostare la risorsa
+ 2) RPC effettiva di PUT verso quel nodo chord
 */
 func (s *RPCservice) PutRPC(args *Args1, reply *[]string) error {
 	node := s.node
