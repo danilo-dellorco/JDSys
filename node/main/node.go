@@ -165,10 +165,11 @@ func InitChordDHT() {
 	// Setup dei Flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
 	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
+	port := ":4567"
 	flag.Parse()
 
 	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
-	*addressPtr = GetOutboundIP().String() + ":4567"
+	*addressPtr = GetOutboundIP().String()
 	me = new(chord.ChordNode)
 
 	// Controlla le Istanze attive contattando il Service Registry
@@ -190,7 +191,7 @@ waitLB:
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(result) == 1 {
 		if result[0] == *addressPtr {
-			me = chord.Create(*addressPtr)
+			me = chord.Create(*addressPtr + port)
 		} else {
 			goto waitLB
 		}
@@ -204,11 +205,11 @@ waitLB:
 				break
 			}
 		}
-		*joinPtr = *joinPtr + ":4567"
-		me, _ = chord.Join(*addressPtr, *joinPtr)
+		me, _ = chord.Join(*addressPtr+port, *joinPtr+port)
 	}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
+	fmt.Printf("Port used: %s.\n", port)
 	fmt.Println("Chord Node Started Succesfully")
 }
 
