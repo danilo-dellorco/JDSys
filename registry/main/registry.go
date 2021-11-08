@@ -71,7 +71,7 @@ func checkTerminatingNodes() {
 		for _, t := range terminating {
 			// [TODO] Invia un segnale per dirgli che sta terminando e quindi che dovrà
 			// inviare il suo DB al successore prima di morire
-			sendTerminatingSignal(t.PrivateIP)
+			sendTerminatingSignalRPC(t.PrivateIP)
 		}
 		time.Sleep(utils.CHECK_TERMINATING_INTERVAL)
 	}
@@ -94,6 +94,21 @@ func sendTerminatingSignal(ip string) {
 		fmt.Println(res.StatusCode)
 	}
 	defer res.Body.Close()
+}
+
+func sendTerminatingSignalRPC(ip string) {
+	fmt.Println("Sending Terminating Message to node:", ip)
+	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	var reply string
+	args := Args{}
+	err = client.Call("RPCservice.TerminateInstanceRPC", args, &reply)
+	if err != nil {
+		log.Fatal("GetRPC error:", err)
+	}
+	fmt.Println("Risposta RPC:", reply)
 }
 
 func sendTest(ip string) *http.Response {
