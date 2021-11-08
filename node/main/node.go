@@ -14,6 +14,7 @@ import (
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
+	nodeRPC "progetto-sdcc/node/rpc"
 	"progetto-sdcc/utils"
 	"time"
 )
@@ -29,18 +30,14 @@ func main() {
 		fmt.Println("Wrong usage: Specify registry private IP address")
 		return
 	}
+	//testGetRPC()
+	testPutRPC()
 
-	// TODO invece che aspettare 40 secondi forse dopo aver farto partire il listener degli heartbeat
-	// possiamo inizializzare il database locale invece di fare una sleep facciamo tutta la config locale che comunque
-	// ci mette tempo!!
-	InitHealthyNode()
-	InitChordDHT()
-	//service := InitServiceRPC()
-
-	//rpc.Register(service)
-	//rpc.HandleHTTP()
-	//service.ListenHttpConnection()
-
+	/*
+		InitHealthyNode()
+		InitChordDHT()
+		InitServiceRPC()
+	*/
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
 	for {
@@ -220,3 +217,66 @@ func InitServiceRPC() *RPCservice {
 	return service
 }
 */
+
+/*
+Funzione di Debug utile per testare le RPC in locale
+*/
+func testGetRPC() {
+	mongoClient = mongo.InitLocalSystem()
+	InitServiceRPC()
+
+	addr := "localhost"
+
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	args := nodeRPC.Args1{}
+	args.Key = "TestKeyErr"
+	var reply string
+	err = client.Call("RPCservice.GetRPC", args, &reply)
+	if err != nil {
+		log.Fatal("GetRPC error:", err)
+	}
+	fmt.Println("Risposta RPC:", reply)
+}
+
+/*
+Funzione di Debug utile per testare le RPC in locale. Sarà identico a come il client dovrà invocare Get e Put
+*/
+func testPutRPC() {
+	mongoClient = mongo.InitLocalSystem()
+	InitServiceRPC()
+
+	addr := "localhost"
+
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	args := nodeRPC.Args2{}
+	args.Key = "Key_PutRPC"
+	args.Value = "Value_PutRPC"
+	var reply string
+	err = client.Call("RPCservice.PutRPC", args, &reply)
+	if err != nil {
+		log.Fatal("GetRPC error:", err)
+	}
+	fmt.Println("Risposta RPC:", reply)
+}
+
+/*
+Inizializza il listener delle chiamate RPC. Và invocata dopo aver inizializzato sia Mongo che Chord
+*/
+func InitServiceRPC() {
+	rpcServ := new(nodeRPC.RPCservice)
+	rpcServ.Db = mongoClient
+	//rpcServ.Node = me
+	rpc.Register(rpcServ)
+	rpc.HandleHTTP()
+	l, e := net.Listen("tcp", utils.RPC_PORT)
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	go http.Serve(l, nil)
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
+	"progetto-sdcc/utils"
 )
 
 type EmptyArguments struct{}
@@ -12,7 +13,7 @@ type EmptyArguments struct{}
 Instaura una connessione HTTP con il Load Balancer, specificando in input il suo url
 */
 func HttpConnect(serverAddress string) (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", serverAddress+":80")
+	client, err := rpc.DialHTTP("tcp", serverAddress+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}

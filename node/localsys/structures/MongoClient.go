@@ -160,7 +160,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
 Viene inoltre aggiornato il timestamp di quell'entry
 */
-func (cli *MongoClient) UpdateEntry(key string, newValue string) {
+func (cli *MongoClient) UpdateEntry(key string, newValue string) error {
 	old := bson.D{{ID, key}}
 	oldValue := cli.GetEntry(key).Value
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
@@ -168,9 +168,10 @@ func (cli *MongoClient) UpdateEntry(key string, newValue string) {
 	_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 	fmt.Println("Update:", key+", changed value from", oldValue, "to", newValue)
+	return nil
 }
 
 /*

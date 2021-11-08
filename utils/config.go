@@ -30,4 +30,5 @@ var ACTIVITY_CACHE_FLUSH_INTERVAL time.Duration = 600 * time.Second // Ogni quan
 
 // Port Settings
 var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
-var UPDATES_PORT string = ":27001"  // Porta su cui il nodo ascorta l'update mongo da altri nodi
+var UPDATES_PORT string = ":27001"  // Porta su cui il nodo ascolta l'update mongo da altri nodi
+var RPC_PORT string = ":80"         // Porta su cui il nodo ascolta le chiamate RPC
