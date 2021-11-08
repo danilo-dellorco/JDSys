@@ -35,11 +35,8 @@ func main() {
 	//testUpdateRPC()
 	//testDeleteRPC()
 
-	/*
-		InitHealthyNode()
-		InitChordDHT()
-	*/
-	mongoClient = mongo.InitLocalSystem()
+	InitHealthyNode()
+	InitChordDHT()
 	InitServiceRPC()
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
@@ -219,7 +216,7 @@ Inizializza il listener delle chiamate RPC. Và invocata dopo aver inizializzato
 func InitServiceRPC() {
 	rpcServ := new(nodeRPC.RPCservice)
 	rpcServ.Db = mongoClient
-	//rpcServ.Node = me
+	rpcServ.Node = *me
 	rpc.Register(rpcServ)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", utils.RPC_PORT)
