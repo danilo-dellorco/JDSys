@@ -31,7 +31,9 @@ func main() {
 		return
 	}
 	//testGetRPC()
-	testPutRPC()
+	//testPutRPC()
+	//testUpdateRPC()
+	//testDeleteRPC()
 
 	/*
 		InitHealthyNode()
@@ -208,61 +210,6 @@ waitLB:
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
 	fmt.Printf("Port used: %s.\n", port)
 	fmt.Println("Chord Node Started Succesfully")
-}
-
-/*
-func InitServiceRPC() *RPCservice {
-	service := new(RPCservice)
-	service.node = *me
-	return service
-}
-*/
-
-/*
-Funzione di Debug utile per testare le RPC in locale
-*/
-func testGetRPC() {
-	mongoClient = mongo.InitLocalSystem()
-	InitServiceRPC()
-
-	addr := "localhost"
-
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
-	args := nodeRPC.Args1{}
-	args.Key = "TestKeyErr"
-	var reply string
-	err = client.Call("RPCservice.GetRPC", args, &reply)
-	if err != nil {
-		log.Fatal("GetRPC error:", err)
-	}
-	fmt.Println("Risposta RPC:", reply)
-}
-
-/*
-Funzione di Debug utile per testare le RPC in locale. Sarà identico a come il client dovrà invocare Get e Put
-*/
-func testPutRPC() {
-	mongoClient = mongo.InitLocalSystem()
-	InitServiceRPC()
-
-	addr := "localhost"
-
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
-	args := nodeRPC.Args2{}
-	args.Key = "Key_PutRPC"
-	args.Value = "Value_PutRPC"
-	var reply string
-	err = client.Call("RPCservice.PutRPC", args, &reply)
-	if err != nil {
-		log.Fatal("GetRPC error:", err)
-	}
-	fmt.Println("Risposta RPC:", reply)
 }
 
 /*
