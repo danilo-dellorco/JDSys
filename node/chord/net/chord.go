@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"net"
 	"os"
 	"progetto-sdcc/utils"
@@ -25,7 +24,7 @@ type NodeInfo struct {
 }
 
 func (info *NodeInfo) GetIpAddr() string {
-	return info.ipaddr
+	return info.ipaddr[:len(info.ipaddr)-5]
 }
 
 type request struct {
@@ -175,7 +174,7 @@ func (node *ChordNode) GetPedecessor() *NodeInfo {
 Restituisce l'indirizzo IP del nodo
 */
 func (node *ChordNode) GetIpAddress() string {
-	return node.ipaddr
+	return node.ipaddr[:len(node.ipaddr)-5]
 }
 
 //Lookup returns the address of the ChordNode that is responsible
@@ -381,7 +380,7 @@ Esegue periodicamente operazioni di mantenimento
 func (node *ChordNode) maintain() {
 	ctr := 0
 	for {
-		time.Sleep(time.Duration(rand.Uint32()%3)*time.Minute + time.Duration(rand.Uint32()%60)*time.Second + time.Duration(rand.Uint32()%60)*time.Millisecond)
+		//time.Sleep(time.Duration(rand.Uint32()%3)*time.Minute + time.Duration(rand.Uint32()%60)*time.Second + time.Duration(rand.Uint32()%60)*time.Millisecond)
 		//stabilize
 		node.stabilize()
 		//check predecessor
@@ -390,6 +389,7 @@ func (node *ChordNode) maintain() {
 		node.fix(ctr)
 		ctr = ctr % 256
 		ctr += 1
+		time.Sleep(utils.CHORD_FIX_INTERVAL)
 	}
 }
 

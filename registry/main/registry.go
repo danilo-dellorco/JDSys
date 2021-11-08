@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/rpc"
@@ -85,16 +84,16 @@ func sendTerminatingSignal(ip string) {
 	json.NewEncoder(buf).Encode(body)
 	url := "http://" + ip + utils.HEARTBEAT_PORT
 	req, _ := http.NewRequest("POST", url, buf)
+	req.Close = true
 
 	client := &http.Client{}
 	res, e := client.Do(req)
 	if e != nil {
 		log.Fatal(e)
+	} else {
+		fmt.Println(res.StatusCode)
 	}
-
 	defer res.Body.Close()
-	// Print the body to the stdout
-	io.Copy(os.Stdout, res.Body)
 }
 
 func sendTest(ip string) *http.Response {
