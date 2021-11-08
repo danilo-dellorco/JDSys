@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/rpc"
@@ -92,10 +93,15 @@ func sendTerminatingSignal(ip string) {
 	if e != nil {
 		log.Fatal(e)
 	}
-
 	defer res.Body.Close()
-	// Print the body to the stdout
-	io.Copy(os.Stdout, res.Body)
+
+	_, e = ioutil.ReadAll(res.Body)
+	if e != nil {
+		log.Fatal(e)
+	} else {
+		// Print the body to the stdout
+		io.Copy(os.Stdout, res.Body)
+	}
 }
 
 func sendTest(ip string) *http.Response {

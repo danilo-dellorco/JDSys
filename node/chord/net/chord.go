@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"net"
 	"os"
 	"progetto-sdcc/utils"
@@ -381,7 +380,8 @@ Esegue periodicamente operazioni di mantenimento
 func (node *ChordNode) maintain() {
 	ctr := 0
 	for {
-		time.Sleep(time.Duration(rand.Uint32()%3)*time.Minute + time.Duration(rand.Uint32()%60)*time.Second + time.Duration(rand.Uint32()%60)*time.Millisecond)
+		//time.Sleep(time.Duration(rand.Uint32()%3)*time.Minute + time.Duration(rand.Uint32()%60)*time.Second + time.Duration(rand.Uint32()%60)*time.Millisecond)
+		time.Sleep(time.Duration(5 * time.Second))
 		//stabilize
 		node.stabilize()
 		//check predecessor
