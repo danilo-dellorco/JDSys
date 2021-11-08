@@ -75,6 +75,7 @@ func (cli *MongoClient) CloseConnection() {
 Ritorna una entry specificando la sua chiave
 */
 func (cli *MongoClient) GetEntry(key string) *MongoEntry {
+	fmt.Println("Searching for:", key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
 		cli.downloadEntryFromS3(key)
@@ -83,11 +84,14 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
 		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
 	}
+	fmt.Println("prima1")
 
 	coll := cli.Collection
 	var result bson.M
+	fmt.Println("prima1")
 	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
-	fmt.Println(result)
+	fmt.Println("dopo")
+
 	if err != nil {
 		fmt.Println("Get Error:", err)
 		return nil

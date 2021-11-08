@@ -8,9 +8,12 @@ import (
 )
 
 type Args0 struct{}
+type Args1 struct {
+	Key string
+}
 type Args2 struct {
-	key   string
-	value string
+	Key   string
+	Value string
 }
 
 /*
@@ -24,33 +27,37 @@ func HttpConnect(serverAddress string) (*rpc.Client, error) {
 	return client, err
 }
 
-/*
-RPC che permette di ottenere la lista dei metodi disponibili sul nodo remoto contattato
-*/
-func GetMethodsList(serverAddress string) {
-	args := Args0{}
-	var reply string
+func PrintMethodList() {
+	fmt.Println("=============== METHODS LIST ===============")
+	fmt.Println("1) Get")
+	fmt.Println("2) Put")
+	fmt.Println("3) Update")
+	fmt.Println("4) Delete")
+	fmt.Println("5) List")
+	fmt.Println("============================================")
+}
 
-	client, err := HttpConnect(serverAddress)
-	err = client.Call("ServizioDiProva.ListMethods", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Printf(reply)
+func Get() {
+	var key string
+	fmt.Print("Insert the Desired Key: ")
+	fmt.Scanln(&key)
+	fmt.Println(key)
+	testGetRPC(key)
 }
 
 /*
 Funzione di Debug utile per testare le RPC in locale
 */
-func testGetRPC() {
+func testGetRPC(key string) {
 	addr := "localhost"
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	args := Args2{}
-	args.key = "TestKeyErr"
+	args := Args1{}
+	args.Key = key
+	fmt.Println(key)
 	var reply string
 	err = client.Call("RPCservice.GetRPC", args, &reply)
 	if err != nil {
@@ -70,8 +77,8 @@ func testPutRPC() {
 		log.Fatal("dialing:", err)
 	}
 	args := Args2{}
-	args.key = "Key_PutRPC"
-	args.value = "Value_PutRPC"
+	args.Key = "Key_PutRPC"
+	args.Value = "Value_PutRPC"
 	var reply string
 	err = client.Call("RPCservice.PutRPC", args, &reply)
 	if err != nil {
@@ -91,8 +98,8 @@ func testUpdateRPC() {
 		log.Fatal("dialing:", err)
 	}
 	args := Args2{}
-	args.key = "Key_PutRPC"
-	args.value = "NewValue_PutRPC"
+	args.Key = "Key_PutRPC"
+	args.Value = "NewValue_PutRPC"
 	var reply string
 	fmt.Println("UpdatingRPC")
 	err = client.Call("RPCservice.UpdateRPC", args, &reply)
@@ -114,7 +121,7 @@ func testDeleteRPC() {
 		log.Fatal("dialing:", err)
 	}
 	args := Args2{}
-	args.key = "TestKey"
+	args.Key = "TestKey"
 	var reply string
 	err = client.Call("RPCservice.DeleteRPC", args, &reply)
 	if err != nil {

@@ -60,6 +60,7 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 		log.Fatal("dialing:", err)
 	}
 
+	fmt.Println("Before Impl Call")
 	err = client.Call("RPCservice.GetImpl", args, &reply)
 	return nil
 }
@@ -137,7 +138,10 @@ Effettua il get. Scrive in reply la stringa contenente l'entry richiesta. Se l'e
 non è stata trovata restituisce un messaggio di errore.
 */
 func (s *RPCservice) GetImpl(args *Args1, reply *string) error {
+	fmt.Println("GetImpl")
+	fmt.Println(args.Key)
 	entry := s.Db.GetEntry(args.Key)
+	fmt.Println(entry.Value)
 	if entry == nil {
 		*reply = "Entry not Found"
 	} else {

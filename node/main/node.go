@@ -38,8 +38,8 @@ func main() {
 	/*
 		InitHealthyNode()
 		InitChordDHT()
-		InitServiceRPC()
 	*/
+	InitServiceRPC()
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
 	for {
