@@ -90,10 +90,12 @@ func sendTerminatingSignal(ip string) {
 
 	client := &http.Client{}
 	res, e := client.Do(req)
+	fmt.Println(res)
+	fmt.Println(res.StatusCode)
 	if e != nil {
 		log.Fatal(e)
 	}
-	defer res.Body.Close()
+	//defer res.Body.Close()
 
 	_, e = ioutil.ReadAll(res.Body)
 	if e != nil {
