@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/rpc"
 	chord "progetto-sdcc/node/chord/net"
+	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
 )
@@ -194,5 +195,13 @@ func (s *RPCservice) DeleteImpl(args *Args1, reply *string) error {
 	} else {
 		*reply = "Entry to Delete not Found"
 	}
+	return nil
+}
+
+func (s *RPCservice) TerminateInstanceRPC(args *Args1, reply *string) error {
+	addr := s.Node.GetSuccessor().GetIpAddr()
+	fmt.Println("Instance Scheduled to Terminating...")
+	mongo.SendUpdate(s.Db, addr)
+	*reply = "Instance Terminating"
 	return nil
 }
