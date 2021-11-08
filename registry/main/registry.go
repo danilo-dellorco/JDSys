@@ -111,22 +111,6 @@ func sendTerminatingSignalRPC(ip string) {
 	fmt.Println("Risposta RPC:", reply)
 }
 
-func sendTest(ip string) *http.Response {
-	var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast."}`)
-	url := "http://" + ip + utils.HEARTBEAT_PORT
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-	req.Header.Set("X-Custom-Header", "myvalue")
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	return resp
-}
-
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")

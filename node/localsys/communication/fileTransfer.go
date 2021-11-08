@@ -17,7 +17,7 @@ const BUFFERSIZE = 1024
 Goroutine in cui ogni nodo è in attesa di connessioni. Quando viene contattato
 */
 func StartReceiver(fileChannel chan string) {
-	server, err := net.Listen("tcp", ":8889")
+	server, err := net.Listen("tcp", ":4444")
 	if err != nil {
 		fmt.Println("Error listetning: ", err)
 		os.Exit(1)
@@ -63,7 +63,7 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 	connection.Read(bufferFileName)
 	fileName := strings.Trim(string(bufferFileName), ":")
 
-	newFile, err := os.Create("local/" + fileName)
+	newFile, err := os.Create("home/ec2-user/csv/" + fileName)
 
 	if err != nil {
 		panic(err)
