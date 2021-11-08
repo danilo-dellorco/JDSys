@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
-	"os"
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
@@ -204,6 +203,5 @@ func (s *RPCservice) TerminateInstanceRPC(args *Args1, reply *string) error {
 	fmt.Println("Instance Scheduled to Terminating...")
 	mongo.SendUpdate(s.Db, addr)
 	*reply = "Instance Terminating"
-	os.Exit(0)
 	return nil
 }
