@@ -25,7 +25,7 @@ type NodeInfo struct {
 }
 
 func (info *NodeInfo) GetIpAddr() string {
-	return info.ipaddr
+	return info.ipaddr[:len(info.ipaddr)-5]
 }
 
 type request struct {
@@ -175,7 +175,7 @@ func (node *ChordNode) GetPedecessor() *NodeInfo {
 Restituisce l'indirizzo IP del nodo
 */
 func (node *ChordNode) GetIpAddress() string {
-	return node.ipaddr
+	return node.ipaddr[:len(node.ipaddr)-5]
 }
 
 //Lookup returns the address of the ChordNode that is responsible
