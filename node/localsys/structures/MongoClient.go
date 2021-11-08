@@ -2,6 +2,7 @@ package structures
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -177,20 +178,21 @@ func (cli *MongoClient) UpdateEntry(key string, newValue string) error {
 /*
 Cancella un'entry dal database, specificandone la chiave
 */
-func (cli *MongoClient) DeleteEntry(key string) {
+func (cli *MongoClient) DeleteEntry(key string) error {
 	coll := cli.Collection
 	entry := bson.D{{ID, key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
 	if err != nil {
 		fmt.Println("Delete Error:", err)
-		return
+		return err
 	}
 
 	if result.DeletedCount == 1 {
 		fmt.Println("Delete: Cancellata", key)
-		return
+		return nil
 	}
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
+	return errors.New("Entry Not Found")
 }
 
 /*

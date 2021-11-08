@@ -92,13 +92,21 @@ Effettua la RPC per aggiornare un'entry nello storage.
  1) Lookup per trovare il nodo che hosta la risorsa
  2) RPC effettiva di UPDATE verso quel nodo chord
 */
-func (s *RPCservice) UpdateRPC(args *Args1, reply *string) error {
-	node := s.Node
-	// TODO vedere se può partire anche dal nodo stesso invece di node.GetSuccessor().GetIpAddr()
-	addr, err := chord.Lookup(utils.HashString(args.Key), node.GetIpAddress())
-	// [TODO] rpc.call(GetFuncRPC,addr)
-	fmt.Println(addr, err)
+func (s *RPCservice) UpdateRPC(args *Args2, reply *string) error {
+	fmt.Println("UpdateRPC Called!")
 
+	// [TODO] rimettere il lookup. addr:=localhost solo per testing in locale
+	//node := s.node
+	//addr, err := Lookup(utils.HashString(args.Key), node.GetIpAddress())
+	addr := "localhost"
+
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+
+	err = client.Call("RPCservice.UpdateImpl", args, &reply)
+	fmt.Println("int:", *reply)
 	return nil
 }
 
@@ -108,12 +116,19 @@ Effettua la RPC per eliminare un'entry nello storage.
  2) RPC effettiva di DELETE verso quel nodo chord
 */
 func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
-	node := s.Node
-	// TODO vedere se può partire anche dal nodo stesso invece di node.GetSuccessor().GetIpAddr()
-	addr, err := chord.Lookup(utils.HashString(args.Key), node.GetIpAddress())
-	// [TODO] rpc.call(GetFuncRPC,addr)
-	fmt.Println(addr, err)
+	fmt.Println("DeleteRPC called")
 
+	// [TODO] rimettere il lookup. addr:=localhost solo per testing in locale
+	//node := s.node
+	//addr, err := Lookup(utils.HashString(args.Key), node.GetIpAddress())
+	addr := "localhost"
+
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+
+	err = client.Call("RPCservice.DeleteImpl", args, &reply)
 	return nil
 }
 
@@ -152,15 +167,15 @@ func (s *RPCservice) PutImpl(args *Args2, reply *string) error {
 Effettua l'UPDATE. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (s *RPCservice) UpdateImpl(args *Args2, reply *string) error {
-	fmt.Println("Called PutImpl")
+	fmt.Println("Called UpdateImpl")
 	arg1 := args.Key
 	arg2 := args.Value
+	fmt.Println("Arguments", arg1, arg2)
 	err := s.Db.UpdateEntry(arg1, arg2)
 	if err == nil {
 		*reply = "Entry aggiornata correttamente"
 	} else {
 		*reply = "Entry not Found"
-		fmt.Println(*reply)
 	}
 	return nil
 }
@@ -169,11 +184,11 @@ func (s *RPCservice) UpdateImpl(args *Args2, reply *string) error {
 Effettua il DELETE. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (s *RPCservice) DeleteImpl(args *Args1, reply *string) error {
-	entry := s.Db.GetEntry(args.Key)
-	if entry == nil {
-		*reply = "Entry not Found"
+	err := s.Db.DeleteEntry(args.Key)
+	if err == nil {
+		*reply = "Entry Deleted Succesfully"
 	} else {
-		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
+		*reply = "Entry to Delete not Found"
 	}
 	return nil
 }
