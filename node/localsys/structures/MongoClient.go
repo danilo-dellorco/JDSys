@@ -91,12 +91,12 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	fmt.Println("prima1")
 	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
 	fmt.Println("dopo")
+	entry := MongoEntry{}
 
 	if err != nil {
 		fmt.Println("Get Error:", err)
-		return nil
+		return &entry
 	}
-	entry := MongoEntry{}
 	id := result[ID].(string)
 	value := result[VALUE].(string)
 	timest := result[TIME].(primitive.DateTime)
@@ -157,7 +157,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 		}
 		return err
 	}
-	fmt.Println("Put: Entry {" + key + "} inserita correttamente nel database")
+	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
 	return nil
 }
 

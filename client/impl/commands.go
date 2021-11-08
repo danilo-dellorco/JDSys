@@ -33,7 +33,6 @@ func PrintMethodList() {
 	fmt.Println("2) Put")
 	fmt.Println("3) Update")
 	fmt.Println("4) Delete")
-	fmt.Println("5) List")
 	fmt.Println("============================================")
 }
 
@@ -43,6 +42,38 @@ func Get() {
 	fmt.Scanln(&key)
 	fmt.Println(key)
 	testGetRPC(key)
+}
+
+func Put() {
+	var key string
+	var value string
+	fmt.Print("Insert the Entry Key: ")
+	fmt.Scanln(&key)
+
+	fmt.Print("Insert the Entry Value: ")
+	fmt.Scanln(&value)
+
+	testPutRPC(key, value)
+}
+
+func Update() {
+	var key string
+	var value string
+	fmt.Print("Insert the Key of the Entry to Update: ")
+	fmt.Scanln(&key)
+
+	fmt.Print("Insert the New Value: ")
+	fmt.Scanln(&value)
+
+	testUpdateRPC(key, value)
+}
+
+func Delete() {
+	var key string
+	fmt.Print("Insert the Key of the Entry to Delete: ")
+	fmt.Scanln(&key)
+	fmt.Println(key)
+	testDeleteRPC(key)
 }
 
 /*
@@ -69,7 +100,7 @@ func testGetRPC(key string) {
 /*
 Funzione di Debug utile per testare le RPC in locale. Sarà identico a come il client dovrà invocare Get e Put
 */
-func testPutRPC() {
+func testPutRPC(key string, value string) {
 	addr := "localhost"
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
@@ -77,8 +108,8 @@ func testPutRPC() {
 		log.Fatal("dialing:", err)
 	}
 	args := Args2{}
-	args.Key = "Key_PutRPC"
-	args.Value = "Value_PutRPC"
+	args.Key = key
+	args.Value = value
 	var reply string
 	err = client.Call("RPCservice.PutRPC", args, &reply)
 	if err != nil {
@@ -90,7 +121,7 @@ func testPutRPC() {
 /*
 Funzione di Debug utile per testare le RPC in locale. Sarà identico a come il client dovrà invocare Get e Put
 */
-func testUpdateRPC() {
+func testUpdateRPC(key string, value string) {
 	addr := "localhost"
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
@@ -98,8 +129,8 @@ func testUpdateRPC() {
 		log.Fatal("dialing:", err)
 	}
 	args := Args2{}
-	args.Key = "Key_PutRPC"
-	args.Value = "NewValue_PutRPC"
+	args.Key = key
+	args.Value = value
 	var reply string
 	fmt.Println("UpdatingRPC")
 	err = client.Call("RPCservice.UpdateRPC", args, &reply)
@@ -112,7 +143,7 @@ func testUpdateRPC() {
 /*
 Funzione di Debug utile per testare le RPC in locale
 */
-func testDeleteRPC() {
+func testDeleteRPC(key string) {
 
 	addr := "localhost"
 
@@ -121,7 +152,7 @@ func testDeleteRPC() {
 		log.Fatal("dialing:", err)
 	}
 	args := Args2{}
-	args.Key = "TestKey"
+	args.Key = key
 	var reply string
 	err = client.Call("RPCservice.DeleteRPC", args, &reply)
 	if err != nil {

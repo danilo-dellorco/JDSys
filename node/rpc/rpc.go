@@ -142,7 +142,7 @@ func (s *RPCservice) GetImpl(args *Args1, reply *string) error {
 	fmt.Println(args.Key)
 	entry := s.Db.GetEntry(args.Key)
 	fmt.Println(entry.Value)
-	if entry == nil {
+	if entry.Value == "" {
 		*reply = "Entry not Found"
 	} else {
 		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)

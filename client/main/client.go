@@ -24,6 +24,13 @@ func main() {
 		switch cmd {
 		case "1":
 			impl.Get()
+		case "2":
+			impl.Put()
+		case "3":
+			impl.Update()
+		case "4":
+			impl.Delete()
 		}
+
 	}
 }
