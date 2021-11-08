@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -62,16 +61,16 @@ Loop:
 	select {}
 }
 
-type term_message struct {
+/*type term_message struct {
 	Status string
-}
+}*/
 
 /*
 Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
 */
 func terminate_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
-	if r.Method == "POST" {
+	/*if r.Method == "POST" {
 		fmt.Println("Ricevuta Richiesta di Post!")
 		var m term_message
 		err := json.NewDecoder(r.Body).Decode(&m)
@@ -87,7 +86,7 @@ func terminate_handler(w http.ResponseWriter, r *http.Request) {
 			ip := succ.GetIpAddr()
 			mongo.SendUpdate(mongoClient, ip)
 		}
-	}
+	}*/
 }
 
 /*
@@ -184,7 +183,7 @@ waitLB:
 	fmt.Println(result)
 	fmt.Println(len(result))
 
-	// Se c'è solo un'istanza attiva, se è il nodo stesso crea il DHT Chord, se non è lui
+	// Unica istanza attiva, se è il nodo stesso crea la DHT Chord, se non è lui
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(result) == 1 {
 		if result[0] == *addressPtr {
@@ -193,7 +192,7 @@ waitLB:
 			goto waitLB
 		}
 	} else {
-		// Se c'è un'altra istanza attiva viene contattato un altro nodo random per fare la Join
+		// Se c'è più di un'istanza attiva viene contattato un altro nodo random per fare la Join
 		*joinPtr = result[rand.Intn(len(result))]
 		for {
 			if *joinPtr == *addressPtr {
