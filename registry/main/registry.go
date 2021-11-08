@@ -85,6 +85,7 @@ func sendTerminatingSignal(ip string) {
 	json.NewEncoder(buf).Encode(body)
 	url := "http://" + ip + utils.HEARTBEAT_PORT
 	req, _ := http.NewRequest("POST", url, buf)
+	req.Close = true
 
 	client := &http.Client{}
 	res, e := client.Do(req)
