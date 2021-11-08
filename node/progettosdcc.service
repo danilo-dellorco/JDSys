@@ -3,17 +3,17 @@ Description=Simple systemd service for progetto-sdcc application setup
 
 [Service]
 Type=simple
-EnvironmentFile=/home/ec2-user/progetto-sdcc/src/server/env
-WorkingDirectory=/home/ec2-user/progetto-sdcc/src/server
-ExecStart=/bin/bash /home/ec2-user/progetto-sdcc/src/server/main/run.sh
-ExecStartPre=/usr/bin/go build /home/ec2-user/progetto-sdcc/src/server/main/server.go	
+EnvironmentFile=/home/ec2-user/go/src/env
+WorkingDirectory=/home/ec2-user/go/src
+ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/node/run.sh
+ExecStartPre=/usr/bin/git clone --branch=jacopo https://www.github.com/danilo-dellorco/progetto-sdcc /home/ec2-user/go/src/progetto-sdcc/
+ExecStartPre=/usr/bin/sleep 10
 
 [Install]
 WantedBy=multi-user.target
 
-#1) copiare il sorgente sul server: git clone https://www.github.com/danilo-dellorco/progetto-sdcc nella directory ec2-user
-#2) copiare il servizio in progettosdcc.service in /etc/systemd/system
-#3) avviare il servizio: 
+#1) copiare il servizio progettosdcc.service in /etc/systemd/system
+#2) avviare il servizio: 
 	#sudo systemctl daemon-reload
 	#sudo systemctl start progettosdcc.service
 	#sudo systemctl enable progettosdcc.service

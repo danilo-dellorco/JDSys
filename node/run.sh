@@ -1,2 +1,3 @@
 #!/bin/sh
-sudo go run /home/ec2-user/progetto-sdcc/src/server/main/server.go
+cd /home/ec2-user/go/src/progetto-sdcc/node/main
+sudo go run node.go 10.0.0.64
