@@ -14,6 +14,7 @@ import (
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
+	nodeRPC "progetto-sdcc/node/rpc"
 	"progetto-sdcc/utils"
 	"time"
 )
@@ -29,18 +30,17 @@ func main() {
 		fmt.Println("Wrong usage: Specify registry private IP address")
 		return
 	}
+	//testGetRPC()
+	//testPutRPC()
+	//testUpdateRPC()
+	//testDeleteRPC()
 
-	// TODO invece che aspettare 40 secondi forse dopo aver farto partire il listener degli heartbeat
-	// possiamo inizializzare il database locale invece di fare una sleep facciamo tutta la config locale che comunque
-	// ci mette tempo!!
-	InitHealthyNode()
-	InitChordDHT()
-	//service := InitServiceRPC()
-
-	//rpc.Register(service)
-	//rpc.HandleHTTP()
-	//service.ListenHttpConnection()
-
+	/*
+		InitHealthyNode()
+		InitChordDHT()
+	*/
+	mongoClient = mongo.InitLocalSystem()
+	InitServiceRPC()
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
 	for {
@@ -214,9 +214,17 @@ waitLB:
 }
 
 /*
-func InitServiceRPC() *RPCservice {
-	service := new(RPCservice)
-	service.node = *me
-	return service
-}
+Inizializza il listener delle chiamate RPC. Và invocata dopo aver inizializzato sia Mongo che Chord
 */
+func InitServiceRPC() {
+	rpcServ := new(nodeRPC.RPCservice)
+	rpcServ.Db = mongoClient
+	//rpcServ.Node = me
+	rpc.Register(rpcServ)
+	rpc.HandleHTTP()
+	l, e := net.Listen("tcp", utils.RPC_PORT)
+	if e != nil {
+		log.Fatal("listen error:", e)
+	}
+	go http.Serve(l, nil)
+}

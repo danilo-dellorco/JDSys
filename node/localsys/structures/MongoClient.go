@@ -2,6 +2,7 @@ package structures
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -74,6 +75,7 @@ func (cli *MongoClient) CloseConnection() {
 Ritorna una entry specificando la sua chiave
 */
 func (cli *MongoClient) GetEntry(key string) *MongoEntry {
+	fmt.Println("Searching for:", key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
 		cli.downloadEntryFromS3(key)
@@ -82,16 +84,19 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
 		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
 	}
+	fmt.Println("prima1")
 
 	coll := cli.Collection
 	var result bson.M
+	fmt.Println("prima1")
 	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
-	fmt.Println(result)
+	fmt.Println("dopo")
+	entry := MongoEntry{}
+
 	if err != nil {
 		fmt.Println("Get Error:", err)
-		return nil
+		return &entry
 	}
-	entry := MongoEntry{}
 	id := result[ID].(string)
 	value := result[VALUE].(string)
 	timest := result[TIME].(primitive.DateTime)
@@ -152,7 +157,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 		}
 		return err
 	}
-	fmt.Println("Put: Entry {" + key + "} inserita correttamente nel database")
+	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
 	return nil
 }
 
@@ -160,7 +165,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
 Viene inoltre aggiornato il timestamp di quell'entry
 */
-func (cli *MongoClient) UpdateEntry(key string, newValue string) {
+func (cli *MongoClient) UpdateEntry(key string, newValue string) error {
 	old := bson.D{{ID, key}}
 	oldValue := cli.GetEntry(key).Value
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
@@ -168,28 +173,30 @@ func (cli *MongoClient) UpdateEntry(key string, newValue string) {
 	_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 	fmt.Println("Update:", key+", changed value from", oldValue, "to", newValue)
+	return nil
 }
 
 /*
 Cancella un'entry dal database, specificandone la chiave
 */
-func (cli *MongoClient) DeleteEntry(key string) {
+func (cli *MongoClient) DeleteEntry(key string) error {
 	coll := cli.Collection
 	entry := bson.D{{ID, key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
 	if err != nil {
 		fmt.Println("Delete Error:", err)
-		return
+		return err
 	}
 
 	if result.DeletedCount == 1 {
 		fmt.Println("Delete: Cancellata", key)
-		return
+		return nil
 	}
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
+	return errors.New("Entry Not Found")
 }
 
 /*
