@@ -63,7 +63,7 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 	connection.Read(bufferFileName)
 	fileName := strings.Trim(string(bufferFileName), ":")
 
-	newFile, err := os.Create("home/ec2-user/csv/" + fileName)
+	newFile, err := os.Create("/home/ec2-user/csv/" + fileName)
 
 	if err != nil {
 		panic(err)
