@@ -11,6 +11,8 @@ import (
 Unisce le Entry tenendo in caso di conflitti sempre quella piu recente
 */
 func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
+	fmt.Println("Merging Database Entries...")
+
 	var mergedEntries []MongoEntry
 
 	for i := 0; i < len(local); i++ {
@@ -36,6 +38,7 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 			mergedEntries = append(mergedEntries, u)
 		}
 	}
+	fmt.Println("Entries Merged")
 	return mergedEntries
 }
 
@@ -43,6 +46,7 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 Ottiene una lista di Entry partendo da un file CSV
 */
 func ParseCSV(file string) []MongoEntry {
+	fmt.Println("Parsing CSV:", file)
 	csvFile, err := os.Open(file)
 	if err != nil {
 		fmt.Println("ParseCSV Error:", err)
@@ -68,5 +72,6 @@ func ParseCSV(file string) []MongoEntry {
 		entryList = append(entryList, entry)
 	}
 	defer csvFile.Close()
+	fmt.Println("CSV Parsed correctly")
 	return entryList
 }

@@ -29,10 +29,6 @@ func main() {
 		fmt.Println("Wrong usage: Specify registry private IP address")
 		return
 	}
-	//testGetRPC()
-	//testPutRPC()
-	//testUpdateRPC()
-	//testDeleteRPC()
 
 	InitHealthyNode()
 	InitChordDHT()
@@ -146,8 +142,7 @@ func InitHealthyNode() {
 	// Inizia a ricevere gli HeartBeat
 	go StartHeartBeatListener()
 
-	// Inizia a configurare il sistema di storage locale
-	// TODO decommentare
+	// Configura il sistema di storage locale
 	mongoClient = mongo.InitLocalSystem()
 
 	// Attende di diventare healthy per il Load Balancer
