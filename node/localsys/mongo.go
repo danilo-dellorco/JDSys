@@ -27,18 +27,18 @@ func InitLocalSystem() structures.MongoClient {
 	*/
 
 	// ***************** TEST *********************
-	/*
-		client.PutEntry("TestKey", "TestValue")
-		client.PutEntry("TestKey1", "TestValue1")
-		client.PutEntry("TestKey2", "TestValue2")
-		client.PutEntry("TestKey3", "TestValue3")
-		client.CheckRarelyAccessed()
-		client.GetEntry("TestKey")
-		client.GetEntry("TestKey1")
-		client.GetEntry("TestKey2")
-		client.GetEntry("TestKey3")
-		client.CloseConnection()
-	*/
+
+	client.PutEntry("TestKey", "TestValue")
+	client.PutEntry("TestKey1", "TestValue1")
+	client.PutEntry("TestKey2", "TestValue2")
+	client.PutEntry("TestKey3", "TestValue3")
+	//client.CheckRarelyAccessed()
+	client.GetEntry("TestKey")
+	client.GetEntry("TestKey1")
+	client.GetEntry("TestKey2")
+	client.GetEntry("TestKey3")
+	//client.CloseConnection()
+
 	// ********************************************
 	fmt.Println("Done...")
 	return client
