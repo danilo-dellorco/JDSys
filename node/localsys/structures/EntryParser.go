@@ -52,7 +52,9 @@ func ParseCSV(file string) []MongoEntry {
 		fmt.Println("ParseCSV Error:", err)
 	}
 
-	csvLines, err := csv.NewReader(csvFile).ReadAll()
+	csvr := csv.NewReader(csvFile)
+	csvr.FieldsPerRecord = -1
+	csvLines, err := csvr.ReadAll()
 	if err != nil {
 		fmt.Println("ReadCSV Error:", err)
 	}
