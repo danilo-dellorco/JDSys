@@ -68,4 +68,6 @@ func SendUpdate(cli structures.MongoClient, address string) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
 	communication.StartSender(file, address)
+	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+	utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 }
