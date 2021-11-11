@@ -45,12 +45,12 @@ Ottiene una lista di Entry partendo da un file CSV
 func ParseCSV(file string) []MongoEntry {
 	csvFile, err := os.Open(file)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("ParseCSV Error:", err)
 	}
 
 	csvLines, err := csv.NewReader(csvFile).ReadAll()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("ReadCSV Error:", err)
 	}
 
 	var entryList []MongoEntry
