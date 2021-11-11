@@ -62,6 +62,8 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 
 	connection.Read(bufferFileName)
 	fileName := strings.Trim(string(bufferFileName), ":")
+	fmt.Println("porca maria")
+	fmt.Println(fileName)
 
 	newFile, err := os.Create(utils.UPDATES_RECEIVE_PATH + fileName)
 
