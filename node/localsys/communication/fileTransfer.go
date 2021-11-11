@@ -54,18 +54,12 @@ Utility per ricevere un file tramite il canale
 */
 func receiveFile(connection net.Conn, fileChannel chan string) {
 	fmt.Println("A client connected, start receiving the file name and file size")
-	bufferFileName := make([]byte, 64)
 	bufferFileSize := make([]byte, 10)
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
-	connection.Read(bufferFileName)
-	fileName := strings.Trim(string(bufferFileName), ":")
-	fmt.Println("porca maria")
-	fmt.Println(fileName)
-
-	newFile, err := os.Create(utils.UPDATES_RECEIVE_PATH + fileName)
+	newFile, err := os.Create(utils.UPDATES_RECEIVE_FILE)
 
 	if err != nil {
 		fmt.Printf("failed to create file %q, %v", newFile, err)

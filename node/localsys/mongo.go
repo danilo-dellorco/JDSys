@@ -67,6 +67,5 @@ Esporta il file CSV e lo invia al nodo remoto
 func SendUpdate(cli structures.MongoClient, address string) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
-
 	communication.StartSender(file, address)
 }
