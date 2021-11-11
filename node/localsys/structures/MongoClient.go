@@ -234,6 +234,7 @@ func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
 Esporta una collezione, scrivendola su un file csv
 */
 func (cli *MongoClient) ExportCollection(filename string) {
+	fmt.Println("Exporting Collection to CSV...")
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
 	arg2 := "--db=" + DB_NAME
@@ -247,6 +248,7 @@ func (cli *MongoClient) ExportCollection(filename string) {
 		fmt.Println(err.Error())
 		return
 	}
+	fmt.Println("Collection exported succesfully to", filename)
 }
 
 /*
@@ -335,6 +337,7 @@ Goroutine in attesa di ricevere aggiornamenti remoti. Ogni volta che si riceve u
 nodo remoto viene aggiornato il database locale.
 */
 func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string) {
+	fmt.Println("Updating Collections")
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
@@ -344,7 +347,7 @@ func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string)
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
-	fmt.Println("Local DB ReceivedCorrectly")
+	fmt.Println("Local DB Updated Correctly")
 }
 
 /*
@@ -357,7 +360,7 @@ func (cli *MongoClient) CheckRarelyAccessed() {
 	var results []bson.M
 
 	if err = cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
+		log.Fatal("Cursor Error:", err)
 	}
 	fmt.Println("\n===== Check Rarely Accessed Files =====")
 	for _, result := range results {
