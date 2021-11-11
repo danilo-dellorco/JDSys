@@ -66,9 +66,10 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 	newFile, err := os.Create(utils.UPDATES_RECEIVE_PATH + fileName)
 
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to create file %q, %v", newFile, err)
+		return
 	}
-	defer newFile.Close()
+
 	var receivedBytes int64
 
 	for {
@@ -80,6 +81,7 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 		io.CopyN(newFile, connection, BUFFERSIZE)
 		receivedBytes += BUFFERSIZE
 	}
+	defer newFile.Close()
 	fmt.Println("Received file completely!")
 	fileChannel <- "rcvd"
 }
