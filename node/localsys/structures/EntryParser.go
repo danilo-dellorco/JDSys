@@ -47,7 +47,6 @@ func ParseCSV(file string) []MongoEntry {
 	if err != nil {
 		fmt.Println(err)
 	}
-	defer csvFile.Close()
 
 	csvLines, err := csv.NewReader(csvFile).ReadAll()
 	if err != nil {
@@ -68,5 +67,6 @@ func ParseCSV(file string) []MongoEntry {
 		entry := MongoEntry{Key: line[0], Value: line[1], Timest: tVal, LastAcc: aVal, Conflict: false}
 		entryList = append(entryList, entry)
 	}
+	defer csvFile.Close()
 	return entryList
 }

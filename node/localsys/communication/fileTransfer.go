@@ -17,7 +17,7 @@ const BUFFERSIZE = 1024
 Goroutine in cui ogni nodo è in attesa di connessioni. Quando viene contattato
 */
 func StartReceiver(fileChannel chan string) {
-	server, err := net.Listen("tcp", "localhost:27001")
+	server, err := net.Listen("tcp", ":4444")
 	if err != nil {
 		fmt.Println("Error listetning: ", err)
 		os.Exit(1)
@@ -54,21 +54,18 @@ Utility per ricevere un file tramite il canale
 */
 func receiveFile(connection net.Conn, fileChannel chan string) {
 	fmt.Println("A client connected, start receiving the file name and file size")
-	bufferFileName := make([]byte, 64)
 	bufferFileSize := make([]byte, 10)
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
-	connection.Read(bufferFileName)
-	fileName := strings.Trim(string(bufferFileName), ":")
-
-	newFile, err := os.Create("local/" + fileName)
+	newFile, err := os.Create(utils.UPDATES_RECEIVE_FILE)
 
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to create file %q, %v", newFile, err)
+		return
 	}
-	defer newFile.Close()
+
 	var receivedBytes int64
 
 	for {
@@ -80,6 +77,7 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 		io.CopyN(newFile, connection, BUFFERSIZE)
 		receivedBytes += BUFFERSIZE
 	}
+	defer newFile.Close()
 	fmt.Println("Received file completely!")
 	fileChannel <- "rcvd"
 }
