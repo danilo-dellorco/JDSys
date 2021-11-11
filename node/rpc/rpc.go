@@ -11,8 +11,8 @@ import (
 )
 
 /*
-Pseudo-Interfaccia che verrà registrata dal server in modo tale che il client possa invocare i metodi tramite RPC
-ciò che si registra realmente è un oggetto che prevede l'implementazione di quei metodi specifici
+Interfaccia registrata dal nodo in modo tale che il client possa invocare i metodi tramite RPC
+Ciò che poi si registra realmente è un oggetto che ha l'implementazione dei precisi metodi offerti
 */
 type RPCservice struct {
 	Node chord.ChordNode
@@ -20,7 +20,7 @@ type RPCservice struct {
 }
 
 /*
-Struttura per l'RPC effettiva dopo il
+Struttura per l'RPC effettiva
 */
 type ImplArgs struct {
 	Key   string
@@ -197,6 +197,11 @@ func (s *RPCservice) DeleteImpl(args *Args1, reply *string) error {
 	}
 	return nil
 }
+
+/*
+Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per la terminazione
+Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati
+*/
 
 func (s *RPCservice) TerminateInstanceRPC(args *Args1, reply *string) error {
 	addr := s.Node.GetSuccessor().GetIpAddr()

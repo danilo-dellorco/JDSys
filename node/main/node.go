@@ -32,7 +32,7 @@ func main() {
 
 	InitHealthyNode()
 	InitChordDHT()
-	InitServiceRPC()
+	StartApplication()
 	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
 Loop:
 	for {
@@ -57,32 +57,11 @@ Loop:
 	select {}
 }
 
-/*type term_message struct {
-	Status string
-}*/
-
 /*
 Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
 */
 func terminate_handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Homepage")
-	/*if r.Method == "POST" {
-		fmt.Println("Ricevuta Richiesta di Post!")
-		var m term_message
-		err := json.NewDecoder(r.Body).Decode(&m)
-		if err != nil {
-			panic(err)
-		}
-		status := m.Status
-		if status == "terminating" {
-
-			// Invio al nodo successore l'intero database del nodo in terminazione
-			fmt.Println("Node Scheduled to Terminating...")
-			succ := me.GetSuccessor()
-			ip := succ.GetIpAddr()
-			mongo.SendUpdate(mongoClient, ip)
-		}
-	}*/
 }
 
 /*
@@ -111,8 +90,8 @@ func GetOutboundIP() net.IP {
 /*
 Permette di instaurare una connessione HTTP con il server all'indirizzo specificato.
 */
-func HttpConnect(serverAddress string) (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", serverAddress+":1234")
+func HttpConnect(registryAddr string) (*rpc.Client, error) {
+	client, err := rpc.DialHTTP("tcp", registryAddr+utils.REGISTRY_PORT)
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
@@ -122,11 +101,11 @@ func HttpConnect(serverAddress string) (*rpc.Client, error) {
 /*
 Permette al nodo di inserirsi nell'anello chord contattando il server specificato
 */
-func JoinDHT(serverAddress string) []string {
+func JoinDHT(registryAddr string) []string {
 	args := EmptyArgs{}
 	var reply []string
 
-	client, _ := HttpConnect(serverAddress)
+	client, _ := HttpConnect(registryAddr)
 	err := client.Call("DHThandler.JoinRing", args, &reply)
 	if err != nil {
 		log.Fatal("RPC error: ", err)
@@ -148,24 +127,26 @@ func InitHealthyNode() {
 	// Attende di diventare healthy per il Load Balancer
 	fmt.Println("Waiting for ELB Health Checking...")
 	time.Sleep(utils.NODE_HEALTHY_TIME)
-	fmt.Println("EC2 Node Up & Running")
+	fmt.Println("EC2 Node Up & Running!")
 }
 
+/*
+Permette al nodo di entrare a far parte della DHT Chord in base alle informazioni ottenute dal Service Registry.
+Inizia anche due routine per aggiornamento periodico delle FT del nodo stesso e degli altri nodi della rete
+*/
 func InitChordDHT() {
-	fmt.Println("Initializing Chord DHT")
+	fmt.Println("Initializing Chord DHT...")
+
 	// Setup dei Flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
 	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
-	port := ":4567"
 	flag.Parse()
 
 	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
 	*addressPtr = GetOutboundIP().String()
 	me = new(chord.ChordNode)
 
-	// Controlla le Istanze attive contattando il Service Registry
-
-	// Continua finchè c'è almeno una istanza attiva
+	// Controlla le istanze attive contattando il Service Registry per entrare nella rete
 waitLB:
 	result := JoinDHT(os.Args[1])
 	for {
@@ -176,13 +157,12 @@ waitLB:
 		}
 	}
 	fmt.Println(result)
-	fmt.Println(len(result))
 
 	// Unica istanza attiva, se è il nodo stesso crea la DHT Chord, se non è lui
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(result) == 1 {
 		if result[0] == *addressPtr {
-			me = chord.Create(*addressPtr + port)
+			me = chord.Create(*addressPtr + utils.CHORD_PORT)
 		} else {
 			goto waitLB
 		}
@@ -196,18 +176,20 @@ waitLB:
 				break
 			}
 		}
-		me, _ = chord.Join(*addressPtr+port, *joinPtr+port)
+		me, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 	}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
-	fmt.Printf("Port used: %s.\n", port)
+	fmt.Printf("Port used: %s.\n", utils.CHORD_PORT)
 	fmt.Println("Chord Node Started Succesfully")
 }
 
 /*
-Inizializza il listener delle chiamate RPC. Và invocata dopo aver inizializzato sia Mongo che Chord
+Inizializza il listener delle chiamate RPC per il funzionamento del sistema di storage distribuito.
+Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da poter gestire correttamente la comunicazione
+tra i nodi del sistema, inclusa replicazione e migrazione dei dati verso il Cloud Provider
 */
-func InitServiceRPC() {
+func StartApplication() {
 	rpcServ := new(nodeRPC.RPCservice)
 	rpcServ.Db = mongoClient
 	rpcServ.Node = *me
