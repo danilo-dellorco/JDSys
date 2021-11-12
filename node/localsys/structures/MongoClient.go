@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"progetto-sdcc/registry/services"
 	"progetto-sdcc/utils"
@@ -84,13 +85,10 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
 		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
 	}
-	fmt.Println("prima1")
 
 	coll := cli.Collection
 	var result bson.M
-	fmt.Println("prima1")
 	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
-	fmt.Println("dopo")
 	entry := MongoEntry{}
 
 	if err != nil {
@@ -234,7 +232,6 @@ func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
 Esporta una collezione, scrivendola su un file csv
 */
 func (cli *MongoClient) ExportCollection(filename string) {
-	fmt.Println("Exporting Collection to CSV...")
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
 	arg2 := "--db=" + DB_NAME
@@ -248,7 +245,6 @@ func (cli *MongoClient) ExportCollection(filename string) {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println("Collection exported succesfully to", filename)
 }
 
 /*
@@ -333,11 +329,10 @@ func (cli *MongoClient) downloadEntryFromS3(key string) {
 }
 
 /*
-Goroutine in attesa di ricevere aggiornamenti remoti. Ogni volta che si riceve un CSV da un
-nodo remoto viene aggiornato il database locale.
+Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
+Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.
 */
 func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string) {
-	fmt.Println("Updating Collections")
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
@@ -347,34 +342,38 @@ func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string)
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
-	fmt.Println("Local DB Updated Correctly")
+	fmt.Println("Local DB ReceivedCorrectly")
 }
 
 /*
-Routine che periodicamente controlla tutte le entry per vedere se è possibile
+Routine che ogni ora controlla tutte le entry per vedere se è possibile
 effettuare una migrazione delle risorse verso il cloud S3
 */
 func (cli *MongoClient) CheckRarelyAccessed() {
-	opts := options.Find().SetSort(bson.D{{"_id", 1}})
-	cursor, err := cli.Collection.Find(context.TODO(), bson.D{}, opts)
-	var results []bson.M
+	for {
+		time.Sleep(time.Hour)
+		opts := options.Find().SetSort(bson.D{{"_id", 1}})
+		cursor, err := cli.Collection.Find(context.TODO(), bson.D{}, opts)
+		var results []bson.M
 
-	if err = cursor.All(context.TODO(), &results); err != nil {
-		log.Fatal("Cursor Error:", err)
-	}
-	fmt.Println("\n===== Check Rarely Accessed Files =====")
-	for _, result := range results {
-		key := result[ID].(string)
-		entry := cli.ReadEntry(key)
-		if entry != nil {
-			timeNow, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
-			diff := timeNow.Sub(entry.LastAcc)
-			fmt.Println("Key", key, "non-accessed since:", diff)
-			if diff >= utils.RARELY_ACCESSED_TIME {
-				fmt.Println("Elemento Non acceduto da tanto, Migrazione su cloud...")
-				cli.uploadToS3(entry.Key)
+		if err = cursor.All(context.TODO(), &results); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("\n===== Check Rarely Accessed Files =====")
+		for _, result := range results {
+			key := result[ID].(string)
+			entry := cli.ReadEntry(key)
+			if entry != nil {
+				timeNow, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
+				diff := timeNow.Sub(entry.LastAcc)
+				fmt.Println("Key", key, "non-accessed since:", diff)
+				if diff >= utils.RARELY_ACCESSED_TIME {
+					fmt.Println("Elemento Non acceduto da tanto, Migrazione su cloud...")
+					cli.uploadToS3(entry.Key)
+				}
 			}
 		}
+		fmt.Print("=======================\n\n")
 	}
-	fmt.Print("=======================\n\n")
+
 }

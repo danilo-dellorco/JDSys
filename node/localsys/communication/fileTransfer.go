@@ -14,38 +14,36 @@ import (
 const BUFFERSIZE = 1024
 
 /*
-Goroutine in cui ogni nodo è in attesa di connessioni. Quando viene contattato
+Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi
 */
 func StartReceiver(fileChannel chan string) {
 	server, err := net.Listen("tcp", ":4444")
 	if err != nil {
-		fmt.Println("Error listetning: ", err)
+		fmt.Println("Error listening: ", err)
 		os.Exit(1)
 	}
 	defer server.Close()
-	fmt.Println("Server started! Waiting for connections...")
 	for {
 		connection, err := server.Accept()
 		if err != nil {
 			fmt.Println("Error: ", err)
 			os.Exit(1)
 		}
-		fmt.Println("Client connected")
+		fmt.Println("Node connected!")
 		receiveFile(connection, fileChannel)
 	}
 }
 
 /*
-Il ricevente contatta il mittente per ottenere il file
-nell'anello quindi il nodo contatta il suo successore per chiedere le sue entry
+Apre la connessione verso un altro nodo per trasmettere un file
 */
 func StartSender(filename string, address string) {
-	fmt.Println("Start Sending:", filename)
 	connection, err := net.Dial("tcp", address+utils.UPDATES_PORT)
 	if err != nil {
 		panic(err)
 	}
 	defer connection.Close()
+	fmt.Println("Ready to send DB export...")
 	sendFile(connection, filename)
 }
 
@@ -53,7 +51,8 @@ func StartSender(filename string, address string) {
 Utility per ricevere un file tramite il canale
 */
 func receiveFile(connection net.Conn, fileChannel chan string) {
-	fmt.Println("A client connected, start receiving the file name and file size")
+	fmt.Println("Start receiving the filesize...")
+	var receivedBytes int64
 	bufferFileSize := make([]byte, 10)
 
 	connection.Read(bufferFileSize)
@@ -62,12 +61,9 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 	newFile, err := os.Create(utils.UPDATES_RECEIVE_FILE)
 
 	if err != nil {
-		fmt.Printf("failed to create file %q, %v", newFile, err)
-		return
+		panic(err)
 	}
-
-	var receivedBytes int64
-
+	fmt.Println("Start receiving file...")
 	for {
 		if (fileSize - receivedBytes) < BUFFERSIZE {
 			io.CopyN(newFile, connection, (fileSize - receivedBytes))
@@ -78,7 +74,7 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 		receivedBytes += BUFFERSIZE
 	}
 	defer newFile.Close()
-	fmt.Println("Received file completely!")
+	fmt.Println("File received correctly!")
 	fileChannel <- "rcvd"
 }
 
@@ -86,8 +82,6 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 Utility per inviare un file tramite il canale
 */
 func sendFile(connection net.Conn, filename string) {
-	fmt.Println("Connected to the server!")
-	defer connection.Close()
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
@@ -100,12 +94,10 @@ func sendFile(connection net.Conn, filename string) {
 	}
 
 	fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
-	fileName := fillString(fileInfo.Name(), 64)
-	fmt.Println("Sending filename and filesize!")
+	fmt.Println("Start sending the filesize...")
 	connection.Write([]byte(fileSize))
-	connection.Write([]byte(fileName))
 	sendBuffer := make([]byte, BUFFERSIZE)
-	fmt.Println("Start sending file!")
+	fmt.Println("Start sending file...")
 	for {
 		_, err = file.Read(sendBuffer)
 		if err == io.EOF {
@@ -113,8 +105,7 @@ func sendFile(connection net.Conn, filename string) {
 		}
 		connection.Write(sendBuffer)
 	}
-	fmt.Println("File has been sent, closing connection!")
-	return
+	fmt.Println("File send correctly!")
 }
 
 /*

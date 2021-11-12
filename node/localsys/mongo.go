@@ -8,49 +8,35 @@ import (
 )
 
 /*
-Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
-i listener e le routine per la gestione degli updates.
+Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando le varie
+routine per la ricezione degli update del DB dagli altri nodi e per la migrazione verso il cloud.
 */
 func InitLocalSystem() structures.MongoClient {
 	fmt.Println("Starting Mongo Local System...")
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
-	// Lancio della Goroutine che permette al nodo di restare in attesa perenne
+	// Lancio della Goroutine tramite cui il nodo si mette in ascolto per la ricezione di DB updates:
+	// 1. Tramite RPC da parte del Service Registry quando il nodo viene schedulato come "Terminating"
+	// 2. Tramite invio periodico da parte di ogni nodo al suo successore
 	go ListenUpdates(client)
 
-	/*[TODO] Fare gestione di quando inviare gli aggiornamenti
-	1) Ogni Tot Minuti per avere la consistenza finale
-	2) Quando un nodo ESCE dall'anello deve inviare il suo db per fare merge
-	==> SendUpdate non và chiamata nel main di default, ma invocata in risposta agli eventi (1) e (2)
-	SendUpdate(client)
-	*/
+	// Lancio della Goroutine tramite cui il nodo esporta periodicamente su S3 le entry accedute raramente
+	go client.CheckRarelyAccessed()
 
-	// ***************** TEST *********************
-	client.PutEntry("TestKey", "TestValue")
-	client.PutEntry("TestKey1", "TestValue1")
-	client.PutEntry("TestKey2", "TestValue2")
-	client.PutEntry("TestKey3", "TestValue3")
-	/*
-		//client.CheckRarelyAccessed()
-		client.GetEntry("TestKey")
-		client.GetEntry("TestKey1")
-		client.GetEntry("TestKey2")
-		client.GetEntry("TestKey3")
-		//client.CloseConnection()
-	*/
-	// ********************************************
-	fmt.Println("Done...")
+	/*[TODO] Fare gestione di quando inviare gli aggiornamenti
+	1) Ogni Tot Minuti per avere la consistenza finale*/
+
 	return client
 }
 
 /*
-Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
+Resta in ascolto per la ricezione di aggiornamenti del DB da altri nodi
 */
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
-	fmt.Println("Start Update Listening Service...")
+	fmt.Println("Start receiving DB update from other nodes on port:", utils.UPDATES_PORT)
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
@@ -68,4 +54,6 @@ func SendUpdate(cli structures.MongoClient, address string) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
 	communication.StartSender(file, address)
+	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+	utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 }

@@ -7,20 +7,26 @@ import (
 	"progetto-sdcc/utils"
 )
 
-type Args0 struct{}
+/*
+Parametri per le operazioni di Get e Delete
+*/
 type Args1 struct {
 	Key string
 }
+
+/*
+Parametri per le operazioni di Put e Update
+*/
 type Args2 struct {
 	Key   string
 	Value string
 }
 
 /*
-Instaura una connessione HTTP con il Load Balancer, specificando in input il suo url
+Permette di instaurare una connessione HTTP con il LB fornendo il suo nome DNS.
 */
-func HttpConnect(serverAddress string) (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", serverAddress+utils.RPC_PORT)
+func HttpConnect(lbAddr string) (*rpc.Client, error) {
+	client, err := rpc.DialHTTP("tcp", lbAddr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
@@ -36,127 +42,86 @@ func PrintMethodList() {
 	fmt.Println("============================================")
 }
 
-func Get() {
-	var key string
+/*
+Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
+*/
+func Get(lbAddr string) {
+	args := Args1{}
 	fmt.Print("Insert the Desired Key: ")
-	fmt.Scanln(&key)
-	fmt.Println(key)
-	testGetRPC(key)
+	fmt.Scanln(&args.Key)
+	fmt.Println(args.Key)
+
+	var reply *string
+
+	client, _ := HttpConnect(lbAddr)
+	err := client.Call("RPCservice.GetRPC", args, &reply)
+	if err != nil {
+		log.Fatal("RPC error: ", err)
+	}
+	fmt.Println("Risposta RPC:", *reply)
 }
 
-func Put() {
-	var key string
-	var value string
+/*
+Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
+*/
+func Put(lbAddr string) {
+	args := Args2{}
 	fmt.Print("Insert the Entry Key: ")
-	fmt.Scanln(&key)
+	fmt.Scanln(&args.Key)
+	fmt.Println(args.Key)
 
 	fmt.Print("Insert the Entry Value: ")
-	fmt.Scanln(&value)
+	fmt.Scanln(&args.Value)
+	fmt.Println(args.Value)
 
-	testPutRPC(key, value)
+	var reply *string
+
+	client, _ := HttpConnect(lbAddr)
+	err := client.Call("RPCservice.PutRPC", args, &reply)
+	if err != nil {
+		log.Fatal("RPC error: ", err)
+	}
+	fmt.Println("Risposta RPC:", *reply)
 }
 
-func Update() {
-	var key string
-	var value string
+/*
+Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
+*/
+func Update(lbAddr string) {
+	args := Args2{}
 	fmt.Print("Insert the Key of the Entry to Update: ")
-	fmt.Scanln(&key)
+	fmt.Scanln(&args.Key)
+	fmt.Println(args.Key)
 
-	fmt.Print("Insert the New Value: ")
-	fmt.Scanln(&value)
+	fmt.Print("Insert the new Entry Value: ")
+	fmt.Scanln(&args.Value)
+	fmt.Println(args.Value)
 
-	testUpdateRPC(key, value)
-}
+	var reply *string
 
-func Delete() {
-	var key string
-	fmt.Print("Insert the Key of the Entry to Delete: ")
-	fmt.Scanln(&key)
-	fmt.Println(key)
-	testDeleteRPC(key)
+	client, _ := HttpConnect(lbAddr)
+	err := client.Call("RPCservice.UpdateRPC", args, &reply)
+	if err != nil {
+		log.Fatal("RPC error: ", err)
+	}
+	fmt.Println("Risposta RPC:", *reply)
 }
 
 /*
-Funzione di Debug utile per testare le RPC in locale
+Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
-func testGetRPC(key string) {
-	addr := "localhost"
-
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
+func Delete(lbAddr string) {
 	args := Args1{}
-	args.Key = key
-	fmt.Println(key)
-	var reply string
-	err = client.Call("RPCservice.GetRPC", args, &reply)
-	if err != nil {
-		log.Fatal("GetRPC error:", err)
-	}
-	fmt.Println("Risposta RPC:", reply)
-}
+	fmt.Print("Insert the Key of the Entry to Delete: ")
+	fmt.Scanln(&args.Key)
+	fmt.Println(args.Key)
 
-/*
-Funzione di Debug utile per testare le RPC in locale. Sarà identico a come il client dovrà invocare Get e Put
-*/
-func testPutRPC(key string, value string) {
-	addr := "localhost"
+	var reply *string
 
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	client, _ := HttpConnect(lbAddr)
+	err := client.Call("RPCservice.DeleteRPC", args, &reply)
 	if err != nil {
-		log.Fatal("dialing:", err)
+		log.Fatal("RPC error: ", err)
 	}
-	args := Args2{}
-	args.Key = key
-	args.Value = value
-	var reply string
-	err = client.Call("RPCservice.PutRPC", args, &reply)
-	if err != nil {
-		log.Fatal("GetRPC error:", err)
-	}
-	fmt.Println("Risposta RPC:", reply)
-}
-
-/*
-Funzione di Debug utile per testare le RPC in locale. Sarà identico a come il client dovrà invocare Get e Put
-*/
-func testUpdateRPC(key string, value string) {
-	addr := "localhost"
-
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
-	args := Args2{}
-	args.Key = key
-	args.Value = value
-	var reply string
-	fmt.Println("UpdatingRPC")
-	err = client.Call("RPCservice.UpdateRPC", args, &reply)
-	if err != nil {
-		log.Fatal("GetRPC error:", err)
-	}
-	fmt.Println("Risposta RPC:", reply)
-}
-
-/*
-Funzione di Debug utile per testare le RPC in locale
-*/
-func testDeleteRPC(key string) {
-
-	addr := "localhost"
-
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
-	args := Args2{}
-	args.Key = key
-	var reply string
-	err = client.Call("RPCservice.DeleteRPC", args, &reply)
-	if err != nil {
-		log.Fatal("GetRPC error:", err)
-	}
-	fmt.Println("Risposta RPC:", reply)
+	fmt.Println("Risposta RPC:", *reply)
 }
