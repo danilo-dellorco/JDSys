@@ -8,7 +8,6 @@ import (
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
-	"time"
 )
 
 /*
@@ -222,19 +221,4 @@ func (s *RPCservice) TerminateInstanceRPC(args *Args1, reply *string) error {
 	mongo.SendUpdate(s.Db, addr)
 	*reply = "Instance Terminating"
 	return nil
-}
-
-/*
-Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione dei dati
-Non è una vera e propria RPC ma è invocato dal nodo stesso come un semplice metodo
---> Tramite metodo di RPCservice posso accedere agli oggetti ChordNode e MongoClient istanziati!
-*/
-
-func (s *RPCservice) SendPeriodicUpdates() {
-	for {
-		time.Sleep(time.Minute)
-		addr := s.Node.GetSuccessor().GetIpAddr()
-		fmt.Println("Sending DB export to my successor...")
-		mongo.SendUpdate(s.Db, addr)
-	}
 }

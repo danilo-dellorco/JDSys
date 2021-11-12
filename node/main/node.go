@@ -200,9 +200,24 @@ func StartApplication() {
 	}
 
 	//Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione
-	go rpcServ.SendPeriodicUpdates()
+	go SendPeriodicUpdates(rpcServ)
 
 	fmt.Println("\nApplication is ready to start!")
 	fmt.Println("Start Serving application request on port:", utils.RPC_PORT)
 	go http.Serve(l, nil)
+}
+
+/*
+Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione dei dati
+Non è una vera e propria RPC ma è invocato dal nodo stesso come un semplice metodo
+--> Tramite metodo di RPCservice posso accedere agli oggetti ChordNode e MongoClient istanziati!
+*/
+
+func SendPeriodicUpdates(s *nodeRPC.RPCservice) {
+	for {
+		time.Sleep(time.Minute)
+		addr := s.Node.GetSuccessor().GetIpAddr()
+		fmt.Println("Sending DB export to my successor...")
+		mongo.SendUpdate(s.Db, addr)
+	}
 }
