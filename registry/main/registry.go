@@ -62,8 +62,8 @@ Restituisce tutte le istanze healthy presenti
 */
 func checkActiveNodes() []services.Instance {
 	instances := services.GetActiveNodes()
-	fmt.Println("Healthy Instances:")
-	fmt.Println(instances)
+	//fmt.Println("Healthy Instances:")
+	//fmt.Println(instances)
 	return instances
 }
 
@@ -98,5 +98,6 @@ func sendTerminatingSignalRPC(ip string) {
 	if err != nil {
 		log.Fatal("GetRPC error:", err)
 	}
+	defer client.Close()
 	fmt.Println("Risposta RPC:", reply)
 }

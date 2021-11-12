@@ -93,6 +93,7 @@ func HttpConnect(registryAddr string) (*rpc.Client, error) {
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
+	defer client.Close()
 	return client, err
 }
 
@@ -154,7 +155,7 @@ waitLB:
 			break
 		}
 	}
-	fmt.Println(result)
+	//fmt.Println(result)
 
 	// Unica istanza attiva, se è il nodo stesso crea la DHT Chord, se non è lui
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
