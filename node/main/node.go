@@ -71,7 +71,7 @@ ed i segnali di terminazione dal service registry.
 func StartHeartBeatListener() {
 	fmt.Println("Start Listening Heartbeats from LB on port:", utils.HEARTBEAT_PORT)
 	http.HandleFunc("/", terminate_handler)
-	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
+	defer http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
 
 /*
@@ -95,6 +95,7 @@ func HttpConnect(registryAddr string) (*rpc.Client, error) {
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
+	defer client.Close()
 	return client, err
 }
 
@@ -156,7 +157,7 @@ waitLB:
 			break
 		}
 	}
-	fmt.Println(result)
+	//fmt.Println(result)
 
 	// Unica istanza attiva, se è il nodo stesso crea la DHT Chord, se non è lui
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
@@ -199,6 +200,7 @@ func StartApplication() {
 		log.Fatal("listen error:", e)
 	}
 
+	defer l.Close()
 	//Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione
 	go SendPeriodicUpdates(rpcServ)
 
