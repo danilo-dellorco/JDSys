@@ -45,7 +45,7 @@ func InitLocalSystem() structures.MongoClient {
 }
 
 /*
-Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
+Resta in ascolto per la ricezione di aggiornamenti del DB da altri nodi
 */
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)

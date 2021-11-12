@@ -70,7 +70,7 @@ func checkError(err error) {
 	}
 }
 
-/* Ritorna l'indirizzo del successore dellachiave nella DHT Chord.
+/* Ritorna l'indirizzo del successore della chiave nella DHT Chord.
 Il processo di lookup è iterativo. Iniziando da un nodo specificato (start)
 questa funzione richiede la finger table del nodo più vicino che precede la chiave,
 finchè il successore della stessa non viene identificato

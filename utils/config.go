@@ -5,10 +5,10 @@ import "time"
 // MongoDB Settings
 var CSV string = ".csv"
 var CLOUD_EXPORT_PATH string = "../localsys/communication/cloud/export/"
-var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
 var CLOUD_RECEIVE_PATH string = "../localsys/communication/cloud/receive/"
 var UPDATES_EXPORT_PATH string = "../localsys/communication/updates/export/"
 var UPDATES_RECEIVE_PATH string = "../localsys/communication/updates/receive/"
+var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
 var UPDATES_EXPORT_FILE string = UPDATES_EXPORT_PATH + "exported.csv"
 var UPDATES_RECEIVE_FILE string = UPDATES_RECEIVE_PATH + "received.csv"
 

@@ -331,8 +331,8 @@ func (cli *MongoClient) downloadEntryFromS3(key string) {
 }
 
 /*
-Goroutine in attesa di ricevere aggiornamenti remoti. Ogni volta che si riceve un CSV da un
-nodo remoto viene aggiornato il database locale.
+Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
+Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.
 */
 func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string) {
 	cli.ExportCollection(exportFile) // Dump del database Locale

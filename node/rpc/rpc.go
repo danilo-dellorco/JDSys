@@ -13,6 +13,10 @@ import (
 /*
 Interfaccia registrata dal nodo in modo tale che il client possa invocare i metodi tramite RPC
 Ciò che poi si registra realmente è un oggetto che ha l'implementazione dei precisi metodi offerti
+
+I metodi di Get,Put,Delete,Update vengono invocati tramite RPC dai client
+Ricevuta la richiesta, il nodo effettua il lookup per trovare chi mantiene la risorsa
+--> Seconda RPC verso l'effettivo nodo che gestisce la chiave cercata!
 */
 type RPCservice struct {
 	Node chord.ChordNode
@@ -49,12 +53,8 @@ Effettua la RPC per la Get di una Key.
  2) RPC effettiva di GET verso quel nodo chord
 */
 func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
-	fmt.Println("GetRPC called")
-
-	// [TODO] rimettere il lookup. addr:=localhost solo per testing in locale
-	//node := s.node
-	//addr, err := Lookup(utils.HashString(args.Key), node.GetIpAddress())
-	addr := "localhost"
+	fmt.Println("GetRPC called!")
+	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
@@ -62,7 +62,7 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	}
 
 	fmt.Println("Before Impl Call")
-	err = client.Call("RPCservice.GetImpl", args, &reply)
+	client.Call("RPCservice.GetImpl", args, &reply)
 	return nil
 }
 
@@ -73,19 +73,14 @@ Effettua la RPC per inserire un'entry nello storage.
 */
 func (s *RPCservice) PutRPC(args *Args2, reply *string) error {
 	fmt.Println("PutRPC Called!")
-
-	// [TODO] rimettere il lookup. addr:=localhost solo per testing in locale
-	//node := s.node
-	//addr, err := Lookup(utils.HashString(args.Key), node.GetIpAddress())
-	addr := "localhost"
+	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	err = client.Call("RPCservice.PutImpl", args, &reply)
-	fmt.Println("int:", *reply)
+	client.Call("RPCservice.PutImpl", args, &reply)
 	return nil
 }
 
@@ -96,19 +91,14 @@ Effettua la RPC per aggiornare un'entry nello storage.
 */
 func (s *RPCservice) UpdateRPC(args *Args2, reply *string) error {
 	fmt.Println("UpdateRPC Called!")
-
-	// [TODO] rimettere il lookup. addr:=localhost solo per testing in locale
-	//node := s.node
-	//addr, err := Lookup(utils.HashString(args.Key), node.GetIpAddress())
-	addr := "localhost"
+	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	err = client.Call("RPCservice.UpdateImpl", args, &reply)
-	fmt.Println("int:", *reply)
+	client.Call("RPCservice.UpdateImpl", args, &reply)
 	return nil
 }
 
@@ -119,18 +109,14 @@ Effettua la RPC per eliminare un'entry nello storage.
 */
 func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
 	fmt.Println("DeleteRPC called")
-
-	// [TODO] rimettere il lookup. addr:=localhost solo per testing in locale
-	//node := s.node
-	//addr, err := Lookup(utils.HashString(args.Key), node.GetIpAddress())
-	addr := "localhost"
+	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	err = client.Call("RPCservice.DeleteImpl", args, &reply)
+	client.Call("RPCservice.DeleteImpl", args, &reply)
 	return nil
 }
 
