@@ -33,5 +33,5 @@ var CHORD_FIX_INTERVAL time.Duration = 10 * time.Second            // Ogni quant
 var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
 var UPDATES_PORT string = ":4444"   // Porta su cui il nodo ascolta l'update mongo da altri nodi
 var RPC_PORT string = ":80"         // Porta su cui il nodo ascolta le chiamate RPC
-var REGISTRY_PORT string = "1234"   // Porta tramite cui il nodo instaura una connessione con il Service Registry
+var REGISTRY_PORT string = ":1234"  // Porta tramite cui il nodo instaura una connessione con il Service Registry
 var CHORD_PORT string = ":4567"     // Porta tramite cui il nodo riceve ed invia i messaggi necessari ad aggiornare la DHT Chord
