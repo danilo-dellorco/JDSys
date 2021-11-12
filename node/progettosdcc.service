@@ -1,14 +1,11 @@
 [Unit]
 Description=Simple systemd service for progetto-sdcc application setup
-StandardOutput=append:/home/ec2-user/log/output.log
-StandardError=append:/home/ec2-user/log/error.log
 
 [Service]
 Type=simple
 EnvironmentFile=/home/ec2-user/go/src/env
 WorkingDirectory=/home/ec2-user/go/src
 ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/node/run.sh
-Restart=always
 
 [Install]
 WantedBy=multi-user.target
