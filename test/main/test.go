@@ -34,7 +34,7 @@ func workload1(size float32) {
 func runGetQueries(num int) {
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
-		go Get(key, LB_ADDR)
+		go TestGet(key)
 	}
 }
 
@@ -42,6 +42,6 @@ func runPutQueries(num int) {
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
 		value := "test_value_" + strconv.Itoa(i)
-		go Put(key, value, LB_ADDR)
+		go TestPut(key, value)
 	}
 }
