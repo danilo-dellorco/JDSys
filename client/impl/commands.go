@@ -23,10 +23,10 @@ type Args2 struct {
 }
 
 /*
-Permette di instaurare una connessione HTTP con il LB fornendo il suo nome DNS.
+Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
 */
-func HttpConnect(lbAddr string) (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", lbAddr+utils.RPC_PORT)
+func HttpConnect() (*rpc.Client, error) {
+	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
@@ -45,83 +45,51 @@ func PrintMethodList() {
 /*
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
-func Get(lbAddr string) {
-	args := Args1{}
+func Get() {
+	var key string
 	fmt.Print("Insert the Desired Key: ")
-	fmt.Scanln(&args.Key)
-	fmt.Println(args.Key)
+	fmt.Scanln(&key)
 
-	var reply *string
-
-	client, _ := HttpConnect(lbAddr)
-	err := client.Call("RPCservice.GetRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	GetRPC(key)
 }
 
 /*
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
-func Put(lbAddr string) {
-	args := Args2{}
+func Put() {
+	var key string
+	var value string
 	fmt.Print("Insert the Entry Key: ")
-	fmt.Scanln(&args.Key)
-	fmt.Println(args.Key)
+	fmt.Scanln(&key)
 
 	fmt.Print("Insert the Entry Value: ")
-	fmt.Scanln(&args.Value)
-	fmt.Println(args.Value)
+	fmt.Scanln(&value)
 
-	var reply *string
-
-	client, _ := HttpConnect(lbAddr)
-	err := client.Call("RPCservice.PutRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	PutRPC(key, value)
 }
 
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
-func Update(lbAddr string) {
-	args := Args2{}
+func Update() {
+	var key string
+	var newValue string
 	fmt.Print("Insert the Key of the Entry to Update: ")
-	fmt.Scanln(&args.Key)
-	fmt.Println(args.Key)
+	fmt.Scanln(&key)
 
 	fmt.Print("Insert the new Entry Value: ")
-	fmt.Scanln(&args.Value)
-	fmt.Println(args.Value)
+	fmt.Scanln(&newValue)
 
-	var reply *string
-
-	client, _ := HttpConnect(lbAddr)
-	err := client.Call("RPCservice.UpdateRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	UpdateRPC(key, newValue)
 }
 
 /*
 Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
-func Delete(lbAddr string) {
-	args := Args1{}
+func Delete() {
+	var key string
 	fmt.Print("Insert the Key of the Entry to Delete: ")
-	fmt.Scanln(&args.Key)
-	fmt.Println(args.Key)
+	fmt.Scanln(&key)
 
-	var reply *string
-
-	client, _ := HttpConnect(lbAddr)
-	err := client.Call("RPCservice.DeleteRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	DeleteRPC(key)
 }

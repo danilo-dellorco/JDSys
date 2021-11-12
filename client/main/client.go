@@ -1,28 +1,17 @@
 package main
 
+// TODO implementare l'operazione di Append
+// TODO inserire la sovrascrittura nel Put ( che diventa quindi anche update )
+// TODO fare la gestione della semantica at-least-once a livello del client
+// TODO fare i testing per i due carichi di lavoro visti
+
 import (
 	"fmt"
 	"io"
-	"os"
 	"progetto-sdcc/client/impl"
-	"progetto-sdcc/utils"
 )
 
-// Mantiene l'indirizzo DNS del Load Balancer
-var lbAddr string
-
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Printf("Wrong usage: Specify LB DNS name with \"d\" or \"j\"\n")
-	}
-	// TODO rimuovere le differenze danilo / jacopo
-	user := os.Args[1]
-	if user == "d" {
-		lbAddr = utils.LB_DNS_NAME_D
-	} else {
-		lbAddr = utils.LB_DNS_NAME_J
-	}
-
 Loop:
 	for {
 		impl.PrintMethodList()
@@ -32,13 +21,13 @@ Loop:
 		_, err := fmt.Scan(&cmd)
 		switch {
 		case cmd == "1":
-			impl.Get(lbAddr)
+			impl.Get()
 		case cmd == "2":
-			impl.Put(lbAddr)
+			impl.Put()
 		case cmd == "3":
-			impl.Update(lbAddr)
+			impl.Update()
 		case cmd == "4":
-			impl.Delete(lbAddr)
+			impl.Delete()
 		case err == io.EOF:
 			break Loop
 		}
