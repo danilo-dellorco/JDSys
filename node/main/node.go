@@ -69,7 +69,7 @@ Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat de
 ed i segnali di terminazione dal service registry.
 */
 func StartHeartBeatListener() {
-	fmt.Println("Start Listening Messages on port:", utils.HEARTBEAT_PORT)
+	fmt.Println("Start Listening Heartbeats from LB on port:", utils.HEARTBEAT_PORT)
 	http.HandleFunc("/", terminate_handler)
 	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
@@ -180,8 +180,7 @@ waitLB:
 	}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
-	fmt.Printf("Port used: %s.\n", utils.CHORD_PORT)
-	fmt.Println("Chord Node Started Succesfully")
+	fmt.Println("Chord Node Started Succesfully!")
 }
 
 /*
@@ -199,5 +198,7 @@ func StartApplication() {
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
+	fmt.Println("\nApplication is ready to start!")
+	fmt.Println("Start Serving application request on port:", utils.RPC_PORT)
 	go http.Serve(l, nil)
 }

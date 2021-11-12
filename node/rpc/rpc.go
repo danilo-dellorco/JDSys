@@ -54,13 +54,15 @@ Effettua la RPC per la Get di una Key.
 */
 func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	fmt.Println("GetRPC called!")
-	//manca porta Chord, se non è questo il problema
-	//--> potrebbe essere che errore viene da connessione aperta con se stesso
-	//--> provare con check locale per vedere se chiave ce l'ho io, senno a questo punto faccio lookup
+
 	me := s.Node.GetIpAddress()
+
+	//porta 4567 per lookup di Chord
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	fmt.Println(addr)
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+
+	//porta 80 per RPC dell'applicazione
+	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
+	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
@@ -77,9 +79,15 @@ Effettua la RPC per inserire un'entry nello storage.
 */
 func (s *RPCservice) PutRPC(args *Args2, reply *string) error {
 	fmt.Println("PutRPC Called!")
-	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
 
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	me := s.Node.GetIpAddress()
+
+	//porta 4567 per lookup di Chord
+	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
+
+	//porta 80 per RPC dell'applicazione
+	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
+	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
@@ -95,9 +103,14 @@ Effettua la RPC per aggiornare un'entry nello storage.
 */
 func (s *RPCservice) UpdateRPC(args *Args2, reply *string) error {
 	fmt.Println("UpdateRPC Called!")
-	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
+	me := s.Node.GetIpAddress()
 
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	//porta 4567 per lookup di Chord
+	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
+
+	//porta 80 per RPC dell'applicazione
+	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
+	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
@@ -113,9 +126,14 @@ Effettua la RPC per eliminare un'entry nello storage.
 */
 func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
 	fmt.Println("DeleteRPC called")
-	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
+	me := s.Node.GetIpAddress()
 
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	//porta 4567 per lookup di Chord
+	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
+
+	//porta 80 per RPC dell'applicazione
+	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
+	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}

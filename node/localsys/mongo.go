@@ -40,7 +40,6 @@ func InitLocalSystem() structures.MongoClient {
 		//client.CloseConnection()
 	*/
 	// ********************************************
-	fmt.Println("Done...")
 	return client
 }
 
@@ -50,7 +49,7 @@ Resta in ascolto per la ricezione di aggiornamenti del DB da altri nodi
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
-	fmt.Println("Start Update Listening Service...")
+	fmt.Println("Start Receiving DB update from other nodes on port:", utils.UPDATES_PORT)
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {

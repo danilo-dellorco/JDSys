@@ -23,7 +23,6 @@ func StartReceiver(fileChannel chan string) {
 		os.Exit(1)
 	}
 	defer server.Close()
-	fmt.Println("Ready to receive DB export from other nodes...")
 	for {
 		connection, err := server.Accept()
 		if err != nil {
