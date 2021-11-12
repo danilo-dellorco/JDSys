@@ -57,9 +57,9 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	//manca porta Chord, se non è questo il problema
 	//--> potrebbe essere che errore viene da connessione aperta con se stesso
 	//--> provare con check locale per vedere se chiave ce l'ho io, senno a questo punto faccio lookup
-	me := s.Node.GetIpAddress() + utils.CHORD_PORT
-	addr, _ := chord.Lookup(utils.HashString(args.Key), me)
-
+	me := s.Node.GetIpAddress()
+	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
+	fmt.Println(addr)
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
