@@ -14,16 +14,11 @@ var UPDATES_RECEIVE_FILE string = UPDATES_RECEIVE_PATH + "received.csv"
 
 // AWS SDK Settings
 // TODO rimuovere le differenze jacopo/danilo
-var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
-var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
+var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
-var AWS_CRED_PATH_D string = "/home/danilo/.aws/credentials"
-var AWS_CRED_PATH_J string = "/home/jacopo/.aws/credentials"
-var AUTOSCALING_NAME_D string = "sdcc-autoscaling"
-var AUTOSCALING_NAME_J string = "sdcc-autoscaling"
-var BUCKET_NAME string = "sdcc-cloud-keys"
-var LB_DNS_NAME_D string = ""
-var LB_DNS_NAME_J string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
+var AUTOSCALING_NAME string = "sdcc-autoscaling"
+var BUCKET_NAME string = "sdcc-cloud-resources"
+var LB_DNS_NAME string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
 
 // Time Settings
 // TODO impostare questi parametri a valori reali
