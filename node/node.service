@@ -3,7 +3,7 @@ Description=Simple systemd service for progetto-sdcc application node setup
 
 [Service]
 Type=simple
-EnvironmentFile=/home/ec2-user/go/src/env
+EnvironmentFile=/home/ec2-user/go/src/progetto-sdcc/env
 WorkingDirectory=/home/ec2-user/go/src
 ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/node/run.sh
 
