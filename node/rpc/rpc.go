@@ -54,6 +54,11 @@ Effettua la RPC per la Get di una Key.
 */
 func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	fmt.Println("GetRPC called!")
+	//vediamo che stampa visto che ci vuole pure la porta
+	//se non è questo il problema proviamo a vedere se è perchè lookup deve essere verso altro nodo
+	//--> potrebbe essere che errore viene da connessione aperta con se stesso
+	//--> provare con check locale per vedere se chiave ce l'ho io, senno a questo punto faccio lookup
+	fmt.Println(s.Node.GetIpAddress())
 	addr, _ := chord.Lookup(utils.HashString(args.Key), s.Node.GetIpAddress())
 
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
