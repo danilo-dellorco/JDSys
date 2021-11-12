@@ -13,7 +13,6 @@ var UPDATES_EXPORT_FILE string = UPDATES_EXPORT_PATH + "exported.csv"
 var UPDATES_RECEIVE_FILE string = UPDATES_RECEIVE_PATH + "received.csv"
 
 // AWS SDK Settings
-// TODO rimuovere le differenze jacopo/danilo
 var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
 var AUTOSCALING_NAME string = "sdcc-autoscaling"

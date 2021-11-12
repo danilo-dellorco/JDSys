@@ -31,6 +31,23 @@ func workload1(size float32) {
 	go runPutQueries(numPut)
 }
 
+/*
+Esegue un test in cui il workload è composto:
+- 40% operazioni di Get
+- 40% operazioni di Put
+- 20% operazioni di Append
+E' possibile specificare tramite il parametro size il numero totali di query da eseguire.
+*/
+func workload2(size float32) {
+	numGet := int(PERC_40 * size)
+	numPut := int(PERC_40 * size)
+	numApp := int(PERC_20 * size)
+
+	go runGetQueries(numGet)
+	go runPutQueries(numPut)
+	go runAppendQueries(numApp)
+}
+
 func runGetQueries(num int) {
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
@@ -43,5 +60,13 @@ func runPutQueries(num int) {
 		key := "test_key_" + strconv.Itoa(i)
 		value := "test_value_" + strconv.Itoa(i)
 		go TestPut(key, value)
+	}
+}
+
+func runAppendQueries(num int) {
+	for i := 0; i < num; i++ {
+		//key := "test_key_" + strconv.Itoa(i)
+		//arg := "_test_arg_" + strconv.Itoa(i)
+		//go TestAppend(key, value)
 	}
 }
