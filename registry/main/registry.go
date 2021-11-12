@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,8 +11,18 @@ import (
 	"time"
 )
 
-type term_message struct {
-	Status string `json:"status"`
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
+		return
+	}
+	services.SetupUser()
+	go checkTerminatingNodes()
+	fmt.Printf("Server Waiting For Connection... \n")
+	service := InitializeService()
+	rpc.Register(service)
+	rpc.HandleHTTP()
+	log.Fatal(http.ListenAndServe(":1234", nil))
 }
 
 /*
@@ -77,25 +85,6 @@ func checkTerminatingNodes() {
 	}
 }
 
-func sendTerminatingSignal(ip string) {
-	fmt.Println("Sending Terminating Message to node:", ip)
-	body := &term_message{Status: "terminating"}
-	buf := new(bytes.Buffer)
-	json.NewEncoder(buf).Encode(body)
-	url := "http://" + ip + utils.HEARTBEAT_PORT
-	req, _ := http.NewRequest("POST", url, buf)
-	req.Close = true
-
-	client := &http.Client{}
-	res, e := client.Do(req)
-	if e != nil {
-		log.Fatal(e)
-	} else {
-		fmt.Println(res.StatusCode)
-	}
-	defer res.Body.Close()
-}
-
 func sendTerminatingSignalRPC(ip string) {
 	fmt.Println("Sending Terminating Message to node:", ip)
 	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
@@ -109,18 +98,4 @@ func sendTerminatingSignalRPC(ip string) {
 		log.Fatal("GetRPC error:", err)
 	}
 	fmt.Println("Risposta RPC:", reply)
-}
-
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
-		return
-	}
-	services.SetupUser()
-	go checkTerminatingNodes()
-	fmt.Printf("Server Waiting For Connection... \n")
-	service := InitializeService()
-	rpc.Register(service)
-	rpc.HandleHTTP()
-	log.Fatal(http.ListenAndServe(":1234", nil))
 }

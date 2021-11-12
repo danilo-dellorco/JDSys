@@ -21,6 +21,8 @@ var AWS_CRED_PATH_J string = "/home/jacopo/.aws/credentials"
 var AUTOSCALING_NAME_D string = "sdcc-autoscaling"
 var AUTOSCALING_NAME_J string = "sdcc-autoscaling"
 var BUCKET_NAME string = "sdcc-cloud-keys"
+var LB_DNS_NAME_D string = ""
+var LB_DNS_NAME_J string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
 
 // Time Settings
 var RARELY_ACCESSED_TIME time.Duration = 10                        // Dopo quanto tempo (ms) un'entry viene migrata sul cloud

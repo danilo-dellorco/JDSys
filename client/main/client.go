@@ -5,14 +5,21 @@ import (
 	"io"
 	"os"
 	"progetto-sdcc/client/impl"
+	"progetto-sdcc/utils"
 )
 
 func main() {
+	var lbAddr string
 	if len(os.Args) != 2 {
-		fmt.Printf("Usage: go run client.go LB_IP\n")
+		fmt.Printf("Wrong usage: Specify LB DNS name with \"d\" or \"j\"\n")
+	}
+	user := os.Args[1]
+	if user == "d" {
+		lbAddr = utils.LB_DNS_NAME_D
+	} else {
+		lbAddr = utils.LB_DNS_NAME_J
 	}
 
-	lbAddr := os.Args[1]
 Loop:
 	for {
 		impl.PrintMethodList()
