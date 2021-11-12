@@ -48,7 +48,7 @@ func StartSender(filename string, address string) {
 }
 
 /*
-Utility per ricevere un file tramite il canale
+Utility per ricevere un file tramite la connessione
 */
 func receiveFile(connection net.Conn, fileChannel chan string) {
 	fmt.Println("Start receiving the filesize...")
@@ -79,7 +79,7 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 }
 
 /*
-Utility per inviare un file tramite il canale
+Utility per inviare un file tramite la connessione
 */
 func sendFile(connection net.Conn, filename string) {
 	file, err := os.Open(filename)

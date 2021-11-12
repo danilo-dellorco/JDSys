@@ -12,6 +12,7 @@ import (
 	"os"
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/localsys"
+	"progetto-sdcc/node/localsys/communication"
 	"progetto-sdcc/node/localsys/structures"
 	nodeRPC "progetto-sdcc/node/rpc"
 	"progetto-sdcc/utils"
