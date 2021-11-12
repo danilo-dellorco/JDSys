@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-//TODO il ChordNode può mantenere un riferimento al MongoClient direttamente, viene assegnato in fase di startup in node.go!!
-
 /*
 Mantiene le informazioni riguardo un Nodo Chord
 */
@@ -494,7 +492,7 @@ func (node *ChordNode) notify(newPred NodeInfo) {
 	node.query(true, false, -1, &newPred)
 	//update predecessor
 	successor := node.query(false, false, 1, nil)
-	if successor.zero() { //TODO: so if you get here, you were probably the first node.
+	if successor.zero() {
 		node.query(true, false, 1, &newPred)
 	}
 	//notify applications
@@ -530,7 +528,7 @@ func (node *ChordNode) fix(which int) {
 	var targetId [sha256.Size]byte
 	copy(targetId[:sha256.Size], target(node.id, which)[:sha256.Size])
 	newip, err := node.lookup(targetId, successor.ipaddr)
-	if err != nil { //node failed: TODO make more robust
+	if err != nil {
 		checkError(err)
 		return
 	}

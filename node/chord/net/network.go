@@ -13,7 +13,6 @@ import (
 //It opens a connection to the Chord node with the IP address addr,
 //sends the message msg, and waits for a reply
 func Send(msg []byte, addr string) (reply []byte, err error) {
-	//TODO: return error if reply took too long
 
 	if addr == "" {
 		err = &PeerError{addr, nil}
@@ -43,7 +42,7 @@ func Send(msg []byte, addr string) (reply []byte, err error) {
 		return
 	}
 
-	reply = make([]byte, 100000) //TODO: use framing here
+	reply = make([]byte, 100000)
 	n, err := conn.Read(reply)
 	if err != nil {
 		return
@@ -118,7 +117,7 @@ func (node *ChordNode) send(msg []byte, addr string) (reply []byte, err error) {
 		node.connections[addr] = conn
 	}
 
-	reply = make([]byte, 100000) //TODO: use framing here
+	reply = make([]byte, 100000)
 	n, err := conn.Read(reply)
 	conn.SetDeadline(time.Now().Add(3 * time.Minute))
 	if err != nil {
@@ -171,7 +170,7 @@ func handleMessage(conn net.Conn, c chan []byte, c2 chan []byte) {
 	for {
 
 		//Create data buffer of type byte slice
-		data := make([]byte, 100000) //TODO: use framing here
+		data := make([]byte, 100000)
 		conn.SetDeadline(time.Now().Add(3 * time.Minute))
 		n, err := conn.Read(data)
 		if n >= 4095 {

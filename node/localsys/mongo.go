@@ -8,35 +8,28 @@ import (
 )
 
 /*
-Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando le varie
-routine per la ricezione degli update del DB dagli altri nodi e per la migrazione verso il cloud.
+Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
+i listener e le routine per la gestione degli updates.
 */
 func InitLocalSystem() structures.MongoClient {
 	fmt.Println("Starting Mongo Local System...")
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
-	// Lancio della Goroutine tramite cui il nodo si mette in ascolto per la ricezione di DB updates:
-	// 1. Tramite RPC da parte del Service Registry quando il nodo viene schedulato come "Terminating"
-	// 2. Tramite invio periodico da parte di ogni nodo al suo successore
+	// Lancio della Goroutine che permette al nodo di restare in attesa perenne
 	go ListenUpdates(client)
 
-	// Lancio della Goroutine tramite cui il nodo esporta periodicamente su S3 le entry accedute raramente
-	go client.CheckRarelyAccessed()
-
-	/*[TODO] Fare gestione di quando inviare gli aggiornamenti
-	1) Ogni Tot Minuti per avere la consistenza finale*/
-
+	fmt.Println("Mongo is Up & Running...")
 	return client
 }
 
 /*
-Resta in ascolto per la ricezione di aggiornamenti del DB da altri nodi
+Resta in ascolto sulla ricezione di aggiornamenti del DB da altri nodi
 */
 func ListenUpdates(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel)
-	fmt.Println("Start receiving DB update from other nodes on port:", utils.UPDATES_PORT)
+	fmt.Println("Started Update Listening Service...")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {

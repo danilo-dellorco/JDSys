@@ -148,8 +148,6 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "E11000") {
 			fmt.Printf("Entry %s già presente nello storage\n", key)
-			// [TODO] Overwrite oppure no delle Entry già presenti?
-			// In futuro si, ora per debug meglio di no
 		} else {
 			fmt.Println("Put Error:", err)
 		}
