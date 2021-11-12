@@ -13,6 +13,7 @@ var UPDATES_EXPORT_FILE string = UPDATES_EXPORT_PATH + "exported.csv"
 var UPDATES_RECEIVE_FILE string = UPDATES_RECEIVE_PATH + "received.csv"
 
 // AWS SDK Settings
+// TODO rimuovere le differenze jacopo/danilo
 var ELB_ARN_D string = "arn:aws:elasticloadbalancing:us-east-1:427788101608:loadbalancer/net/NetworkLB/8d7f674bf6bc6f73"
 var ELB_ARN_J string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
@@ -25,6 +26,7 @@ var LB_DNS_NAME_D string = ""
 var LB_DNS_NAME_J string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
 
 // Time Settings
+// TODO impostare questi parametri a valori reali
 var RARELY_ACCESSED_TIME time.Duration = 10                        // Dopo quanto tempo (ms) un'entry viene migrata sul cloud
 var NODE_HEALTHY_TIME time.Duration = 30 * time.Second             // Tempo di attesa di un nodo prima che diventi healthy
 var CHECK_TERMINATING_INTERVAL time.Duration = 30 * time.Second    // Ogni quanto effettuare il controllo sulle istanze in terminazione

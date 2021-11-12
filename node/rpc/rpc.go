@@ -130,11 +130,11 @@ func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
 	fmt.Println("DeleteRPC called")
 	me := s.Node.GetIpAddress()
 
-	//porta 4567 per lookup di Chord
+	// Porta 4567 per lookup di Chord
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
 
-	//porta 80 per RPC dell'applicazione
-	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
+	// Porta 80 per RPC dell'applicazione
+	// Lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
 	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)

@@ -8,11 +8,14 @@ import (
 	"progetto-sdcc/utils"
 )
 
+// Mantiene l'indirizzo DNS del Load Balancer
+var lbAddr string
+
 func main() {
-	var lbAddr string
 	if len(os.Args) != 2 {
 		fmt.Printf("Wrong usage: Specify LB DNS name with \"d\" or \"j\"\n")
 	}
+	// TODO rimuovere le differenze danilo / jacopo
 	user := os.Args[1]
 	if user == "d" {
 		lbAddr = utils.LB_DNS_NAME_D
@@ -23,7 +26,6 @@ func main() {
 Loop:
 	for {
 		impl.PrintMethodList()
-
 		var cmd string
 
 		fmt.Printf("Inserisci un comando: ")
@@ -40,6 +42,5 @@ Loop:
 		case err == io.EOF:
 			break Loop
 		}
-
 	}
 }

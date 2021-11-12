@@ -38,7 +38,7 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 			mergedEntries = append(mergedEntries, u)
 		}
 	}
-	fmt.Println("Entries Merged")
+	fmt.Println("Entries:")
 	return mergedEntries
 }
 

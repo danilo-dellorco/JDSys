@@ -30,10 +30,8 @@ func main() {
 		return
 	}
 
-	InitHealthyNode()
-	InitChordDHT()
-	StartApplication()
-	// [TODO] Togliere, sono stampe di debug ma il nodo non riceve comandi da riga di comando ma tramite RPC
+	NodeSetup()
+
 Loop:
 	for {
 		var cmd string
@@ -60,8 +58,8 @@ Loop:
 /*
 Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
 */
-func terminate_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Homepage")
+func lb_handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "SDCC Distributed Key-Value Storage")
 }
 
 /*
@@ -70,8 +68,8 @@ ed i segnali di terminazione dal service registry.
 */
 func StartHeartBeatListener() {
 	fmt.Println("Start Listening Heartbeats from LB on port:", utils.HEARTBEAT_PORT)
-	http.HandleFunc("/", terminate_handler)
-	defer http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
+	http.HandleFunc("/", lb_handler)
+	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
 
 /*
@@ -187,9 +185,9 @@ waitLB:
 /*
 Inizializza il listener delle chiamate RPC per il funzionamento del sistema di storage distribuito.
 Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da poter gestire correttamente la comunicazione
-tra i nodi del sistema, inclusa replicazione e migrazione dei dati verso il Cloud Provider
+tra i nodi del sistema.
 */
-func StartApplication() {
+func InitRPCService() {
 	rpcServ := new(nodeRPC.RPCservice)
 	rpcServ.Db = mongoClient
 	rpcServ.Node = *me
@@ -200,26 +198,30 @@ func StartApplication() {
 		log.Fatal("listen error:", e)
 	}
 
-	defer l.Close()
-	//Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione
-	go SendPeriodicUpdates(rpcServ)
-
-	fmt.Println("\nApplication is ready to start!")
-	fmt.Println("Start Serving application request on port:", utils.RPC_PORT)
+	fmt.Println("RPC Serivce Started...")
+	fmt.Println("Start Serving RPC request on port:", utils.RPC_PORT)
 	go http.Serve(l, nil)
 }
 
 /*
-Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione dei dati
-Non è una vera e propria RPC ma è invocato dal nodo stesso come un semplice metodo
---> Tramite metodo di RPCservice posso accedere agli oggetti ChordNode e MongoClient istanziati!
+Routine per l'invio periodico del proprio DB al nodo successore. Garantisce la replicazione dei dati
 */
-
-func SendPeriodicUpdates(s *nodeRPC.RPCservice) {
+func SendPeriodicUpdates() {
+	fmt.Println("Starting Periodic Updates Routine...")
 	for {
 		time.Sleep(time.Minute)
-		addr := s.Node.GetSuccessor().GetIpAddr()
-		fmt.Println("Sending DB export to my successor...")
-		mongo.SendUpdate(s.Db, addr)
+		addr := me.GetSuccessor().GetIpAddr()
+		fmt.Println("PeriodicUpdate: Sending DB export to my successor...")
+		mongo.SendUpdate(mongoClient, addr)
 	}
+}
+
+/*
+Esegue tutte le attività per rendere il nodo UP & Running
+*/
+func NodeSetup() {
+	InitHealthyNode()
+	InitChordDHT()
+	InitRPCService()
+	go SendPeriodicUpdates()
 }

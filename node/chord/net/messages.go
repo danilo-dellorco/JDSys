@@ -109,7 +109,6 @@ func sendidMsg(id []byte) []byte {
 	return data
 }
 
-//TODO: rewrite
 func getpredMsg() []byte {
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
@@ -127,11 +126,9 @@ func getpredMsg() []byte {
 	if err != nil {
 		log.Fatal("marshaling error: ", err)
 	}
-
 	return data
 }
 
-//TODO: rewrite
 func sendpredMsg(finger NodeInfo) []byte {
 	msg := new(internal.NetworkMessage)
 	msg.Proto = proto.Uint32(1)
@@ -363,7 +360,6 @@ func parseFingers(data []byte) (ft []NodeInfo, err error) {
 	msg := new(internal.NetworkMessage)
 	err = proto.Unmarshal(data, msg)
 	if msg.GetProto() != 1 {
-		//TODO: return non-nil error
 		return
 	}
 	chorddata := []byte(msg.GetMsg())
@@ -426,7 +422,6 @@ func parseId(data []byte) (id [32]byte, err error) {
 	msg := new(internal.NetworkMessage)
 	err = proto.Unmarshal(data, msg)
 	if msg.GetProto() != 1 {
-		//TODO: return non-nil error
 		return
 	}
 
@@ -459,7 +454,6 @@ func parsePong(data []byte) (success bool, err error) {
 	}
 
 	if msg.GetProto() != 1 {
-		//TODO: return non-nil error
 		fmt.Printf("Something went wrong!\n")
 		return
 	}
