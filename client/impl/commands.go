@@ -51,7 +51,7 @@ func Get(lbAddr string) {
 	fmt.Scanln(&args.Key)
 	fmt.Println(args.Key)
 
-	var reply []string
+	var reply *string
 
 	client, _ := HttpConnect(lbAddr)
 	err := client.Call("RPCservice.GetRPC", args, &reply)
@@ -74,7 +74,7 @@ func Put(lbAddr string) {
 	fmt.Scanln(&args.Value)
 	fmt.Println(args.Value)
 
-	var reply []string
+	var reply *string
 
 	client, _ := HttpConnect(lbAddr)
 	err := client.Call("RPCservice.PutRPC", args, &reply)
@@ -97,7 +97,7 @@ func Update(lbAddr string) {
 	fmt.Scanln(&args.Value)
 	fmt.Println(args.Value)
 
-	var reply []string
+	var reply *string
 
 	client, _ := HttpConnect(lbAddr)
 	err := client.Call("RPCservice.UpdateRPC", args, &reply)
@@ -116,7 +116,7 @@ func Delete(lbAddr string) {
 	fmt.Scanln(&args.Key)
 	fmt.Println(args.Key)
 
-	var reply []string
+	var reply *string
 
 	client, _ := HttpConnect(lbAddr)
 	err := client.Call("RPCservice.DeleteRPC", args, &reply)
