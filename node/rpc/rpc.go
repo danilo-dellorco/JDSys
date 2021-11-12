@@ -8,6 +8,7 @@ import (
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
+	"time"
 )
 
 /*
@@ -67,7 +68,7 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Before Impl Call")
+	fmt.Println("Request send to:", addr[:len(addr)-5])
 	client.Call("RPCservice.GetImpl", args, &reply)
 	return nil
 }
@@ -92,6 +93,7 @@ func (s *RPCservice) PutRPC(args *Args2, reply *string) error {
 		log.Fatal("dialing:", err)
 	}
 
+	fmt.Println("Request send to:", addr[:len(addr)-5])
 	client.Call("RPCservice.PutImpl", args, &reply)
 	return nil
 }
@@ -115,6 +117,7 @@ func (s *RPCservice) UpdateRPC(args *Args2, reply *string) error {
 		log.Fatal("dialing:", err)
 	}
 
+	fmt.Println("Request send to:", addr[:len(addr)-5])
 	client.Call("RPCservice.UpdateImpl", args, &reply)
 	return nil
 }
@@ -138,6 +141,7 @@ func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
 		log.Fatal("dialing:", err)
 	}
 
+	fmt.Println("Request send to:", addr[:len(addr)-5])
 	client.Call("RPCservice.DeleteImpl", args, &reply)
 	return nil
 }
@@ -147,12 +151,12 @@ Effettua il get. Scrive in reply la stringa contenente l'entry richiesta. Se l'e
 non è stata trovata restituisce un messaggio di errore.
 */
 func (s *RPCservice) GetImpl(args *Args1, reply *string) error {
-	fmt.Println("GetImpl")
+	fmt.Println("Get request arrived")
 	fmt.Println(args.Key)
 	entry := s.Db.GetEntry(args.Key)
 	fmt.Println(entry.Value)
 	if entry.Value == "" {
-		*reply = "Entry not Found"
+		*reply = "Entry not found"
 	} else {
 		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
 	}
@@ -163,14 +167,14 @@ func (s *RPCservice) GetImpl(args *Args1, reply *string) error {
 Effettua il PUT. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (s *RPCservice) PutImpl(args *Args2, reply *string) error {
-	fmt.Println("Called PutImpl")
+	fmt.Println("Put request arrived")
 	arg1 := args.Key
 	arg2 := args.Value
 	err := s.Db.PutEntry(arg1, arg2)
 	if err == nil {
-		*reply = "Entry inserita correttamente nel DB"
+		*reply = "Entry correctly inserted in the DB"
 	} else {
-		*reply = "Entry già presente nel DB"
+		*reply = "Entry already in the DB"
 		fmt.Println(*reply)
 	}
 	return nil
@@ -180,15 +184,15 @@ func (s *RPCservice) PutImpl(args *Args2, reply *string) error {
 Effettua l'UPDATE. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (s *RPCservice) UpdateImpl(args *Args2, reply *string) error {
-	fmt.Println("Called UpdateImpl")
+	fmt.Println("Update request arrived")
 	arg1 := args.Key
 	arg2 := args.Value
 	fmt.Println("Arguments", arg1, arg2)
 	err := s.Db.UpdateEntry(arg1, arg2)
 	if err == nil {
-		*reply = "Entry aggiornata correttamente"
+		*reply = "Entry correctly updated"
 	} else {
-		*reply = "Entry not Found"
+		*reply = "Entry not found"
 	}
 	return nil
 }
@@ -197,11 +201,12 @@ func (s *RPCservice) UpdateImpl(args *Args2, reply *string) error {
 Effettua il DELETE. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (s *RPCservice) DeleteImpl(args *Args1, reply *string) error {
+	fmt.Println("Delete request arrived")
 	err := s.Db.DeleteEntry(args.Key)
 	if err == nil {
-		*reply = "Entry Deleted Succesfully"
+		*reply = "Entry correctly deleted"
 	} else {
-		*reply = "Entry to Delete not Found"
+		*reply = "Entry to delete not found"
 	}
 	return nil
 }
@@ -217,4 +222,19 @@ func (s *RPCservice) TerminateInstanceRPC(args *Args1, reply *string) error {
 	mongo.SendUpdate(s.Db, addr)
 	*reply = "Instance Terminating"
 	return nil
+}
+
+/*
+Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione dei dati
+Non è una vera e propria RPC ma è invocato dal nodo stesso come un semplice metodo
+--> Tramite metodo di RPCservice posso accedere agli oggetti ChordNode e MongoClient istanziati!
+*/
+
+func (s *RPCservice) SendPeriodicUpdates() {
+	for {
+		time.Sleep(time.Minute)
+		addr := s.Node.GetSuccessor().GetIpAddr()
+		fmt.Println("Sending DB export to my successor...")
+		mongo.SendUpdate(s.Db, addr)
+	}
 }

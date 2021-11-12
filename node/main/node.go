@@ -114,15 +114,15 @@ func JoinDHT(registryAddr string) []string {
 }
 
 /*
-Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer.
-Inizia anche una routine che è sempre in ascolto per la ricezione degli HeartBeat
+Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer e configura il DB locale
 */
 func InitHealthyNode() {
-	// Inizia a ricevere gli HeartBeat
-	go StartHeartBeatListener()
 
 	// Configura il sistema di storage locale
 	mongoClient = mongo.InitLocalSystem()
+
+	// Inizia a ricevere gli HeartBeat dal LB
+	go StartHeartBeatListener()
 
 	// Attende di diventare healthy per il Load Balancer
 	fmt.Println("Waiting for ELB Health Checking...")
@@ -198,6 +198,10 @@ func StartApplication() {
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
+
+	//Routine per l'invio periodico del proprio DB al nodo successore per garantire replicazione
+	go rpcServ.SendPeriodicUpdates()
+
 	fmt.Println("\nApplication is ready to start!")
 	fmt.Println("Start Serving application request on port:", utils.RPC_PORT)
 	go http.Serve(l, nil)

@@ -1,19 +1,20 @@
 [Unit]
 Description=Simple systemd service for progetto-sdcc application setup
+StandardOutput=append:/home/ec2-user/log/output.log
+StandardError=append:/home/ec2-user/log/error.log
 
 [Service]
 Type=simple
 EnvironmentFile=/home/ec2-user/go/src/env
 WorkingDirectory=/home/ec2-user/go/src
 ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/node/run.sh
-ExecStartPre=/usr/bin/git clone --branch=jacopo https://www.github.com/danilo-dellorco/progetto-sdcc /home/ec2-user/go/src/progetto-sdcc/
-ExecStartPre=/usr/bin/sleep 10
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
 
 #1) copiare il servizio progettosdcc.service in /etc/systemd/system
-#2) avviare il servizio: 
+#2) abilitare il servizio per consentire l'avvio allo startup del sistema: 
 	#sudo systemctl daemon-reload
 	#sudo systemctl start progettosdcc.service
 	#sudo systemctl enable progettosdcc.service

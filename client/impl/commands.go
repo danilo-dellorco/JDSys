@@ -58,7 +58,7 @@ func Get(lbAddr string) {
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}
-	fmt.Println("Risposta RPC:", reply)
+	fmt.Println("Risposta RPC:", *reply)
 }
 
 /*
@@ -81,7 +81,7 @@ func Put(lbAddr string) {
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}
-	fmt.Println("Risposta RPC:", reply)
+	fmt.Println("Risposta RPC:", *reply)
 }
 
 /*
@@ -104,7 +104,7 @@ func Update(lbAddr string) {
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}
-	fmt.Println("Risposta RPC:", reply)
+	fmt.Println("Risposta RPC:", *reply)
 }
 
 /*
@@ -123,5 +123,5 @@ func Delete(lbAddr string) {
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}
-	fmt.Println("Risposta RPC:", reply)
+	fmt.Println("Risposta RPC:", *reply)
 }

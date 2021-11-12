@@ -19,7 +19,7 @@ Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV
 func StartReceiver(fileChannel chan string) {
 	server, err := net.Listen("tcp", ":4444")
 	if err != nil {
-		fmt.Println("Error listetning: ", err)
+		fmt.Println("Error listening: ", err)
 		os.Exit(1)
 	}
 	defer server.Close()
