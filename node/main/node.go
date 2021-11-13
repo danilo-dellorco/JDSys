@@ -206,6 +206,8 @@ func InitRPCService() {
 Routine per l'invio periodico del proprio DB al nodo successore. Garantisce la replicazione dei dati
 */
 func SendPeriodicUpdates() {
+	//aspettiamo 2 minuti dallo startup del nodo per essere sicuri che prenda il successore quando partono i primi 2
+	time.Sleep(utils.NODE_SUCC_TIME)
 	fmt.Println("Starting Periodic Updates Routine...")
 	for {
 		time.Sleep(time.Minute)

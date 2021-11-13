@@ -23,6 +23,7 @@ var LB_DNS_NAME string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
 // TODO impostare questi parametri a valori reali
 var RARELY_ACCESSED_TIME time.Duration = 10 * time.Minute          // Dopo quanto tempo un'entry viene migrata sul cloud
 var NODE_HEALTHY_TIME time.Duration = 30 * time.Second             // Tempo di attesa di un nodo prima che diventi healthy
+var NODE_SUCC_TIME time.Duration = 2 * time.Minute                 // Tempo di attesa di un nodo per essere sicuri che abbia il successore allo startup
 var CHECK_TERMINATING_INTERVAL time.Duration = 30 * time.Second    // Ogni quanto effettuare il controllo sulle istanze in terminazione
 var ACTIVITY_CACHE_FLUSH_INTERVAL time.Duration = 40 * time.Minute // Ogni quanto flushare la cache sulle istanze in terminazione
 var CHORD_FIX_INTERVAL time.Duration = 10 * time.Second            // Ogni quanto un nodo contatta i suoi vicini per aggiornare le Finger Table
