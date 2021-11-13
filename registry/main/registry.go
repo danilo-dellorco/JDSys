@@ -17,6 +17,7 @@ func main() {
 	rpc.Register(service)
 	rpc.HandleHTTP()
 	log.Fatal(http.ListenAndServe(utils.REGISTRY_PORT, nil))
+	fmt.Println("che succede")
 }
 
 /*
