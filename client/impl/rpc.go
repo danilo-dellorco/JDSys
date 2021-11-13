@@ -34,14 +34,14 @@ func PutRPC(key string, value string) {
 	fmt.Println("Risposta RPC:", *reply)
 }
 
-func UpdateRPC(key string, value string) {
+func AppendRPC(key string, value string) {
 	args := Args2{}
 	args.Key = key
 	args.Value = value
 	var reply *string
 
 	client, _ := HttpConnect()
-	err := client.Call("RPCservice.UpdateRPC", args, &reply)
+	err := client.Call("RPCservice.AppendRPC", args, &reply)
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}

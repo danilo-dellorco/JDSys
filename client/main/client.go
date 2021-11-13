@@ -1,8 +1,7 @@
 package main
 
-// TODO implementare l'operazione di Append
-// TODO vedere come in mongo localsys fare la gestione di value values array
-// TODO inserire la sovrascrittura nel Put ( che diventa quindi anche update )
+// TODO testare bene l'operazione di Append
+// TODO testare bene la sovrascrittura nel Put ( che diventa quindi anche update )
 // TODO fare la gestione della semantica at-least-once a livello del client
 // TODO fare i testing per i due carichi di lavoro visti
 
@@ -26,7 +25,7 @@ Loop:
 		case cmd == "2":
 			impl.Put()
 		case cmd == "3":
-			impl.Update()
+			impl.Append()
 		case cmd == "4":
 			impl.Delete()
 		case err == io.EOF:

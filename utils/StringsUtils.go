@@ -74,3 +74,23 @@ Effettua l'hashing sha256 di una stringa
 func HashString(str string) [32]byte {
 	return sha256.Sum256([]byte(str))
 }
+
+/*
+Formatta la stringa per un Value in mongo
+*/
+func FormatValue(str string) string {
+	if strings.Contains(str, "[") && strings.Contains(str, "]") {
+		return str
+	}
+	return "[" + str + "]"
+}
+
+func AppendValue(str string, arg1 string) string {
+	temp := GetStringInBetween(str, "[", "]")
+	append := temp + "," + arg1
+	return FormatValue(append)
+}
+
+func ParseAddrRPC(addr string) string {
+	return addr[:len(addr)-5] + RPC_PORT
+}

@@ -54,8 +54,8 @@ func ParseCSV(file string) []MongoEntry {
 
 	csvr := csv.NewReader(csvFile)
 
-	//disabilitiamo il check della lunghezza dei record
-	//così non va in errore ReadAll se c'è riga vuota
+	// Disabilitiamo il check della lunghezza dei record
+	// così non va in errore ReadAll se c'è riga vuota
 	csvr.FieldsPerRecord = -1
 	csvLines, err := csvr.ReadAll()
 	if err != nil {

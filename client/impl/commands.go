@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/rpc"
 	"progetto-sdcc/utils"
+	"strings"
 )
 
 /*
@@ -46,9 +47,7 @@ func PrintMethodList() {
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
 func Get() {
-	var key string
-	fmt.Print("Insert the Desired Key: ")
-	fmt.Scanln(&key)
+	key := SecScanln("Insert the Desired Key")
 
 	GetRPC(key)
 }
@@ -57,13 +56,10 @@ func Get() {
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
 func Put() {
-	var key string
-	var value string
-	fmt.Print("Insert the Entry Key: ")
-	fmt.Scanln(&key)
 
-	fmt.Print("Insert the Entry Value: ")
-	fmt.Scanln(&value)
+	key := SecScanln("Insert the Entry Key")
+
+	value := SecScanln("Insert the Entry Value")
 
 	PutRPC(key, value)
 }
@@ -71,25 +67,39 @@ func Put() {
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
-func Update() {
-	var key string
-	var newValue string
-	fmt.Print("Insert the Key of the Entry to Update: ")
-	fmt.Scanln(&key)
+func Append() {
+	key := SecScanln("Insert the Key of the Entry to Update")
 
-	fmt.Print("Insert the new Entry Value: ")
-	fmt.Scanln(&newValue)
+	newValue := SecScanln("Insert the Value to Append")
 
-	UpdateRPC(key, newValue)
+	AppendRPC(key, newValue)
 }
 
 /*
 Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
 func Delete() {
-	var key string
-	fmt.Print("Insert the Key of the Entry to Delete: ")
-	fmt.Scanln(&key)
+	key := SecScanln("Insert the Key of the Entry to Delete")
 
 	DeleteRPC(key)
+}
+
+/*
+Prende input da tastiera in modo sicuro, rimuovendo eventuali caratteri che potrebbero
+permettere ad un attaccante di effettuare una Injection
+*/
+func SecScanln(message string) string {
+	var arg string
+
+	for {
+		fmt.Print(message + ": ")
+		fmt.Scanln(&arg)
+		if strings.ContainsAny(arg, "[]{},:./*") {
+			fmt.Println("Inserted value contains not allowed characters")
+			fmt.Println("Retry")
+		} else {
+			break
+		}
+	}
+	return arg
 }
