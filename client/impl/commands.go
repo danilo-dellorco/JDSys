@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
+	"os"
 	"progetto-sdcc/utils"
 	"strings"
 )
@@ -32,15 +33,6 @@ func HttpConnect() (*rpc.Client, error) {
 		log.Fatal("Connection error: ", err)
 	}
 	return client, err
-}
-
-func PrintMethodList() {
-	fmt.Println("=============== METHODS LIST ===============")
-	fmt.Println("1) Get")
-	fmt.Println("2) Put")
-	fmt.Println("3) Update")
-	fmt.Println("4) Delete")
-	fmt.Println("============================================")
 }
 
 /*
@@ -82,6 +74,12 @@ func Delete() {
 	key := SecScanln("Insert the Key of the Entry to Delete")
 
 	DeleteRPC(key)
+}
+
+func Exit() {
+	fmt.Println("Closing Client...")
+	fmt.Println("Goodbye.")
+	os.Exit(0)
 }
 
 /*
