@@ -24,12 +24,12 @@ var mongoClient structures.MongoClient
 var me *chord.ChordNode
 
 func main() {
-	mongoClient = mongo.InitLocalSystem()
+	/*mongoClient = mongo.InitLocalSystem()
 	mongoClient.DropDatabase()
 	mongoClient.PutEntry("ProvaK", "ProvaV")
 	mongoClient.GetEntry("ProvaK")
 	mongoClient.AppendValue("ProvaK", "NuovoValoreBro")
-	mongoClient.GetEntry("ProvaK")
+	mongoClient.GetEntry("ProvaK")*/
 	NodeSetup()
 
 Loop:
