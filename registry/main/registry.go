@@ -5,20 +5,14 @@ import (
 	"log"
 	"net/http"
 	"net/rpc"
-	"os"
 	"progetto-sdcc/registry/services"
 	"progetto-sdcc/utils"
 	"time"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Wrong usage: Specify user \"d\" or \"j\"")
-		return
-	}
-	services.SetupUser()
 	go checkTerminatingNodes()
-	fmt.Printf("Server Waiting For Connection... \n")
+	fmt.Printf("Server Registry Waiting For Incoming Connection... \n")
 	service := InitializeService()
 	rpc.Register(service)
 	rpc.HandleHTTP()
@@ -84,7 +78,7 @@ func checkTerminatingNodes() {
 }
 
 /*
-RPC Che invia il segnale di terminazione ad un nodo schedulato per la terminazione
+Chiamata a RPC che invia il segnale di terminazione ad un nodo schedulato per la terminazione
 */
 func sendTerminatingSignalRPC(ip string) {
 	fmt.Println("Sending Terminating Message to node:", ip)

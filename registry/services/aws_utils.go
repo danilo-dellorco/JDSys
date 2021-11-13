@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"os"
 	"progetto-sdcc/utils"
 	"time"
 
@@ -42,22 +41,6 @@ func CreateSession() *session.Session {
 		fmt.Println(err)
 	}
 	return sess
-}
-
-/*
-Imposta l'utente corretto della sessione AWS
-*/
-func SetupUser() {
-	user := os.Args[1]
-	if user == "d" {
-		ELB = utils.ELB_ARN_D
-		CRS = utils.AWS_CRED_PATH_D
-		AUS = utils.AUTOSCALING_NAME_D
-	} else {
-		ELB = utils.ELB_ARN_J
-		CRS = utils.AWS_CRED_PATH
-		AUS = utils.AUTOSCALING_NAME_J
-	}
 }
 
 /*

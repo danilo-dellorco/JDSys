@@ -14,7 +14,7 @@ import (
 Interfaccia registrata dal nodo in modo tale che il client possa invocare i metodi tramite RPC
 Ciò che poi si registra realmente è un oggetto che ha l'implementazione dei precisi metodi offerti
 
-I metodi di Get,Put,Delete,Update vengono invocati tramite RPC dai client
+I metodi di Get,Put,Delete,Append vengono invocati tramite RPC dai client
 Ricevuta la richiesta, il nodo effettua il lookup per trovare chi mantiene la risorsa
 --> Seconda RPC verso l'effettivo nodo che gestisce la chiave cercata!
 */
@@ -40,7 +40,7 @@ type Args1 struct {
 }
 
 /*
-Parametri per le operazioni di Put e Update
+Parametri per le operazioni di Put e Append
 */
 type Args2 struct {
 	Key   string
@@ -56,18 +56,13 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	fmt.Println("GetRPC called!")
 
 	me := s.Node.GetIpAddress()
-
-	//porta 4567 per lookup di Chord
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-
-	//porta 80 per RPC dell'applicazione
-	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
-	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", addr[:len(addr)-5])
+	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
 	client.Call("RPCservice.GetImpl", args, &reply)
 	return nil
 }
@@ -81,18 +76,13 @@ func (s *RPCservice) PutRPC(args *Args2, reply *string) error {
 	fmt.Println("PutRPC Called!")
 
 	me := s.Node.GetIpAddress()
-
-	//porta 4567 per lookup di Chord
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-
-	//porta 80 per RPC dell'applicazione
-	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
-	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", addr[:len(addr)-5])
+	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
 	client.Call("RPCservice.PutImpl", args, &reply)
 	return nil
 }
@@ -100,24 +90,19 @@ func (s *RPCservice) PutRPC(args *Args2, reply *string) error {
 /*
 Effettua la RPC per aggiornare un'entry nello storage.
  1) Lookup per trovare il nodo che hosta la risorsa
- 2) RPC effettiva di UPDATE verso quel nodo chord
+ 2) RPC effettiva di APPEND verso quel nodo chord
 */
-func (s *RPCservice) UpdateRPC(args *Args2, reply *string) error {
-	fmt.Println("UpdateRPC Called!")
+func (s *RPCservice) AppendRPC(args *Args2, reply *string) error {
+	fmt.Println("AppendRPC Called!")
 	me := s.Node.GetIpAddress()
-
-	//porta 4567 per lookup di Chord
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-
-	//porta 80 per RPC dell'applicazione
-	//lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
-	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", addr[:len(addr)-5])
-	client.Call("RPCservice.UpdateImpl", args, &reply)
+	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
+	client.Call("RPCservice.AppendImpl", args, &reply)
 	return nil
 }
 
@@ -129,18 +114,13 @@ Effettua la RPC per eliminare un'entry nello storage.
 func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
 	fmt.Println("DeleteRPC called")
 	me := s.Node.GetIpAddress()
-
-	// Porta 4567 per lookup di Chord
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-
-	// Porta 80 per RPC dell'applicazione
-	// Lookup ritorna IP+porta, quindi dobbiamo toglierla e inserire quella su cui fare RPC
-	client, err := rpc.DialHTTP("tcp", addr[:len(addr)-5]+utils.RPC_PORT)
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", addr[:len(addr)-5])
+	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
 	client.Call("RPCservice.DeleteImpl", args, &reply)
 	return nil
 }
@@ -180,16 +160,16 @@ func (s *RPCservice) PutImpl(args *Args2, reply *string) error {
 }
 
 /*
-Effettua l'UPDATE. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
+Effettua l'APPEND. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
-func (s *RPCservice) UpdateImpl(args *Args2, reply *string) error {
-	fmt.Println("Update request arrived")
+func (s *RPCservice) AppendImpl(args *Args2, reply *string) error {
+	fmt.Println("Append request arrived")
 	arg1 := args.Key
 	arg2 := args.Value
 	fmt.Println("Arguments", arg1, arg2)
-	err := s.Db.UpdateEntry(arg1, arg2)
+	err := s.Db.AppendValue(arg1, arg2)
 	if err == nil {
-		*reply = "Entry correctly updated"
+		*reply = "Value correctly appended"
 	} else {
 		*reply = "Entry not found"
 	}

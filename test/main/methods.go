@@ -50,10 +50,10 @@ func TestPut(key string, value string) time.Duration {
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
-func TestUpdate(key string, value string) time.Duration {
+func TestAppend(key string, value string) time.Duration {
 	start := utils.GetTimestamp()
 
-	impl.UpdateRPC(key, value)
+	impl.AppendRPC(key, value)
 
 	end := utils.GetTimestamp()
 

@@ -111,8 +111,7 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 }
 
 /*
-Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per
-la identificare le entry raramente utilizzate
+Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per identificare le entry raramente utilizzate
 */
 func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
 	coll := cli.Collection
@@ -143,11 +142,24 @@ Al momento del get viene calcolato il timestamp
 func (cli *MongoClient) PutEntry(key string, value string) error {
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
-	doc := bson.D{{ID, key}, {VALUE, value}, {TIME, timestamp}, {LAST_ACC, timestamp}}
+	strVal := utils.FormatValue(value)
+	doc := bson.D{{ID, key}, {VALUE, strVal}, {TIME, timestamp}, {LAST_ACC, timestamp}}
 	_, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
 		if strings.Contains(err.Error(), "E11000") {
-			fmt.Printf("Entry %s già presente nello storage\n", key)
+			fmt.Printf("Put: Entry %s già presente nello storage\n", key)
+			fmt.Println("Updating Entry Value...")
+			old := bson.D{{ID, key}}
+			timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
+			update := bson.D{{"$set", bson.D{{VALUE, strVal}, {TIME, timestamp}, {LAST_ACC, timestamp}}}}
+			_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+			fmt.Println("Update:", key+", changed value into", value)
+			return nil
+
 		} else {
 			fmt.Println("Put Error:", err)
 		}
@@ -161,17 +173,22 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
 Viene inoltre aggiornato il timestamp di quell'entry
 */
-func (cli *MongoClient) UpdateEntry(key string, newValue string) error {
+func (cli *MongoClient) AppendValue(key string, arg1 string) error {
 	old := bson.D{{ID, key}}
-	oldValue := cli.GetEntry(key).Value
+	oldEntry := cli.GetEntry(key)
+	if oldEntry == nil {
+		fmt.Println("Append Error: No entry found with key", key)
+		return errors.New("NoKeyFound")
+	}
+	append := utils.AppendValue(oldEntry.Value, arg1)
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
-	update := bson.D{{"$set", bson.D{{VALUE, newValue}, {TIME, timestamp}, {LAST_ACC, timestamp}}}}
+	update := bson.D{{"$set", bson.D{{VALUE, append}, {TIME, timestamp}, {LAST_ACC, timestamp}}}}
 	_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	fmt.Println("Update:", key+", changed value from", oldValue, "to", newValue)
+	fmt.Println("Append: inserted", arg1, "to key", key)
 	return nil
 }
 

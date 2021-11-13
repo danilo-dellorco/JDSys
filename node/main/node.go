@@ -24,13 +24,13 @@ var mongoClient structures.MongoClient
 var me *chord.ChordNode
 
 func main() {
-
-	if len(os.Args) < 2 {
-		fmt.Println("Wrong usage: Specify registry private IP address")
-		return
-	}
-
-	NodeSetup()
+	mongoClient = mongo.InitLocalSystem()
+	mongoClient.DropDatabase()
+	mongoClient.PutEntry("ProvaK", "ProvaV")
+	mongoClient.GetEntry("ProvaK")
+	mongoClient.AppendValue("ProvaK", "NuovoValoreBro")
+	mongoClient.GetEntry("ProvaK")
+	//NodeSetup()
 
 Loop:
 	for {
