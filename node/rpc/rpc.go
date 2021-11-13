@@ -10,6 +10,10 @@ import (
 	"progetto-sdcc/utils"
 )
 
+//TODO modificare i commenti e dire che prima del lookupchord vedo se la risorsa sta in locale
+//TODO ora il nodo random che riceve la richiesta vede prima in locale, ma anche ogni successore contattato da chord dovrebbe vedere
+// prima in locale senno non ha senso. Penso che è un macello perche va modificato propro chord.lookup come è implementato.
+
 /*
 Interfaccia registrata dal nodo in modo tale che il client possa invocare i metodi tramite RPC
 Ciò che poi si registra realmente è un oggetto che ha l'implementazione dei precisi metodi offerti
@@ -55,6 +59,14 @@ Effettua la RPC per la Get di una Key.
 func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	fmt.Println("GetRPC called!")
 
+	fmt.Println("Checking value on local storage...")
+	entry := s.Db.GetEntry(args.Key)
+	if entry != nil {
+		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
+		return nil
+	}
+
+	fmt.Println("None.\nForwarding Get Request on DHT...")
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
@@ -94,6 +106,16 @@ Effettua la RPC per aggiornare un'entry nello storage.
 */
 func (s *RPCservice) AppendRPC(args *Args2, reply *string) error {
 	fmt.Println("AppendRPC Called!")
+
+	fmt.Println("Checking value on local storage...")
+	err := s.Db.AppendValue(args.Key, args.Value)
+	if err == nil {
+		*reply = "Value correctly appended"
+		return nil
+	}
+
+	fmt.Println("None.\nForwarding Append Request on DHT...")
+
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
@@ -113,6 +135,16 @@ Effettua la RPC per eliminare un'entry nello storage.
 */
 func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
 	fmt.Println("DeleteRPC called")
+
+	fmt.Println("Checking value on local storage...")
+	err := s.Db.DeleteEntry(args.Key)
+	if err == nil {
+		*reply = "Entry correctly deleted."
+		return nil
+	}
+
+	fmt.Println("None.\nForwarding Delete Request on DHT...")
+
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
