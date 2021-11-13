@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"net/rpc"
 	"progetto-sdcc/registry/services"
@@ -17,12 +16,7 @@ func main() {
 	service := InitializeService()
 	rpc.Register(service)
 	rpc.HandleHTTP()
-	l, e := net.Listen("tcp", utils.REGISTRY_PORT)
-	if e != nil {
-		log.Fatal("listen error:", e)
-	}
-	defer l.Close()
-	go http.Serve(l, nil)
+	log.Fatal(http.ListenAndServe(utils.REGISTRY_PORT, nil))
 }
 
 /*
