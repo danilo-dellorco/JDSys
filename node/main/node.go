@@ -30,7 +30,7 @@ func main() {
 	mongoClient.GetEntry("ProvaK")
 	mongoClient.AppendValue("ProvaK", "NuovoValoreBro")
 	mongoClient.GetEntry("ProvaK")
-	//NodeSetup()
+	NodeSetup()
 
 Loop:
 	for {
