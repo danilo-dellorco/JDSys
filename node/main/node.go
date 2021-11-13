@@ -93,7 +93,6 @@ func HttpConnect(registryAddr string) (*rpc.Client, error) {
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
-	defer client.Close()
 	return client, err
 }
 

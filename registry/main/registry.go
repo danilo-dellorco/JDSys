@@ -92,6 +92,6 @@ func sendTerminatingSignalRPC(ip string) {
 	if err != nil {
 		log.Fatal("GetRPC error:", err)
 	}
-	defer client.Close()
+	//defer client.Close()
 	fmt.Println("Risposta RPC:", reply)
 }
