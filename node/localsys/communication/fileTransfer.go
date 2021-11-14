@@ -17,7 +17,7 @@ const BUFFERSIZE = 1024
 Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi
 */
 func StartReceiver(fileChannel chan string) {
-	server, err := net.Listen("tcp", ":4444")
+	server, err := net.Listen("tcp", utils.UPDATES_PORT)
 	if err != nil {
 		fmt.Println("Error listening: ", err)
 		os.Exit(1)

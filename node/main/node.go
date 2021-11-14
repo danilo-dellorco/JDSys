@@ -24,13 +24,13 @@ var mongoClient structures.MongoClient
 var me *chord.ChordNode
 
 func main() {
-	mongoClient = mongo.InitLocalSystem()
+	/*mongoClient = mongo.InitLocalSystem()
 	mongoClient.DropDatabase()
 	mongoClient.PutEntry("ProvaK", "ProvaV")
 	mongoClient.GetEntry("ProvaK")
 	mongoClient.AppendValue("ProvaK", "NuovoValoreBro")
-	mongoClient.GetEntry("ProvaK")
-	//NodeSetup()
+	mongoClient.GetEntry("ProvaK")*/
+	NodeSetup()
 
 Loop:
 	for {
@@ -93,7 +93,6 @@ func HttpConnect(registryAddr string) (*rpc.Client, error) {
 	if err != nil {
 		log.Fatal("Connection error: ", err)
 	}
-	defer client.Close()
 	return client, err
 }
 
@@ -207,9 +206,16 @@ func InitRPCService() {
 Routine per l'invio periodico del proprio DB al nodo successore. Garantisce la replicazione dei dati
 */
 func SendPeriodicUpdates() {
+	//aspettiamo 2 minuti dallo startup del nodo per essere sicuri che prenda il successore quando partono i primi 2
+	time.Sleep(utils.NODE_SUCC_TIME)
 	fmt.Println("Starting Periodic Updates Routine...")
 	for {
+	restart:
 		time.Sleep(time.Minute)
+		//potrebbe esserci un unico nodo senza successore
+		if me.GetSuccessor() == nil {
+			goto restart
+		}
 		addr := me.GetSuccessor().GetIpAddr()
 		fmt.Println("PeriodicUpdate: Sending DB export to my successor...")
 		mongo.SendUpdate(mongoClient, addr)

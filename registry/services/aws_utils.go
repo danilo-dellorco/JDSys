@@ -14,9 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-var ELB string
-var CRS string
-var AUS string
+var ELB = utils.ELB_ARN
+var CRS = utils.AWS_CRED_PATH
+var AUS = utils.AUTOSCALING_NAME
 
 /*
 Struttura contenente tutte le informazioni riguardanti un'istanza EC2
