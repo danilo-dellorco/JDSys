@@ -210,7 +210,12 @@ func SendPeriodicUpdates() {
 	time.Sleep(utils.NODE_SUCC_TIME)
 	fmt.Println("Starting Periodic Updates Routine...")
 	for {
+	restart:
 		time.Sleep(time.Minute)
+		//potrebbe esserci un unico nodo senza successore
+		if me.GetSuccessor() == nil {
+			goto restart
+		}
 		addr := me.GetSuccessor().GetIpAddr()
 		fmt.Println("PeriodicUpdate: Sending DB export to my successor...")
 		mongo.SendUpdate(mongoClient, addr)
