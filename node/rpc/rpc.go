@@ -3,13 +3,11 @@ package net
 import (
 	"fmt"
 	"log"
-	"net"
 	"net/rpc"
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
-	"time"
 )
 
 //TODO modificare i commenti e dire che prima del lookupchord vedo se la risorsa sta in locale
@@ -71,13 +69,10 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	fmt.Println("None.\nForwarding Get Request on DHT...")
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	conn, err := net.DialTimeout("tcp", utils.ParseAddrRPC(addr), 10*time.Second)
-	//client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-
-	client := rpc.NewClient(conn)
 
 	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
 	client.Call("RPCservice.GetImpl", args, &reply)
