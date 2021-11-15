@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/rpc"
@@ -70,6 +71,7 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 		c <- err
 		log.Fatal("RPC error: ", err)
 	} else {
+		c <- errors.New("Success")
 		fmt.Println("Riposta RPC:", *reply)
 		return
 	}
@@ -79,14 +81,14 @@ func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
 	//ciclo che deve essere fatto tante volte quante vogliamo ritrasmettere
 	for {
 		time.Sleep(utils.RR1_TIMEOUT)
-		fmt.Println("scaduto timer")
 		res := <-c
 		fmt.Println("Risultato call:", res)
 		//errore, riprovo
-		if res != nil {
-			CallRPC(client, args, reply, c)
-		} else {
+		if res.Error() == "Success" {
 			break
+		} else {
+			fmt.Println("Timer elapsed, retrying...")
+			CallRPC(client, args, reply, c)
 		}
 	}
 }
