@@ -10,17 +10,10 @@ import (
 	"progetto-sdcc/utils"
 )
 
-//TODO modificare i commenti e dire che prima del lookupchord vedo se la risorsa sta in locale
-//TODO ora il nodo random che riceve la richiesta vede prima in locale, ma anche ogni successore contattato da chord dovrebbe vedere
-// prima in locale senno non ha senso. Penso che è un macello perche va modificato propro chord.lookup come è implementato.
+//TODO testare il nuovo delete e verificare che fa tutto il giro dell'anello partendo dal nodo che deve gestire la risorsa
 
 /*
-Interfaccia registrata dal nodo in modo tale che il client possa invocare i metodi tramite RPC
-Ciò che poi si registra realmente è un oggetto che ha l'implementazione dei precisi metodi offerti
-
-I metodi di Get,Put,Delete,Append vengono invocati tramite RPC dai client
-Ricevuta la richiesta, il nodo effettua il lookup per trovare chi mantiene la risorsa
---> Seconda RPC verso l'effettivo nodo che gestisce la chiave cercata!
+Servizio RPC del nodo. Mantiene un riferimento al ChordNode ed al MongoClient
 */
 type RPCservice struct {
 	Node chord.ChordNode
@@ -28,35 +21,22 @@ type RPCservice struct {
 }
 
 /*
-Struttura per l'RPC effettiva
+Struttura che mantiene i parametri delle RPC
 */
-type ImplArgs struct {
-	Key   string
-	Value string
-	ip    string
-}
-
-/*
-Parametri per le operazioni di Get e Delete
-*/
-type Args1 struct {
-	Key string
-}
-
-/*
-Parametri per le operazioni di Put e Append
-*/
-type Args2 struct {
-	Key   string
-	Value string
+type Args struct {
+	Key     string
+	Value   string
+	Handler string
+	Deleted bool
 }
 
 /*
 Effettua la RPC per la Get di una Key.
- 1) Lookup per trovare il nodo che hosta una risorsa
+ 1) Si verifica se il nodo ha una copia della risorsa
+ 2) Lookup per trovare il nodo che hosta la risorsa
  2) RPC effettiva di GET verso quel nodo chord
 */
-func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
+func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 	fmt.Println("GetRPC called!")
 
 	fmt.Println("Checking value on local storage...")
@@ -67,8 +47,9 @@ func (s *RPCservice) GetRPC(args *Args1, reply *string) error {
 	}
 
 	fmt.Println("None.\nForwarding Get Request on DHT...")
-	me := s.Node.GetIpAddress()
-	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
+	// TODO testare se ci va tolta la porta o no per il successore
+	succ := s.Node.GetSuccessor().GetIpAddr()
+	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
 	if err != nil {
 		log.Fatal("dialing:", err)
@@ -84,7 +65,7 @@ Effettua la RPC per inserire un'entry nello storage.
  1) Lookup per trovare il nodo che deve hostare la risorsa
  2) RPC effettiva di PUT verso quel nodo chord
 */
-func (s *RPCservice) PutRPC(args *Args2, reply *string) error {
+func (s *RPCservice) PutRPC(args Args, reply *string) error {
 	fmt.Println("PutRPC Called!")
 
 	me := s.Node.GetIpAddress()
@@ -104,17 +85,10 @@ Effettua la RPC per aggiornare un'entry nello storage.
  1) Lookup per trovare il nodo che hosta la risorsa
  2) RPC effettiva di APPEND verso quel nodo chord
 */
-func (s *RPCservice) AppendRPC(args *Args2, reply *string) error {
+func (s *RPCservice) AppendRPC(args Args, reply *string) error {
 	fmt.Println("AppendRPC Called!")
 
-	fmt.Println("Checking value on local storage...")
-	err := s.Db.AppendValue(args.Key, args.Value)
-	if err == nil {
-		*reply = "Value correctly appended"
-		return nil
-	}
-
-	fmt.Println("None.\nForwarding Append Request on DHT...")
+	fmt.Println("Forwarding Append Request on DHT...")
 
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
@@ -132,36 +106,31 @@ func (s *RPCservice) AppendRPC(args *Args2, reply *string) error {
 Effettua la RPC per eliminare un'entry nello storage.
  1) Lookup per trovare il nodo che hosta la risorsa
  2) RPC effettiva di DELETE verso quel nodo chord
+ 3) La delete viene inoltrata su tutto l'anello
 */
-func (s *RPCservice) DeleteRPC(args *Args1, reply *string) error {
+func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 	fmt.Println("DeleteRPC called")
 
-	fmt.Println("Checking value on local storage...")
-	err := s.Db.DeleteEntry(args.Key)
-	if err == nil {
-		*reply = "Entry correctly deleted."
-		return nil
-	}
-
-	fmt.Println("None.\nForwarding Delete Request on DHT...")
-
 	me := s.Node.GetIpAddress()
-	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
+	handlerNode, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
+	args.Handler = handlerNode
+	args.Deleted = false
+
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(me))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-
-	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
-	client.Call("RPCservice.DeleteImpl", args, &reply)
+	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(me))
+	client.Call("RPCservice.DeleteHandling", args, &reply)
 	return nil
+
 }
 
 /*
 Effettua il get. Scrive in reply la stringa contenente l'entry richiesta. Se l'entry
 non è stata trovata restituisce un messaggio di errore.
 */
-func (s *RPCservice) GetImpl(args *Args1, reply *string) error {
+func (s *RPCservice) GetImpl(args Args, reply *string) error {
 	fmt.Println("Get request arrived")
 	fmt.Println(args.Key)
 	entry := s.Db.GetEntry(args.Key)
@@ -177,7 +146,7 @@ func (s *RPCservice) GetImpl(args *Args1, reply *string) error {
 /*
 Effettua il PUT. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
-func (s *RPCservice) PutImpl(args *Args2, reply *string) error {
+func (s *RPCservice) PutImpl(args Args, reply *string) error {
 	fmt.Println("Put request arrived")
 	arg1 := args.Key
 	arg2 := args.Value
@@ -194,7 +163,7 @@ func (s *RPCservice) PutImpl(args *Args2, reply *string) error {
 /*
 Effettua l'APPEND. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
-func (s *RPCservice) AppendImpl(args *Args2, reply *string) error {
+func (s *RPCservice) AppendImpl(args *Args, reply *string) error {
 	fmt.Println("Append request arrived")
 	arg1 := args.Key
 	arg2 := args.Value
@@ -209,16 +178,60 @@ func (s *RPCservice) AppendImpl(args *Args2, reply *string) error {
 }
 
 /*
-Effettua il DELETE. Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
+Effettua il delete della risorsa sul nodo che deve gestirla.
+Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
-func (s *RPCservice) DeleteImpl(args *Args1, reply *string) error {
-	fmt.Println("Delete request arrived")
+func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
+
+	// Effettua la delete sul db locale
+	fmt.Println("Deleting value on local storage...")
 	err := s.Db.DeleteEntry(args.Key)
 	if err == nil {
-		*reply = "Entry correctly deleted"
-	} else {
-		*reply = "Entry to delete not found"
+		args.Deleted = true
 	}
+
+	// Propaga la Delete al nodo successivo
+	next := s.Node.GetSuccessor().GetIpAddr()
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	fmt.Println("Delete request forwarded to replication node:", utils.ParseAddrRPC(next))
+	client.Call("RPCservice.DeleteReplicating", args, &reply)
+	return nil
+}
+
+/*
+Effettua il delete della risorsa replicata.
+Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
+*/
+func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
+
+	// Controllo se la richiesta ha completato il giro dell'anello
+	if s.Node.GetIpAddress() == args.Handler {
+		if args.Deleted {
+			*reply = "Entry succesfully deleted"
+		} else {
+			*reply = "Entry to delete not found"
+		}
+		return nil
+	}
+
+	// Cancella la richiesta sul db locale
+	fmt.Println("Deleting value on local storage...")
+	err := s.Db.DeleteEntry(args.Key)
+	if err == nil {
+		args.Deleted = true
+	}
+
+	// Propaga la Delete al nodo successivo
+	next := s.Node.GetSuccessor().GetIpAddr()
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	fmt.Println("Delete request forwarded to:", utils.ParseAddrRPC(next))
+	client.Call("RPCservice.DeleteRPC", args, &reply)
 	return nil
 }
 
@@ -227,7 +240,7 @@ Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per l
 Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati
 */
 
-func (s *RPCservice) TerminateInstanceRPC(args *Args1, reply *string) error {
+func (s *RPCservice) TerminateInstanceRPC(args *Args, reply *string) error {
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Instance Scheduled to Terminating...")
 	mongo.SendUpdate(s.Db, addr)

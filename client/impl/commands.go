@@ -10,21 +10,6 @@ import (
 )
 
 /*
-Parametri per le operazioni di Get e Delete
-*/
-type Args1 struct {
-	Key string
-}
-
-/*
-Parametri per le operazioni di Put e Update
-*/
-type Args2 struct {
-	Key   string
-	Value string
-}
-
-/*
 Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
 */
 func HttpConnect() (*rpc.Client, error) {
@@ -40,7 +25,6 @@ Permette al client di recuperare il valore associato ad una precisa chiave conta
 */
 func Get() {
 	key := SecScanln("Insert the Desired Key")
-
 	GetRPC(key)
 }
 
@@ -48,11 +32,8 @@ func Get() {
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
 func Put() {
-
 	key := SecScanln("Insert the Entry Key")
-
 	value := SecScanln("Insert the Entry Value")
-
 	PutRPC(key, value)
 }
 
@@ -61,9 +42,7 @@ Permette al client di aggiornare una coppia key-value presente nel sistema di st
 */
 func Append() {
 	key := SecScanln("Insert the Key of the Entry to Update")
-
 	newValue := SecScanln("Insert the Value to Append")
-
 	AppendRPC(key, newValue)
 }
 
@@ -72,10 +51,12 @@ Permette al client di eliminare una coppia key-value dal sistema di storage cont
 */
 func Delete() {
 	key := SecScanln("Insert the Key of the Entry to Delete")
-
 	DeleteRPC(key)
 }
 
+/*
+Termina il programma client.
+*/
 func Exit() {
 	fmt.Println("Closing Client...")
 	fmt.Println("Goodbye.")
@@ -84,7 +65,7 @@ func Exit() {
 
 /*
 Prende input da tastiera in modo sicuro, rimuovendo eventuali caratteri che potrebbero
-permettere ad un attaccante di effettuare una Injection
+permettere ad un attaccante di effettuare una Injection su MongoDB
 */
 func SecScanln(message string) string {
 	var arg string
