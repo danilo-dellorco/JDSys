@@ -19,7 +19,6 @@ func GetRPC(key string) {
 	client, _ := HttpConnect()
 	go rr1_timeout(client, args, reply, c)
 	CallRPC(client, args, reply, c)
-	fmt.Println("Risposta RPC:", *reply)
 }
 
 func PutRPC(key string, value string) {
