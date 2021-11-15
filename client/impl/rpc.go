@@ -83,8 +83,9 @@ Goroutine per l'implementazione della semantica at-least-once.
 La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
 */
 func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
-	i := 0
-	for i = 0; i < 4; i++ {
+	//i := 0
+	//for i = 0; i < 4; i++ {
+	for {
 		time.Sleep(utils.RR1_TIMEOUT)
 		res := <-c
 
