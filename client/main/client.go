@@ -6,6 +6,8 @@ package main
 // TODO fare i testing per i due carichi di lavoro visti
 // TODO modificare il lookup perchè con la consistenza finale comunque piu nodi avranno la risorsa quindi anche
 // quello contattato random potrebbe averla. Invece adesso quel nodo va direttamente a cercare con l'hash un altro nodo
+// TODO verificare il comportamento con la concorrenza. RPC dovrebbe gestirla già da sola, Bisonga vedere Mongo in locale
+// come si comporta rispetto ad esempio a due PUT sullo stesso dato.
 
 import (
 	"fmt"
