@@ -197,7 +197,7 @@ func InitRPCService() {
 		log.Fatal("listen error:", e)
 	}
 
-	fmt.Println("RPC Serivce Started...")
+	fmt.Println("RPC Service Started...")
 	fmt.Println("Start Serving RPC request on port:", utils.RPC_PORT)
 	go http.Serve(l, nil)
 }
@@ -212,6 +212,7 @@ func SendPeriodicUpdates() {
 	for {
 	restart:
 		time.Sleep(time.Minute)
+		fmt.Println(me.GetSuccessor())
 		//potrebbe esserci un unico nodo senza successore
 		if me.GetSuccessor() == nil {
 			goto restart
