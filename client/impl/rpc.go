@@ -65,21 +65,15 @@ func DeleteRPC(key string) {
 }
 
 func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
-	go func() { c <- client.Call("RPCservice.GetRPC", args, &reply) }()
-	select {
-	case err := <-c:
-		if err != nil {
-			log.Fatal("RPC error: ", err)
-		} else {
-			fmt.Println("eiiiiiiiiiiiiiiiiii")
-			fmt.Println(*reply)
-			return
-		}
-
-		//case <-time.After(15 * time.Second):
-		//return
+	err := client.Call("RPCservice.GetRPC", args, &reply)
+	defer client.Close()
+	if err != nil {
+		c <- err
+		log.Fatal("RPC error: ", err)
+	} else {
+		fmt.Println("Riposta RPC:", *reply)
+		return
 	}
-	client.Close()
 }
 
 func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
@@ -88,7 +82,7 @@ func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
 		time.Sleep(utils.RR1_TIMEOUT)
 		fmt.Println("scaduto timer")
 		res := <-c
-		fmt.Println(res)
+		fmt.Println("Risultato call:", res)
 		//errore, riprovo
 		if res != nil {
 			CallRPC(client, args, reply, c)
