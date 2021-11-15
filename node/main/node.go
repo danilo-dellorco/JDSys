@@ -20,6 +20,8 @@ import (
 
 type EmptyArgs struct{}
 
+var deletedKeys = []string
+
 var mongoClient structures.MongoClient
 var me *chord.ChordNode
 

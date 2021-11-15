@@ -30,6 +30,8 @@ var VALUE string = "value"
 var TIME string = "timest"
 var LAST_ACC string = "lastAcc"
 
+var DeletedKeys []string
+
 /*
 Struttura che mantiene una connessione verso una specifica collezione MongoDB
 */
@@ -76,7 +78,8 @@ func (cli *MongoClient) CloseConnection() {
 Ritorna una entry specificando la sua chiave
 */
 func (cli *MongoClient) GetEntry(key string) *MongoEntry {
-	fmt.Println("Searching for:", key)
+	utils.FormattedTimestamp()
+	fmt.Println("Get | Searching for:", key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
 		cli.downloadEntryFromS3(key)
@@ -106,6 +109,7 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 
 	update := bson.D{{"$set", bson.D{{LAST_ACC, lastaccess}}}}
 	_, err = cli.Collection.UpdateOne(context.TODO(), entry, update)
+	utils.FormattedTimestamp()
 	fmt.Println("Get: found", entry)
 	return &entry
 }
@@ -140,6 +144,8 @@ Inserisce un'entry, specificando la chiave ed il suo valore.
 Al momento del get viene calcolato il timestamp
 */
 func (cli *MongoClient) PutEntry(key string, value string) error {
+	utils.FormattedTimestamp()
+	fmt.Printf("PUT | Inserting {%s,%s}\n", key, value)
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 	strVal := utils.FormatValue(value)
@@ -157,6 +163,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 				fmt.Println(err)
 				return err
 			}
+			utils.FormattedTimestamp()
 			fmt.Println("Update:", key+", changed value into", value)
 			return nil
 
@@ -165,6 +172,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 		}
 		return err
 	}
+	utils.FormattedTimestamp()
 	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
 	return nil
 }
@@ -174,6 +182,8 @@ Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegn
 Viene inoltre aggiornato il timestamp di quell'entry
 */
 func (cli *MongoClient) AppendValue(key string, arg1 string) error {
+	utils.FormattedTimestamp()
+	fmt.Printf("Append | Appending %s to %s\n", arg1, key)
 	old := bson.D{{ID, key}}
 	oldEntry := cli.GetEntry(key)
 	if oldEntry == nil {
@@ -196,6 +206,8 @@ func (cli *MongoClient) AppendValue(key string, arg1 string) error {
 Cancella un'entry dal database, specificandone la chiave
 */
 func (cli *MongoClient) DeleteEntry(key string) error {
+	utils.FormattedTimestamp()
+	fmt.Printf("Delete | Deleting %s\n", key)
 	coll := cli.Collection
 	entry := bson.D{{ID, key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
@@ -206,6 +218,7 @@ func (cli *MongoClient) DeleteEntry(key string) error {
 
 	if result.DeletedCount == 1 {
 		fmt.Println("Delete: Cancellata", key)
+		DeletedKeys = append(DeletedKeys, key)
 		return nil
 	}
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
