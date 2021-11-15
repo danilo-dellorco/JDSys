@@ -1,12 +1,10 @@
 package main
 
-// TODO testare bene la sovrascrittura nel Put ( che diventa quindi anche update)
-// TODO fare la gestione della semantica at-least-once a livello del client
+// TODO testare la gestione della semantica at-least-once a livello del client per PUT APPEND DELETE
 // TODO fare i testing per i due carichi di lavoro visti
 // TODO verificare il comportamento con la concorrenza. RPC dovrebbe gestirla già da sola, Bisonga vedere Mongo in locale
 // come si comporta rispetto ad esempio a due PUT sullo stesso dato.
-// TODO Modificare la Delete. Rispetto alle altre operazioni questa non viene aggiornata in automatico con l'update periodico.
-// anzi al contrario se vado a cancellare una cosa poi con il merge quella resuscita
+// TODO Testare la Delete
 
 import (
 	"fmt"

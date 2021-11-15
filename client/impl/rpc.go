@@ -9,8 +9,26 @@ import (
 	"time"
 )
 
+var GET string = "RPCservice.GetRPC"
+var PUT string = "RPCservice.PutRPC"
+var DEL string = "RPCservice.DeleteRPC"
+var APP string = "RPCservice.AppendRPC"
+
+/*
+Struttura che mantiene i parametri delle RPC
+*/
+type Args struct {
+	Key     string
+	Value   string
+	Handler string
+	Deleted bool
+}
+
+/*
+Effettua la chiamata RPC per il GET
+*/
 func GetRPC(key string) {
-	args := Args1{}
+	args := Args{}
 	args.Key = key
 
 	var reply *string
@@ -18,55 +36,66 @@ func GetRPC(key string) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
-	go CallRPC(client, args, reply, c)
-	rr1_timeout(client, args, reply, c)
+	go CallRPC(GET, client, args, reply, c)
+	rr1_timeout(GET, client, args, reply, c)
 }
 
+/*
+Effettua la chiamata RPC per il PUT
+*/
 func PutRPC(key string, value string) {
-	args := Args2{}
+	args := Args{}
 	args.Key = key
 	args.Value = value
 
 	var reply *string
 
+	c := make(chan error)
+
 	client, _ := HttpConnect()
-	err := client.Call("RPCservice.PutRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	go CallRPC(PUT, client, args, reply, c)
+	rr1_timeout(PUT, client, args, reply, c)
 }
 
+/*
+Effettua la chiamata RPC per l'APPEND
+*/
 func AppendRPC(key string, value string) {
-	args := Args2{}
+	args := Args{}
 	args.Key = key
 	args.Value = value
+
 	var reply *string
 
+	c := make(chan error)
+
 	client, _ := HttpConnect()
-	err := client.Call("RPCservice.AppendRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	go CallRPC(APP, client, args, reply, c)
+	rr1_timeout(APP, client, args, reply, c)
 }
 
+/*
+Effettua la chiamata RPC per il DELETE
+*/
 func DeleteRPC(key string) {
-	args := Args1{}
+	args := Args{}
 	args.Key = key
+
 	var reply *string
 
+	c := make(chan error)
+
 	client, _ := HttpConnect()
-	err := client.Call("RPCservice.DeleteRPC", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	fmt.Println("Risposta RPC:", *reply)
+	go CallRPC(DEL, client, args, reply, c)
+	rr1_timeout(DEL, client, args, reply, c)
 }
 
-func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
+/*
+Effettua una generica chiamata RPC, includendo il meccanismo RR1 per la semantica at
+*/
+func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
 	c <- errors.New("Timeout")
-	err := client.Call("RPCservice.GetRPC", args, &reply)
+	err := client.Call(rpc, args, &reply)
 	defer client.Close()
 	if err != nil {
 		c <- err
@@ -81,8 +110,9 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 /*
 Goroutine per l'implementazione della semantica at-least-once.
 La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
+// TODO implementare il numero max di ritrasmissioni
 */
-func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
+func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
 	//i := 0
 	//for i = 0; i < 4; i++ {
 	for {
@@ -94,7 +124,7 @@ func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
 			break
 		} else {
 			fmt.Println("Timer elapsed, retrying...")
-			go CallRPC(client, args, reply, c)
+			go CallRPC(rpc, client, args, reply, c)
 		}
 	}
 }
