@@ -89,7 +89,7 @@ func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
 			break
 		} else {
 			fmt.Println("Timer elapsed, retrying...")
-			CallRPC(client, args, reply, c)
+			go CallRPC(client, args, reply, c)
 		}
 	}
 }
