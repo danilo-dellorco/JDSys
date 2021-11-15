@@ -14,9 +14,10 @@ func GetRPC(key string) {
 
 	var reply *string
 
-	c := make(chan string)
+	c := make(chan error)
 
 	client, _ := HttpConnect()
+	go rr1_timeout(client, args, reply, c)
 	CallRPC(client, args, reply, c)
 	fmt.Println("Risposta RPC:", *reply)
 }
@@ -63,26 +64,30 @@ func DeleteRPC(key string) {
 	fmt.Println("Risposta RPC:", *reply)
 }
 
-func CallRPC(client *rpc.Client, args Args1, reply *string, c chan string) {
-	go rr1_timeout(client, args, reply, c)
-	fmt.Println("prima call")
-	err := client.Call("RPCservice.GetRPC", args, &reply)
-	fmt.Println("dopo call")
-	fmt.Println(*reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
+func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
+	go func() { c <- client.Call("RPCservice.GetRPC", args, &reply) }()
+	select {
+	case err := <-c:
+		if err != nil {
+			log.Fatal("RPC error: ", err)
+		} else {
+			fmt.Println(*reply)
+		}
+
+	case <-time.After(15 * time.Second):
+		return
 	}
-	c <- *reply
 }
 
-func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan string) {
+func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
 	//ciclo che deve essere fatto tante volte quante vogliamo ritrasmettere
 	for {
 		time.Sleep(utils.RR1_TIMEOUT)
 		fmt.Println("scaduto timer")
 		res := <-c
 		fmt.Println(res)
-		if res == "" {
+		//errore, riprovo
+		if res != nil {
 			CallRPC(client, args, reply, c)
 		} else {
 			break
