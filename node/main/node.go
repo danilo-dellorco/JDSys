@@ -197,7 +197,7 @@ func InitRPCService() {
 		log.Fatal("listen error:", e)
 	}
 
-	fmt.Println("RPC Serivce Started...")
+	fmt.Println("RPC Service Started...")
 	fmt.Println("Start Serving RPC request on port:", utils.RPC_PORT)
 	go http.Serve(l, nil)
 }
