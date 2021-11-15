@@ -16,7 +16,6 @@ func InitLocalSystem() structures.MongoClient {
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
-	// Lancio della Goroutine che permette al nodo di restare in attesa perenne
 	go ListenUpdates(client)
 
 	fmt.Println("Mongo is Up & Running...")
