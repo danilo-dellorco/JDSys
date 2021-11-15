@@ -65,6 +65,7 @@ func DeleteRPC(key string) {
 }
 
 func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
+	c <- errors.New("Timeout")
 	err := client.Call("RPCservice.GetRPC", args, &reply)
 	defer client.Close()
 	if err != nil {
