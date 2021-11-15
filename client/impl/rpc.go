@@ -73,6 +73,7 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 		} else {
 			fmt.Println("eiiiiiiiiiiiiiiiiii")
 			fmt.Println(*reply)
+			return
 		}
 
 	case <-time.After(15 * time.Second):
