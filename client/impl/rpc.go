@@ -71,6 +71,7 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 		if err != nil {
 			log.Fatal("RPC error: ", err)
 		} else {
+			fmt.Println("eiiiiiiiiiiiiiiiiii")
 			fmt.Println(*reply)
 		}
 
