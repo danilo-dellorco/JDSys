@@ -19,7 +19,7 @@ func GetRPC(key string) {
 
 	client, _ := HttpConnect()
 	go rr1_timeout(client, args, reply, c)
-	CallRPC(client, args, reply, c)
+	go CallRPC(client, args, reply, c)
 }
 
 func PutRPC(key string, value string) {
@@ -73,7 +73,7 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 		log.Fatal("RPC error: ", err)
 	} else {
 		c <- errors.New("Success")
-		fmt.Println("Riposta RPC:", *reply)
+		fmt.Println("Risposta RPC:", *reply)
 		return
 	}
 }
@@ -83,13 +83,13 @@ func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
 	for {
 		time.Sleep(utils.RR1_TIMEOUT)
 		res := <-c
-		fmt.Println("Risultato call:", res)
+		//fmt.Println("Risultato call:", res)
 		//errore, riprovo
 		if res.Error() == "Success" {
 			break
 		} else {
 			fmt.Println("Timer elapsed, retrying...")
-			CallRPC(client, args, reply, c)
+			go CallRPC(client, args, reply, c)
 		}
 	}
 }
