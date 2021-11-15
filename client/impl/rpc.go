@@ -76,9 +76,10 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 			return
 		}
 
-	case <-time.After(15 * time.Second):
-		return
+		//case <-time.After(15 * time.Second):
+		//return
 	}
+	client.Close()
 }
 
 func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
