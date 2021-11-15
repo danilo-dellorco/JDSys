@@ -113,19 +113,21 @@ La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il s
 // TODO implementare il numero max di ritrasmissioni
 */
 func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
-	// utils.RR1_RETRIES
 	//i := 0
-	//for i = 0; i < 4; i++ {
+	//for i = 0; i < utils.RR1_RETRIES; i++ {
 	for {
 		time.Sleep(utils.RR1_TIMEOUT)
 		res := <-c
 
-		//errore, riprovo
+		//si interrompe la ritrasmissione quando si riceve la prima risposta
 		if res.Error() == "Success" {
 			break
-		} else {
-			fmt.Println("Timer elapsed, retrying...")
-			go CallRPC(rpc, client, args, reply, c)
 		}
+		fmt.Println("Timer elapsed, retrying...")
+		go CallRPC(rpc, client, args, reply, c)
 	}
+	//effettuate tutte le ritrasmissioni possibili e di nessuna si riceve la risposta
+	//if i == 4 && res.Error() != "Success" {
+	//	fmt.Println("Server unreachable!")
+	//}
 }

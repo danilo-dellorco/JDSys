@@ -1,22 +1,45 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"net/rpc"
+	"os"
+	"os/signal"
 	"progetto-sdcc/registry/services"
 	"progetto-sdcc/utils"
+	"syscall"
 	"time"
 )
 
 func main() {
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	server := &http.Server{
+		Addr:    utils.REGISTRY_PORT,
+		Handler: http.DefaultServeMux,
+	}
+
 	go checkTerminatingNodes()
 	fmt.Printf("Server Registry Waiting For Incoming Connection... \n")
 	service := InitializeService()
 	rpc.Register(service)
 	rpc.HandleHTTP()
-	log.Fatal(http.ListenAndServe(utils.REGISTRY_PORT, nil))
+	go server.ListenAndServe()
+
+	//Aspetta segnali per chiudere tutte le connessioni al Ctrl+C
+	<-done
+	log.Print("Server Stopped")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+	log.Print("Server Exited Properly")
 }
 
 /*
@@ -62,7 +85,7 @@ func checkActiveNodes() []services.Instance {
 }
 
 /*
-Controlla ogni tot secondi quali sono le istanze in terminaione. Invia a queste un segnale in modo che prima
+Controlla ogni tot secondi quali sono le istanze in terminazione. Invia a queste un segnale in modo che prima
 di terminare possano inviare le proprie entry ad un altro nodo
 */
 func checkTerminatingNodes() {
