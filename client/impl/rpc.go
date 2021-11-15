@@ -18,8 +18,8 @@ func GetRPC(key string) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
-	go rr1_timeout(client, args, reply, c)
 	go CallRPC(client, args, reply, c)
+	rr1_timeout(client, args, reply, c)
 }
 
 func PutRPC(key string, value string) {
@@ -78,12 +78,16 @@ func CallRPC(client *rpc.Client, args Args1, reply *string, c chan error) {
 	}
 }
 
+/*
+Goroutine per l'implementazione della semantica at-least-once.
+La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
+*/
 func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan error) {
-	//ciclo che deve essere fatto tante volte quante vogliamo ritrasmettere
-	for {
+	i := 0
+	for i = 0; i < 4; i++ {
 		time.Sleep(utils.RR1_TIMEOUT)
 		res := <-c
-		//fmt.Println("Risultato call:", res)
+
 		//errore, riprovo
 		if res.Error() == "Success" {
 			break

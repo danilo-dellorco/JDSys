@@ -35,10 +35,10 @@ Loop:
 			impl.Append()
 		case cmd == "5":
 			impl.Exit()
-		default:
-			fmt.Println("Command not recognized. Retry.")
 		case err == io.EOF:
 			break Loop
+		default:
+			fmt.Println("Command not recognized. Retry.")
 		}
 		utils.ClearScreen()
 	}
