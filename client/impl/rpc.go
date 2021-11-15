@@ -17,7 +17,7 @@ func GetRPC(key string) {
 	c := make(chan string)
 
 	client, _ := HttpConnect()
-	CallRPC(client, args, *reply, c)
+	CallRPC(client, args, reply, c)
 	fmt.Println("Risposta RPC:", *reply)
 }
 
@@ -63,21 +63,21 @@ func DeleteRPC(key string) {
 	fmt.Println("Risposta RPC:", *reply)
 }
 
-func rr1_timeout(client *rpc.Client, args Args1, reply string, c chan string) {
+func rr1_timeout(client *rpc.Client, args Args1, reply *string, c chan string) {
 	for {
 		time.Sleep(utils.RR1_TIMEOUT)
 		fmt.Println("scaduto timer")
-		reply := <-c
+		res := <-c
 		fmt.Println(reply)
-		if reply == "" {
-			CallRPC(client, args, reply, c)
+		if res == "" {
+			CallRPC(client, args, &res, c)
 		} else {
 			break
 		}
 	}
 }
 
-func CallRPC(client *rpc.Client, args Args1, reply string, c chan string) {
+func CallRPC(client *rpc.Client, args Args1, reply *string, c chan string) {
 	go rr1_timeout(client, args, reply, c)
 	fmt.Println("prima call")
 	err := client.Call("RPCservice.GetRPC", args, &reply)
@@ -86,5 +86,5 @@ func CallRPC(client *rpc.Client, args Args1, reply string, c chan string) {
 	if err != nil {
 		log.Fatal("RPC error: ", err)
 	}
-	c <- reply
+	c <- *reply
 }
