@@ -113,6 +113,7 @@ La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il s
 // TODO implementare il numero max di ritrasmissioni
 */
 func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
+	// utils.RR1_RETRIES
 	//i := 0
 	//for i = 0; i < 4; i++ {
 	for {
