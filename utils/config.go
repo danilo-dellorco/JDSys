@@ -27,7 +27,7 @@ var NODE_SUCC_TIME time.Duration = 2 * time.Minute                 // Tempo di a
 var CHECK_TERMINATING_INTERVAL time.Duration = 30 * time.Second    // Ogni quanto effettuare il controllo sulle istanze in terminazione
 var ACTIVITY_CACHE_FLUSH_INTERVAL time.Duration = 40 * time.Minute // Ogni quanto flushare la cache sulle istanze in terminazione
 var CHORD_FIX_INTERVAL time.Duration = 10 * time.Second            // Ogni quanto un nodo contatta i suoi vicini per aggiornare le Finger Table
-var RR1_TIMEOUT time.Duration = 1 * time.Microsecond
+var RR1_TIMEOUT time.Duration = 1 * time.Nanosecond
 
 // Port Settings
 var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
