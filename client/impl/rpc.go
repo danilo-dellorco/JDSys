@@ -99,14 +99,13 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 	res := errors.New("")
 	i := 0
 	for i = 0; i < utils.RR1_RETRIES; i++ {
-	restart_timer:
 		go check_timeout(check)
 		select {
 		// scade timer per la ritrasmissione
 		case <-check:
 			fmt.Println("Timeout elapsed, start retransmitting...")
 			go CallRPC(rpc, client, args, reply, c)
-			goto restart_timer
+			continue
 		// arriva risposta dal server
 		case res = <-c:
 			val := res.Error()
