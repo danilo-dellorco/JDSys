@@ -53,12 +53,12 @@ func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 	}
 	succ := s.Node.GetSuccessor().GetIpAddr()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
+	fmt.Println("Request send to:", addr+utils.RPC_PORT)
 	client.Call("RPCservice.GetImpl", args, &reply)
 	return nil
 }
@@ -73,12 +73,12 @@ func (s *RPCservice) PutRPC(args Args, reply *string) error {
 
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
+	fmt.Println("Request send to:", addr+utils.RPC_PORT)
 	client.Call("RPCservice.PutImpl", args, &reply)
 	return nil
 }
@@ -95,12 +95,12 @@ func (s *RPCservice) AppendRPC(args Args, reply *string) error {
 
 	me := s.Node.GetIpAddress()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
+	fmt.Println("Request send to:", addr+utils.RPC_PORT)
 	client.Call("RPCservice.AppendImpl", args, &reply)
 	return nil
 }
@@ -120,11 +120,11 @@ func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 	args.Handler = handlerNode
 	args.Deleted = false
 
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(me))
+	client, err := rpc.DialHTTP("tcp", me+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(me))
+	fmt.Println("Delete request forwarded to handling node:", me+utils.RPC_PORT)
 	client.Call("RPCservice.DeleteHandling", args, &reply)
 	return nil
 
@@ -200,11 +200,11 @@ func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
 		return nil
 	}
 	next := s.Node.GetSuccessor().GetIpAddr()
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
+	client, err := rpc.DialHTTP("tcp", next+utils.CHORD_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Delete request forwarded to replication node:", utils.ParseAddrRPC(next))
+	fmt.Println("Delete request forwarded to replication node:", next+utils.RPC_PORT)
 	client.Call("RPCservice.DeleteReplicating", args, &reply)
 	return nil
 }
@@ -240,11 +240,11 @@ retry:
 		goto retry
 	}
 	next := s.Node.GetSuccessor().GetIpAddr()
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
+	client, err := rpc.DialHTTP("tcp", next+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Delete request forwarded to:", utils.ParseAddrRPC(next))
+	fmt.Println("Delete request forwarded to:", next+utils.RPC_PORT)
 	client.Call("RPCservice.DeleteRPC", args, &reply)
 	return nil
 }

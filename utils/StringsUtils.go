@@ -92,10 +92,6 @@ func AppendValue(str string, arg1 string) string {
 	return FormatValue(append)
 }
 
-func ParseAddrRPC(addr string) string {
-	return addr[:len(addr)-5] + RPC_PORT
-}
-
 func ClearScreen() {
 	fmt.Print("\033[H\033[2J")
 }
