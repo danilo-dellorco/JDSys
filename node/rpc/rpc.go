@@ -231,8 +231,14 @@ func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 	if err == nil {
 		args.Deleted = true
 	}
-
-	// Propaga la Delete al nodo successivo
+retry:
+	// Propaga la Delete al nodo successivo, la cancellazione sul nodo che gestisce la chiave
+	// è già stata effettuata, per questo se i nodi successivi non hanno successore aspettiamo
+	// la ricostruzione della DHT Chord per completare la Delete
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
+		goto retry
+	}
 	next := s.Node.GetSuccessor().GetIpAddr()
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
 	if err != nil {
