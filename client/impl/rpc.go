@@ -95,23 +95,31 @@ Goroutine per l'implementazione della semantica at-least-once.
 La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
 */
 func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
-	var res string
+	check := make(chan bool)
+	res := errors.New("")
 	i := 0
 	for i = 0; i < utils.RR1_RETRIES; i++ {
-		//TODO: modificare, impostato ad 1 secondo così vediamo effettivamente 2-3 ritrasmissioni
-		time.Sleep(utils.RR1_TIMEOUT)
-		val := <-c
-		res := val.Error()
-		fmt.Println(res)
+	restart_timer:
+		go check_timeout(check)
+		select {
+		// scade timer per la ritrasmissione
+		case <-check:
+			fmt.Println("Timeout elapsed, start retransmitting...")
+			go CallRPC(rpc, client, args, reply, c)
+			goto restart_timer
+		// arriva risposta dal server
+		case res = <-c:
+			val := res.Error()
+			fmt.Println(val)
+		}
 		//si interrompe la ritrasmissione quando si riceve la prima risposta
-		if res == "Success" {
+		if res.Error() == "Success" {
 			break
 		}
-		fmt.Println("Timer elapsed, retrying...")
-		go CallRPC(rpc, client, args, reply, c)
 	}
+
 	//effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
-	if i == 5 && res != "Success" {
+	if i == 5 && res.Error() != "Success" {
 		fmt.Println("Server unreachable!")
 	}
 }
@@ -131,4 +139,9 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 		fmt.Println("Risposta RPC:", *reply)
 		return
 	}
+}
+
+func check_timeout(check chan bool) {
+	time.Sleep(utils.RR1_TIMEOUT)
+	check <- true
 }
