@@ -204,10 +204,10 @@ func SendPeriodicUpdates() {
 	fmt.Println("Starting Periodic Updates Routine...")
 	for {
 	restart:
-		time.Sleep(time.Minute)
-		fmt.Println(me.GetSuccessor())
+		time.Sleep(utils.SEND_UPDATES_TIME)
 		//potrebbe esserci un unico nodo senza successore
-		if me.GetSuccessor() == nil {
+		if me.GetSuccessor().String() == "" {
+			fmt.Println("imboccato")
 			goto restart
 		}
 		addr := me.GetSuccessor().GetIpAddr()
