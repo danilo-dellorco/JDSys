@@ -196,11 +196,12 @@ func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
 	err := s.Db.DeleteEntry(args.Key)
 	if err == nil {
 		args.Deleted = true
-	}
-	// Entry non è presente nel DB del nodo gestore, quindi non esiste
-	if err.Error() == "Entry Not Found" {
-		*reply = "The key searched for delete not exist"
-		return nil
+	} else {
+		// Entry non è presente nel DB del nodo gestore, quindi non esiste
+		if err.Error() == "Entry Not Found" {
+			*reply = "The key searched for delete not exist"
+			return nil
+		}
 	}
 
 	// Se l'entry esiste ed è stata cancellata, procediamo inoltrando la richiesta al nodo successore
