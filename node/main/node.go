@@ -207,7 +207,6 @@ func SendPeriodicUpdates() {
 		time.Sleep(utils.SEND_UPDATES_TIME)
 		//potrebbe esserci un unico nodo senza successore
 		if me.GetSuccessor().String() == "" {
-			fmt.Println("imboccato")
 			goto restart
 		}
 		addr := me.GetSuccessor().GetIpAddr()

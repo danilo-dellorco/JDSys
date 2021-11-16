@@ -34,7 +34,7 @@ type Args struct {
 Effettua la RPC per la Get di una Key.
  1) Si verifica se il nodo ha una copia della risorsa
  2) Lookup per trovare il nodo che hosta la risorsa
- 2) RPC effettiva di GET verso quel nodo chord
+ 3) RPC effettiva di GET verso quel nodo chord
 */
 func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 	fmt.Println("GetRPC called!")
@@ -47,7 +47,10 @@ func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 	}
 
 	fmt.Println("None.\nForwarding Get Request on DHT...")
-	// TODO testare se ci va tolta la porta o no per il successore
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
+		return nil
+	}
 	succ := s.Node.GetSuccessor().GetIpAddr()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
@@ -112,6 +115,7 @@ func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 	fmt.Println("DeleteRPC called")
 
 	me := s.Node.GetIpAddress()
+	fmt.Println("da me parte la ricerca per cancellare: ", me)
 	handlerNode, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
 	args.Handler = handlerNode
 	args.Deleted = false
@@ -191,6 +195,10 @@ func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
 	}
 
 	// Propaga la Delete al nodo successivo
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
+		return nil
+	}
 	next := s.Node.GetSuccessor().GetIpAddr()
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
 	if err != nil {
@@ -207,7 +215,7 @@ Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specific
 */
 func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 
-	// Controllo se la richiesta ha completato il giro dell'anello
+	// La richiesta ha completato il giro dell'anello se è tornata al nodo gestisce quella chiave
 	if s.Node.GetIpAddress() == args.Handler {
 		if args.Deleted {
 			*reply = "Entry succesfully deleted"

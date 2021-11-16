@@ -110,7 +110,6 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 		fmt.Println("Timer elapsed, retrying...")
 		go CallRPC(rpc, client, args, reply, c)
 	}
-
 	//effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
 	if i == 5 && res != "Success" {
 		fmt.Println("Server unreachable!")

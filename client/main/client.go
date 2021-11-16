@@ -11,6 +11,7 @@ import (
 	"io"
 	"progetto-sdcc/client/impl"
 	"progetto-sdcc/utils"
+	"time"
 )
 
 func main() {
@@ -38,8 +39,9 @@ Loop:
 		default:
 			fmt.Println("Command not recognized. Retry.")
 		}
-		//time.Sleep(3 * time.Second)
-		//utils.ClearScreen()
+		//aspettiamo per far stampare prima la risposta se arriva in ritardo, per poi pulire lo schermo
+		time.Sleep(3 * time.Second)
+		utils.ClearScreen()
 	}
 }
 
