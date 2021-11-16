@@ -200,7 +200,7 @@ func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
 		return nil
 	}
 	next := s.Node.GetSuccessor().GetIpAddr()
-	client, err := rpc.DialHTTP("tcp", next+utils.CHORD_PORT)
+	client, err := rpc.DialHTTP("tcp", next+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
