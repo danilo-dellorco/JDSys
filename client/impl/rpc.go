@@ -100,7 +100,7 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 	for i = 0; i < utils.RR1_RETRIES; i++ {
 		time.Sleep(utils.RR1_TIMEOUT)
 		res := <-c
-
+		fmt.Println(res)
 		//si interrompe la ritrasmissione quando si riceve la prima risposta
 		if res.Error() == "Success" {
 			break
@@ -109,7 +109,7 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 		go CallRPC(rpc, client, args, reply, c)
 	}
 	//effettuate tutte le ritrasmissioni possibili e di nessuna si riceve la risposta
-	if i == 4 && res.Error() != "Success" {
+	if i == 5 && res.Error() != "Success" {
 		fmt.Println("Server unreachable!")
 	}
 }
