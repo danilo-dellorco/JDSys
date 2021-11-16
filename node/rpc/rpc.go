@@ -196,13 +196,11 @@ func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
 	err := s.Db.DeleteEntry(args.Key)
 	if err == nil {
 		args.Deleted = true
-		// Entry non è presente nel DB del nodo gestore, quindi non esiste
-	} else if err.Error() == "Entry Not Found" {
+	}
+	// Entry non è presente nel DB del nodo gestore, quindi non esiste
+	if err.Error() == "Entry Not Found" {
 		*reply = "The key searched for delete not exist"
 		return nil
-		// Errore, cancellazione non andata a buon fine
-	} else {
-		args.Deleted = false
 	}
 
 	// Se l'entry esiste ed è stata cancellata, procediamo inoltrando la richiesta al nodo successore
@@ -235,7 +233,7 @@ func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 
 	// Cancella la richiesta sul db locale
 	fmt.Println("Deleting replicated value on local storage...")
-	err := s.Db.DeleteEntry(args.Key)
+	s.Db.DeleteEntry(args.Key)
 
 	// Propaga la Delete al nodo successivo, la cancellazione sul nodo che gestisce la chiave
 	// è già stata effettuata, per questo se i nodi successivi non hanno successore aspettiamo
