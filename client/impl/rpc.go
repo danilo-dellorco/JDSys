@@ -128,7 +128,6 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 Effettua una generica RPC, utilizzata per implementare il meccanismo RR1 per la semantica at-least-once
 */
 func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
-	c <- errors.New("Timeout")
 	err := client.Call(rpc, args, &reply)
 	defer client.Close()
 	if err != nil {
