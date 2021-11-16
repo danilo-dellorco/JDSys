@@ -98,6 +98,7 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 	var res string
 	i := 0
 	for i = 0; i < utils.RR1_RETRIES; i++ {
+		//TODO: modificare, impostato ad 1 secondo così vediamo effettivamente 2-3 ritrasmissioni
 		time.Sleep(utils.RR1_TIMEOUT)
 		val := <-c
 		res := val.Error()
@@ -109,7 +110,8 @@ func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c cha
 		fmt.Println("Timer elapsed, retrying...")
 		go CallRPC(rpc, client, args, reply, c)
 	}
-	//effettuate tutte le ritrasmissioni possibili e di nessuna si riceve la risposta
+
+	//effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
 	if i == 5 && res != "Success" {
 		fmt.Println("Server unreachable!")
 	}
