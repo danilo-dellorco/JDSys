@@ -95,21 +95,22 @@ Goroutine per l'implementazione della semantica at-least-once.
 La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
 */
 func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
-	var res error
+	var res string
 	i := 0
 	for i = 0; i < utils.RR1_RETRIES; i++ {
 		time.Sleep(utils.RR1_TIMEOUT)
-		res := <-c
+		val := <-c
+		res := val.Error()
 		fmt.Println(res)
 		//si interrompe la ritrasmissione quando si riceve la prima risposta
-		if res.Error() == "Success" {
+		if res == "Success" {
 			break
 		}
 		fmt.Println("Timer elapsed, retrying...")
 		go CallRPC(rpc, client, args, reply, c)
 	}
 	//effettuate tutte le ritrasmissioni possibili e di nessuna si riceve la risposta
-	if i == 5 && res.Error() != "Success" {
+	if i == 5 && res != "Success" {
 		fmt.Println("Server unreachable!")
 	}
 }
