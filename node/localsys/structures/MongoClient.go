@@ -226,7 +226,7 @@ func (cli *MongoClient) DeleteEntry(key string) error {
 		return nil
 	}
 	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
-	return errors.New("entry Not Found")
+	return errors.New("Entry Not Found")
 }
 
 /*
