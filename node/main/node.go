@@ -24,12 +24,6 @@ var mongoClient structures.MongoClient
 var me *chord.ChordNode
 
 func main() {
-	/*mongoClient = mongo.InitLocalSystem()
-	mongoClient.DropDatabase()
-	mongoClient.PutEntry("ProvaK", "ProvaV")
-	mongoClient.GetEntry("ProvaK")
-	mongoClient.AppendValue("ProvaK", "NuovoValoreBro")
-	mongoClient.GetEntry("ProvaK")*/
 	NodeSetup()
 
 Loop:
@@ -38,13 +32,13 @@ Loop:
 		_, err := fmt.Scan(&cmd)
 		switch {
 		case cmd == "print":
-			//print out successor and predecessor
+			//stampa successore e predecessore
 			fmt.Printf("%s", me.String())
 		case cmd == "fingers":
-			//print out finger table
+			//stampa la finger table
 			fmt.Printf("%s", me.ShowFingers())
 		case cmd == "succ":
-			//print out successor list
+			//stampa la lista di successori
 			fmt.Printf("%s", me.ShowSucc())
 		case err == io.EOF:
 			break Loop
@@ -154,7 +148,6 @@ waitLB:
 			break
 		}
 	}
-	//fmt.Println(result)
 
 	// Unica istanza attiva, se è il nodo stesso crea la DHT Chord, se non è lui
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
