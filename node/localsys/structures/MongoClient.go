@@ -96,8 +96,7 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 
 	if err != nil {
 		fmt.Println("Get Error:", err)
-		fmt.Println("valore entry: ", entry.Value)
-		return &entry
+		return nil
 	}
 	id := result[ID].(string)
 	value := result[VALUE].(string)
