@@ -63,7 +63,7 @@ func TestAppend(key string, value string) time.Duration {
 /*
 Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
-func TestDelete(key string, lbAddr string) time.Duration {
+func TestDelete(key string) time.Duration {
 	start := utils.GetTimestamp()
 
 	impl.DeleteRPC(key)
