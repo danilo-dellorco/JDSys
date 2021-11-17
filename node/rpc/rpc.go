@@ -310,6 +310,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	//imposto il nodo da cui partirà l'aggiornamento dell'anello
 	me := s.Node.GetIpAddress()
 	args.Handler = me
+	args.Deleted = false
 
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
