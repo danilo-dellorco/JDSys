@@ -47,7 +47,7 @@ risolti i conflitti aggiornando il database
 */
 func ListenReconciliationMessages(cli structures.MongoClient) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel, "update")
+	go communication.StartReceiver(fileChannel, "reconciliation")
 	fmt.Println("Started Reconciliation Message listening Service...")
 	for {
 		received := <-fileChannel
