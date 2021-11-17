@@ -8,11 +8,16 @@ import (
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
+	"time"
 )
 
 // TODO dà un problema su Send Update e Receive forse perche servono porte diverse
 // TODO Replicazione: Handler riceve la scrittura e la pro
 // TODO testare filetransfer di riconciliazione e terminazione con le porte nuove eccetera
+// TODO problema consistenza: il successore riceve l'export e parte la routine per il merge, il nodo
+//il nodo avviando subito la RPC non da tempo al successore di completare il merge, per cui si effettua
+//l'export del DB locale per la Send presente nell'RPC ma il file viene buttato prima dell'invio dalla
+//routine alla fine del merge --> intanto c'ho messo uno sleep di 3 secondi
 
 /*
 Servizio RPC del nodo. Mantiene un riferimento al ChordNode ed al MongoClient
@@ -323,7 +328,13 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
+
+	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
+	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
+	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file per l'invio!
+
 	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
+	time.Sleep(3 * time.Second)
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
@@ -365,7 +376,12 @@ retry:
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
+
+	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
+	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
+	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file per l'invio!
 	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
+	time.Sleep(3 * time.Second)
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }

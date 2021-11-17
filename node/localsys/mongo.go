@@ -50,6 +50,7 @@ func ListenReconciliationMessages(cli structures.MongoClient) {
 	go communication.StartReceiver(fileChannel, "reconciliation")
 	fmt.Println("Started Reconciliation Message listening Service...")
 	for {
+		//ricevuto correttamente l'export del DB dal predecessore, si scrive sul canale per attivare la riconciliazione
 		received := <-fileChannel
 		if received == "rcvd" {
 			cli.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
