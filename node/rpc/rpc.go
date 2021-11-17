@@ -12,6 +12,7 @@ import (
 
 // TODO dà un problema su Send Update e Receive forse perche servono porte diverse
 // TODO Replicazione: Handler riceve la scrittura e la pro
+// TODO testare filetransfer di riconciliazione e terminazione con le porte nuove eccetera
 
 /*
 Servizio RPC del nodo. Mantiene un riferimento al ChordNode ed al MongoClient
@@ -81,7 +82,7 @@ func (s *RPCservice) PutRPC(args Args, reply *string) error {
 		log.Fatal("dialing:", err)
 	}
 
-	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
+	fmt.Println("Request sent to:", utils.ParseAddrRPC(addr))
 	client.Call("RPCservice.PutImpl", args, &reply)
 	return nil
 }
@@ -155,11 +156,21 @@ func (s *RPCservice) PutImpl(args Args, reply *string) error {
 	arg1 := args.Key
 	arg2 := args.Value
 	err := s.Db.PutEntry(arg1, arg2)
+	ok := true
 	if err == nil {
 		*reply = "Entry correctly inserted in the DB"
+	} else if err.Error() == "Update" {
+		*reply = "Entry correctly updated"
 	} else {
-		*reply = "Entry already in the DB"
-		fmt.Println(*reply)
+		*reply = err.Error()
+		ok = false
+	}
+
+	// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
+	if ok {
+		next := s.Node.GetSuccessor().GetIpAddr()
+		s.Db.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
+		mongo.SendCollectionMsg(s.Db, next, "replication")
 	}
 	return nil
 }
@@ -171,13 +182,18 @@ func (s *RPCservice) AppendImpl(args *Args, reply *string) error {
 	fmt.Println("Append request arrived")
 	arg1 := args.Key
 	arg2 := args.Value
-	fmt.Println("Arguments", arg1, arg2)
 	err := s.Db.AppendValue(arg1, arg2)
 	if err == nil {
 		*reply = "Value correctly appended"
+
+		// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
+		next := s.Node.GetSuccessor().GetIpAddr()
+		s.Db.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
+		mongo.SendCollectionMsg(s.Db, next, "replication")
 	} else {
 		*reply = "Entry not found"
 	}
+
 	return nil
 }
 
@@ -273,7 +289,7 @@ retry:
 	}
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Instance Scheduled to Terminating...")
-	mongo.SendUpdate(s.Db, addr, "termination")
+	mongo.SendCollectionMsg(s.Db, addr, "update")
 	*reply = "Instance Terminating"
 	return nil
 }
@@ -298,7 +314,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Sending DB export to my successor...")
-	mongo.SendUpdate(s.Db, addr, "reconciliation")
+	mongo.SendCollectionMsg(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore del trasferimento del DB
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
@@ -339,7 +355,7 @@ retry:
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Sending DB export to my successor...")
-	mongo.SendUpdate(s.Db, addr, "reconciliation")
+	mongo.SendCollectionMsg(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore per continuare propagazione del DB nell'anello
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)

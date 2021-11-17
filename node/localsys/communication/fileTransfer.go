@@ -19,10 +19,10 @@ Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV
 func StartReceiver(fileChannel chan string, mode string) {
 	var port string
 	switch mode {
-	case "termination":
-		port = utils.FILETRANSFER_TERMINATING_PORT
+	case "update":
+		port = utils.FILETR_TERMINATING_PORT
 	case "reconciliation":
-		port = utils.FILETRANSFER_RECONCILIATION_PORT
+		port = utils.FILETR_RECONCILIATION_PORT
 	}
 
 	server, err := net.Listen("tcp", port)
@@ -48,10 +48,10 @@ Apre la connessione verso un altro nodo per trasmettere un file
 func StartSender(filename string, address string, mode string) {
 	var addr string
 	switch mode {
-	case "termination":
-		addr = address + utils.FILETRANSFER_TERMINATING_PORT
+	case "update":
+		addr = address + utils.FILETR_TERMINATING_PORT
 	case "reconciliation":
-		addr = address + utils.FILETRANSFER_RECONCILIATION_PORT
+		addr = address + utils.FILETR_RECONCILIATION_PORT
 	}
 
 	connection, err := net.Dial("tcp", addr)

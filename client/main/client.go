@@ -7,7 +7,7 @@ package main
 // TODO Testare la Delete
 // TODO migliorare leggibilità del codice
 // TODO fare RPC DropDatabase su tutti i nodi per poter fare sempre un test pulito
-
+// TODO testare migrazione e GET da S3
 import (
 	"fmt"
 	"io"

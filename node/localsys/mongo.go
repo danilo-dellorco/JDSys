@@ -16,7 +16,7 @@ func InitLocalSystem() structures.MongoClient {
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
-	go ListenTerminatingDatabases(client)
+	go ListenUpdateMessages(client)
 	go ListenReconciliationMessages(client)
 
 	fmt.Println("Mongo is Up & Running...")
@@ -24,12 +24,13 @@ func InitLocalSystem() structures.MongoClient {
 }
 
 /*
-Resta in ascolto per la ricezione di aggiornamenti del DB da altri nodi per realizzare consistenza finale
+Resta in ascolto per messaggi di aggiornamento del database. Utilizzato per ricevere i DB dei nodi in terminazione
+e le entry replicate.
 */
-func ListenTerminatingDatabases(cli structures.MongoClient) {
+func ListenUpdateMessages(cli structures.MongoClient) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel, "termination")
-	fmt.Println("Started Terminating Database listening Service...")
+	go communication.StartReceiver(fileChannel, "update")
+	fmt.Println("Started Update Message listening Service...")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
@@ -46,7 +47,7 @@ risolti i conflitti aggiornando il database
 */
 func ListenReconciliationMessages(cli structures.MongoClient) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel, "termination")
+	go communication.StartReceiver(fileChannel, "update")
 	fmt.Println("Started Reconciliation Message listening Service...")
 	for {
 		received := <-fileChannel
@@ -61,10 +62,9 @@ func ListenReconciliationMessages(cli structures.MongoClient) {
 /*
 Esporta il file CSV e lo invia al nodo remoto
 */
-func SendUpdate(cli structures.MongoClient, address string, mode string) {
+func SendCollectionMsg(cli structures.MongoClient, address string, mode string) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
 	communication.StartSender(file, address, mode)
 	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
-	utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 }
