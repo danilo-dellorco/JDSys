@@ -413,13 +413,13 @@ func (cli *MongoClient) MergeCollection(exportFile string, receivedFile string) 
 Invocato quando si riceve un update di riconciliazione. Si utilizza
 last-write-wins per risolvere i conflitti tra le entry
 */
-func (cli *MongoClient) Reconciliate(exportFile string, receivedFile string) {
+func (cli *MongoClient) ReconciliateCollection(exportFile string, receivedFile string) {
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
-	mergedEntries := MergeEntries(localExport, receivedUpdate)
+	reconEntries := ReconciliateEntries(localExport, receivedUpdate)
 	cli.Collection.Drop(context.TODO())
-	for _, entry := range mergedEntries {
+	for _, entry := range reconEntries {
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)

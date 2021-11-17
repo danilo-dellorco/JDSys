@@ -112,11 +112,10 @@ func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 				// Appendo l'entry con conflict a false.
 				temp := latestEntry
 				temp.Conflict = false
+				fmt.Println(temp)
+				fmt.Println(latestEntry)
 				reconEntries = append(reconEntries, temp)
 			}
-		}
-		if !local[i].Conflict {
-			reconEntries = append(reconEntries, local[i])
 		}
 	}
 	for _, u := range local {
@@ -124,6 +123,7 @@ func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 			reconEntries = append(reconEntries, u)
 		}
 	}
-	fmt.Println("Entries:")
+	fmt.Print("Entries:")
+	fmt.Println(reconEntries)
 	return reconEntries
 }
