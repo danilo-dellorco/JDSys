@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net/rpc"
@@ -34,6 +35,7 @@ Permette al client di inserire una coppia key-value nel sistema di storage conta
 func Put() {
 	key := SecScanln("Insert the Entry Key")
 	value := SecScanln("Insert the Entry Value")
+	fmt.Println("va: ", value)
 	PutRPC(key, value)
 }
 
@@ -68,11 +70,10 @@ Prende input da tastiera in modo sicuro, rimuovendo eventuali caratteri che potr
 permettere ad un attaccante di effettuare una Injection su MongoDB
 */
 func SecScanln(message string) string {
-	var arg string
-
+	arg := ""
 	for {
 		fmt.Print(message + ": ")
-		fmt.Scanln(&arg)
+		arg, _ = bufio.NewReader(os.Stdin).ReadString('\n')
 		if strings.ContainsAny(arg, "[]{},:./*") {
 			fmt.Println("Inserted value contains not allowed characters")
 			fmt.Println("Retry")
@@ -80,5 +81,5 @@ func SecScanln(message string) string {
 			break
 		}
 	}
-	return arg
+	return arg[:len(arg)-1]
 }
