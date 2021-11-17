@@ -116,7 +116,7 @@ func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 
 	me := s.Node.GetIpAddress()
 	handlerNode, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	args.Handler = handlerNode
+	args.Handler = utils.RemovePort(handlerNode)
 	args.Deleted = false
 
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(handlerNode))
