@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/rpc"
 	"os"
@@ -30,6 +31,8 @@ func main() {
 	rpc.HandleHTTP()
 	go server.ListenAndServe()
 
+	go startPeriodicUpdates()
+
 	//Aspetta segnali per chiudere tutte le connessioni al Ctrl+C
 	<-done
 	log.Print("Server Stopped")
@@ -45,7 +48,9 @@ func main() {
 /*
 Struttura per il passaggio dei parametri alla RPC
 */
-type Args struct{}
+type Args struct {
+	Handler string
+}
 
 /*
 Pseudo-Interfaccia che verrà registrata dal server in modo tale che il client possa invocare i metodi tramite RPC
@@ -101,7 +106,7 @@ func checkTerminatingNodes() {
 }
 
 /*
-Chiamata a RPC che invia il segnale di terminazione ad un nodo schedulato per la terminazione
+Invocazione dell'RPC che invia il segnale di terminazione ad un nodo schedulato per la terminazione
 */
 func sendTerminatingSignalRPC(ip string) {
 	fmt.Println("Sending Terminating Message to node:", ip)
@@ -112,6 +117,50 @@ func sendTerminatingSignalRPC(ip string) {
 	var reply string
 	args := Args{}
 	err = client.Call("RPCservice.TerminateInstanceRPC", args, &reply)
+	if err != nil {
+		log.Fatal("GetRPC error:", err)
+	}
+	//defer client.Close()
+	fmt.Println("Risposta RPC:", reply)
+}
+
+/*
+Avvia ogni tot secondi il processo iterativo di scambio di aggiornamenti tra un nodo e il suo successore.
+Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
+*/
+func startPeriodicUpdates() {
+	fmt.Println("Starting periodic updates for final consistency Routine....")
+retry:
+	for {
+		nodes := checkActiveNodes()
+		if len(nodes) == 0 || len(nodes) == 1 {
+			fmt.Println("Wait the correct construction of the DHT to start the updates routine of the ring")
+			time.Sleep(10 * time.Second)
+			goto retry
+		}
+		//recuperate tutte le istanze attive, si invia la richiesta ad un nodo a caso
+		var list = make([]string, len(nodes))
+		for i := 0; i < len(nodes); i++ {
+			list[i] = nodes[i].PrivateIP
+		}
+		startFinalConsistencyRPC(list[rand.Intn(len(list))])
+		time.Sleep(utils.START_CONSISTENCY_INTERVAL)
+	}
+}
+
+/*
+Invocazione dell'RPC che avvia lo scambio di aggiornamenti tra i nodi per raggiungere la consistenza finale
+*/
+func startFinalConsistencyRPC(ip string) {
+	fmt.Println("Sending signal to start DB exchange to node:", ip)
+	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	var reply string
+	args := Args{}
+	args.Handler = ""
+	err = client.Call("RPCservice.ConsistencyHandlerRPC", args, &reply)
 	if err != nil {
 		log.Fatal("GetRPC error:", err)
 	}
