@@ -8,41 +8,6 @@ import (
 )
 
 /*
-Unisce le Entry tenendo in caso di conflitti sempre quella piu recente
-*/
-func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
-	fmt.Println("Merging Database Entries...")
-
-	var mergedEntries []MongoEntry
-
-	for i := 0; i < len(local); i++ {
-		for j := 0; j < len(update); j++ {
-			var latestEntry MongoEntry
-			if local[i].Key == update[j].Key {
-				local[i].Conflict = true
-				update[j].Conflict = true
-				if local[i].Timest.After(update[j].Timest) {
-					latestEntry = local[i]
-				} else {
-					latestEntry = update[j]
-				}
-				mergedEntries = append(mergedEntries, latestEntry)
-			}
-		}
-		if !local[i].Conflict {
-			mergedEntries = append(mergedEntries, local[i])
-		}
-	}
-	for _, u := range update {
-		if !u.Conflict {
-			mergedEntries = append(mergedEntries, u)
-		}
-	}
-	fmt.Println("Entries:")
-	return mergedEntries
-}
-
-/*
 Ottiene una lista di Entry partendo da un file CSV
 */
 func ParseCSV(file string) []MongoEntry {
@@ -83,4 +48,82 @@ func ParseCSV(file string) []MongoEntry {
 	defer csvFile.Close()
 	fmt.Println("CSV Parsed correctly")
 	return entryList
+}
+
+/*
+Unisce le Entry tenendo in caso di conflitti sempre quella piu recente
+*/
+func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
+	fmt.Println("Merging Database Entries...")
+
+	var mergedEntries []MongoEntry
+
+	for i := 0; i < len(local); i++ {
+		for j := 0; j < len(update); j++ {
+			var latestEntry MongoEntry
+			if local[i].Key == update[j].Key {
+				local[i].Conflict = true
+				update[j].Conflict = true
+				if local[i].Timest.After(update[j].Timest) {
+					latestEntry = local[i]
+				} else {
+					latestEntry = update[j]
+				}
+
+				// Appendo l'entry con conflict a false.
+				temp := latestEntry
+				temp.Conflict = false
+				mergedEntries = append(mergedEntries, temp)
+			}
+		}
+		if !local[i].Conflict {
+			mergedEntries = append(mergedEntries, local[i])
+		}
+	}
+	for _, u := range update {
+		if !u.Conflict {
+			mergedEntries = append(mergedEntries, u)
+		}
+	}
+	fmt.Println("Entries:")
+	return mergedEntries
+}
+
+/*
+Risolve i conflitti secondo Last Write Wins
+*/
+func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
+	fmt.Println("Merging Database Entries...")
+
+	var reconEntries []MongoEntry
+
+	for i := 0; i < len(local); i++ {
+		for j := 0; j < len(update); j++ {
+			var latestEntry MongoEntry
+			if local[i].Key == update[j].Key {
+				local[i].Conflict = true
+				update[j].Conflict = true
+				if local[i].Timest.After(update[j].Timest) {
+					latestEntry = local[i]
+				} else {
+					latestEntry = update[j]
+				}
+
+				// Appendo l'entry con conflict a false.
+				temp := latestEntry
+				temp.Conflict = false
+				reconEntries = append(reconEntries, temp)
+			}
+		}
+		if !local[i].Conflict {
+			reconEntries = append(reconEntries, local[i])
+		}
+	}
+	for _, u := range local {
+		if !u.Conflict {
+			reconEntries = append(reconEntries, u)
+		}
+	}
+	fmt.Println("Entries:")
+	return reconEntries
 }
