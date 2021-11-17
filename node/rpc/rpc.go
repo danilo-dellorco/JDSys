@@ -116,7 +116,7 @@ func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 
 	me := s.Node.GetIpAddress()
 	handlerNode, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
-	args.Handler = handlerNode
+	args.Handler = utils.RemovePort(handlerNode)
 	args.Deleted = false
 
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(handlerNode))
@@ -224,9 +224,9 @@ func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 
 	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
 	if s.Node.GetIpAddress() == args.Handler {
-		fmt.Println("so tornato al gestore")
+		fmt.Println("Request returned to the handler node")
 		if args.Deleted {
-			fmt.Println("buttata correttamente")
+			fmt.Println("Entry correctly removed from every node!")
 			*reply = "Entry succesfully deleted"
 		} else {
 			*reply = "Entry to delete not found"

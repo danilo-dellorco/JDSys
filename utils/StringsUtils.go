@@ -94,7 +94,12 @@ func AppendValue(str string, arg1 string) string {
 
 //toglie la porta dall'indirizzo ritornato da Lookup di Chord, e aggiunge la porta per effettuare le RPC
 func ParseAddrRPC(addr string) string {
-	return addr[:len(addr)-5] + RPC_PORT
+	return RemovePort(addr) + RPC_PORT
+}
+
+//toglie la porta dall'indirizzo ritornato da Lookup di Chord
+func RemovePort(addr string) string {
+	return addr[:len(addr)-5]
 }
 
 func ClearScreen() {

@@ -28,7 +28,7 @@ var SEND_UPDATES_TIME time.Duration = time.Minute                  // Ogni quant
 var CHECK_TERMINATING_INTERVAL time.Duration = 30 * time.Second    // Ogni quanto effettuare il controllo sulle istanze in terminazione
 var ACTIVITY_CACHE_FLUSH_INTERVAL time.Duration = 40 * time.Minute // Ogni quanto flushare la cache sulle istanze in terminazione
 var CHORD_FIX_INTERVAL time.Duration = 10 * time.Second            // Ogni quanto un nodo contatta i suoi vicini per aggiornare le Finger Table
-var RR1_TIMEOUT time.Duration = time.Minute                        // Tempo dopo il quale si considera perso un messaggio client-server
+var RR1_TIMEOUT time.Duration = 100 * time.Millisecond             // Tempo dopo il quale si considera perso un messaggio client-server
 var RR1_RETRIES = 5                                                // Numero di ritrasmissioni RR1
 var TEST_STEADY_TIME = 5 * time.Second                             // Tempo per inizializzare il workload nei test
 
