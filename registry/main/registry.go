@@ -129,6 +129,7 @@ Avvia ogni tot secondi il processo iterativo di scambio di aggiornamenti tra un 
 Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
 */
 func startPeriodicUpdates() {
+	time.Sleep(time.Minute)
 	fmt.Println("Starting periodic updates for final consistency Routine....")
 retry:
 	for {
