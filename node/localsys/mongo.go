@@ -16,7 +16,8 @@ func InitLocalSystem() structures.MongoClient {
 	client := structures.MongoClient{}
 	client.OpenConnection()
 
-	go ListenUpdates(client)
+	go ListenTerminatingDatabases(client)
+	go ListenReconciliationMessages(client)
 
 	fmt.Println("Mongo is Up & Running...")
 	return client
@@ -25,10 +26,10 @@ func InitLocalSystem() structures.MongoClient {
 /*
 Resta in ascolto per la ricezione di aggiornamenti del DB da altri nodi per realizzare consistenza finale
 */
-func ListenUpdates(cli structures.MongoClient) {
+func ListenTerminatingDatabases(cli structures.MongoClient) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel)
-	fmt.Println("Started Update Listening Service...")
+	go communication.StartReceiver(fileChannel, "termination")
+	fmt.Println("Started Terminating Database listening Service...")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
@@ -40,12 +41,30 @@ func ListenUpdates(cli structures.MongoClient) {
 }
 
 /*
+Resta in ascolto per la ricezione dei messaggi di riconciliazione. Ogni volta che si riceve un messaggio vengono
+risolti i conflitti aggiornando il database
+*/
+func ListenReconciliationMessages(cli structures.MongoClient) {
+	fileChannel := make(chan string)
+	go communication.StartReceiver(fileChannel, "termination")
+	fmt.Println("Started Reconciliation Message listening Service...")
+	for {
+		received := <-fileChannel
+		if received == "rcvd" {
+			cli.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
+			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
+		}
+	}
+}
+
+/*
 Esporta il file CSV e lo invia al nodo remoto
 */
-func SendUpdate(cli structures.MongoClient, address string) {
+func SendUpdate(cli structures.MongoClient, address string, mode string) {
 	file := utils.UPDATES_EXPORT_FILE
 	cli.ExportCollection(file)
-	communication.StartSender(file, address)
+	communication.StartSender(file, address, mode)
 	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 	utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 }

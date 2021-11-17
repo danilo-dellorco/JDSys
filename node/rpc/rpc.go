@@ -273,7 +273,7 @@ retry:
 	}
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Instance Scheduled to Terminating...")
-	mongo.SendUpdate(s.Db, addr)
+	mongo.SendUpdate(s.Db, addr, "termination")
 	*reply = "Instance Terminating"
 	return nil
 }
@@ -298,7 +298,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Sending DB export to my successor...")
-	mongo.SendUpdate(s.Db, addr)
+	mongo.SendUpdate(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore del trasferimento del DB
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
@@ -339,7 +339,7 @@ retry:
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Sending DB export to my successor...")
-	mongo.SendUpdate(s.Db, addr)
+	mongo.SendUpdate(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore per continuare propagazione del DB nell'anello
 	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)

@@ -16,8 +16,16 @@ const BUFFERSIZE = 1024
 /*
 Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi
 */
-func StartReceiver(fileChannel chan string) {
-	server, err := net.Listen("tcp", utils.UPDATES_PORT)
+func StartReceiver(fileChannel chan string, mode string) {
+	var port string
+	switch mode {
+	case "termination":
+		port = utils.FILETRANSFER_TERMINATING_PORT
+	case "reconciliation":
+		port = utils.FILETRANSFER_RECONCILIATION_PORT
+	}
+
+	server, err := net.Listen("tcp", port)
 	if err != nil {
 		fmt.Println("Error listening: ", err)
 		os.Exit(1)
@@ -37,8 +45,16 @@ func StartReceiver(fileChannel chan string) {
 /*
 Apre la connessione verso un altro nodo per trasmettere un file
 */
-func StartSender(filename string, address string) {
-	connection, err := net.Dial("tcp", address+utils.UPDATES_PORT)
+func StartSender(filename string, address string, mode string) {
+	var addr string
+	switch mode {
+	case "termination":
+		addr = address + utils.FILETRANSFER_TERMINATING_PORT
+	case "reconciliation":
+		addr = address + utils.FILETRANSFER_RECONCILIATION_PORT
+	}
+
+	connection, err := net.Dial("tcp", addr)
 	if err != nil {
 		panic(err)
 	}

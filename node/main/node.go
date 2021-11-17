@@ -197,14 +197,14 @@ func InitRPCService() {
 }
 
 /*
+//TODO buttare via al 99%
 Routine per l'invio periodico del proprio DB al nodo successore. Garantisce la replicazione dei dati
-*/
 func SendPeriodicUpdates() {
 	//aspettiamo 2 minuti dallo startup del nodo per essere sicuri che prenda il successore quando partono i primi 2
 	time.Sleep(utils.NODE_SUCC_TIME)
 	fmt.Println("Starting Periodic Updates Routine...")
 	for {
-	restart:
+		restart:
 		time.Sleep(utils.SEND_UPDATES_TIME)
 		//potrebbe esserci un unico nodo senza successore
 		if me.GetSuccessor().String() == "" {
@@ -215,6 +215,7 @@ func SendPeriodicUpdates() {
 		mongo.SendUpdate(mongoClient, addr)
 	}
 }
+*/
 
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
@@ -223,7 +224,8 @@ func NodeSetup() {
 	InitHealthyNode()
 	InitChordDHT()
 	InitRPCService()
-	go SendPeriodicUpdates()
+	//TODO da buttare al 99%
+	//	go SendPeriodicUpdates()
 }
 
 /*
