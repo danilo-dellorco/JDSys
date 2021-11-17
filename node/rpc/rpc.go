@@ -34,7 +34,7 @@ type Args struct {
 Effettua la RPC per la Get di una Key.
  1) Si verifica se il nodo ha una copia della risorsa
  2) Lookup per trovare il nodo che hosta la risorsa
- 2) RPC effettiva di GET verso quel nodo chord
+ 3) RPC effettiva di GET verso quel nodo chord
 */
 func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 	fmt.Println("GetRPC called!")
@@ -47,7 +47,10 @@ func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 	}
 
 	fmt.Println("None.\nForwarding Get Request on DHT...")
-	// TODO testare se ci va tolta la porta o no per il successore
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
+		return nil
+	}
 	succ := s.Node.GetSuccessor().GetIpAddr()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
@@ -116,11 +119,11 @@ func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 	args.Handler = handlerNode
 	args.Deleted = false
 
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(me))
+	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(handlerNode))
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(me))
+	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(handlerNode))
 	client.Call("RPCservice.DeleteHandling", args, &reply)
 	return nil
 
@@ -134,8 +137,7 @@ func (s *RPCservice) GetImpl(args Args, reply *string) error {
 	fmt.Println("Get request arrived")
 	fmt.Println(args.Key)
 	entry := s.Db.GetEntry(args.Key)
-	fmt.Println(entry.Value)
-	if entry.Value == "" {
+	if entry == nil {
 		*reply = "Entry not found"
 	} else {
 		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
@@ -182,21 +184,34 @@ Effettua il delete della risorsa sul nodo che deve gestirla.
 Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (s *RPCservice) DeleteHandling(args *Args, reply *string) error {
+	// Delete deve essere propagata a tutti i nodi, se il nodo che gestisce la precisa chiave non ha
+	// un successore, non effettuiamo la cancellazione ma aspettiamo che venga ricostruita la DHT
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
+		return nil
+	}
 
-	// Effettua la delete sul db locale
+	// Nodo gestore ha correttamente un successore, procediamo con la delete sul DB locale
 	fmt.Println("Deleting value on local storage...")
 	err := s.Db.DeleteEntry(args.Key)
 	if err == nil {
 		args.Deleted = true
+	} else {
+		// Entry non è presente nel DB del nodo gestore, quindi non esiste
+		if err.Error() == "Entry Not Found" {
+			*reply = "The key searched for delete not exist"
+			return nil
+		}
 	}
 
-	// Propaga la Delete al nodo successivo
+	// Se l'entry esiste ed è stata cancellata, procediamo inoltrando la richiesta al nodo successore
+	// così da eliminare tutte le repliche nell'anello
 	next := s.Node.GetSuccessor().GetIpAddr()
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
+	client, err := rpc.DialHTTP("tcp", next+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Delete request forwarded to replication node:", utils.ParseAddrRPC(next))
+	fmt.Println("Delete request forwarded to replication node:", next+utils.RPC_PORT)
 	client.Call("RPCservice.DeleteReplicating", args, &reply)
 	return nil
 }
@@ -207,9 +222,11 @@ Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specific
 */
 func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 
-	// Controllo se la richiesta ha completato il giro dell'anello
+	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
 	if s.Node.GetIpAddress() == args.Handler {
+		fmt.Println("so tornato al gestore")
 		if args.Deleted {
+			fmt.Println("buttata correttamente")
 			*reply = "Entry succesfully deleted"
 		} else {
 			*reply = "Entry to delete not found"
@@ -218,20 +235,24 @@ func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 	}
 
 	// Cancella la richiesta sul db locale
-	fmt.Println("Deleting value on local storage...")
-	err := s.Db.DeleteEntry(args.Key)
-	if err == nil {
-		args.Deleted = true
-	}
+	fmt.Println("Deleting replicated value on local storage...")
+	s.Db.DeleteEntry(args.Key)
 
-	// Propaga la Delete al nodo successivo
+	// Propaga la Delete al nodo successivo, la cancellazione sul nodo che gestisce la chiave
+	// è già stata effettuata, per questo se i nodi successivi non hanno successore aspettiamo
+	// la ricostruzione della DHT Chord finchè non viene completata la Delete!
+retry:
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction..."
+		goto retry
+	}
 	next := s.Node.GetSuccessor().GetIpAddr()
-	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(next))
+	client, err := rpc.DialHTTP("tcp", next+utils.RPC_PORT)
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Delete request forwarded to:", utils.ParseAddrRPC(next))
-	client.Call("RPCservice.DeleteRPC", args, &reply)
+	fmt.Println("Delete request forwarded to:", next+utils.RPC_PORT)
+	client.Call("RPCservice.DeleteReplicating", args, &reply)
 	return nil
 }
 

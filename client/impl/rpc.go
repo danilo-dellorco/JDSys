@@ -25,7 +25,7 @@ type Args struct {
 }
 
 /*
-Effettua la chiamata RPC per il GET
+Effettua la RPC per la GET
 */
 func GetRPC(key string) {
 	args := Args{}
@@ -41,7 +41,7 @@ func GetRPC(key string) {
 }
 
 /*
-Effettua la chiamata RPC per il PUT
+Effettua la RPC per il PUT
 */
 func PutRPC(key string, value string) {
 	args := Args{}
@@ -58,7 +58,7 @@ func PutRPC(key string, value string) {
 }
 
 /*
-Effettua la chiamata RPC per l'APPEND
+Effettua la RPC per l'APPEND
 */
 func AppendRPC(key string, value string) {
 	args := Args{}
@@ -75,7 +75,7 @@ func AppendRPC(key string, value string) {
 }
 
 /*
-Effettua la chiamata RPC per il DELETE
+Effettua la RPC per il DELETE
 */
 func DeleteRPC(key string) {
 	args := Args{}
@@ -91,10 +91,40 @@ func DeleteRPC(key string) {
 }
 
 /*
-Effettua una generica chiamata RPC, includendo il meccanismo RR1 per la semantica at
+Goroutine per l'implementazione della semantica at-least-once.
+La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
+*/
+func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
+	signal := make(chan bool)
+	res := errors.New("Timeout")
+	check := 0
+restart_timer:
+	for i := 0; i < utils.RR1_RETRIES; i++ {
+		go check_timeout(signal)
+		select {
+		// scade timer per la ritrasmissione
+		case <-signal:
+			check++
+			fmt.Println("Timeout elapsed, send new request n°", check, "...")
+			go CallRPC(rpc, client, args, reply, c)
+
+		// arriva risposta dal server
+		case res = <-c:
+			if res.Error() == "Success" {
+				break restart_timer
+			}
+		}
+	}
+	//effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
+	if check == utils.RR1_RETRIES && res.Error() != "Success" {
+		fmt.Println("Server unreachable!")
+	}
+}
+
+/*
+Effettua una generica RPC, utilizzata per implementare il meccanismo RR1 per la semantica at-least-once
 */
 func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
-	c <- errors.New("Timeout")
 	err := client.Call(rpc, args, &reply)
 	defer client.Close()
 	if err != nil {
@@ -107,25 +137,7 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 	}
 }
 
-/*
-Goroutine per l'implementazione della semantica at-least-once.
-La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
-// TODO implementare il numero max di ritrasmissioni
-*/
-func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
-	// utils.RR1_RETRIES
-	//i := 0
-	//for i = 0; i < 4; i++ {
-	for {
-		time.Sleep(utils.RR1_TIMEOUT)
-		res := <-c
-
-		//errore, riprovo
-		if res.Error() == "Success" {
-			break
-		} else {
-			fmt.Println("Timer elapsed, retrying...")
-			go CallRPC(rpc, client, args, reply, c)
-		}
-	}
+func check_timeout(check chan bool) {
+	time.Sleep(utils.RR1_TIMEOUT)
+	check <- true
 }

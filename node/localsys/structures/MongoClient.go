@@ -91,12 +91,12 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 
 	coll := cli.Collection
 	var result bson.M
-	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
+	err := coll.FindOne(context.TODO(), bson.D{primitive.E{Key: ID, Value: key}}).Decode(&result)
 	entry := MongoEntry{}
 
 	if err != nil {
 		fmt.Println("Get Error:", err)
-		return &entry
+		return nil
 	}
 	id := result[ID].(string)
 	value := result[VALUE].(string)
@@ -107,8 +107,8 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	entry.Timest = timest.Time()
 	entry.LastAcc = lastaccess
 
-	update := bson.D{{"$set", bson.D{{LAST_ACC, lastaccess}}}}
-	_, err = cli.Collection.UpdateOne(context.TODO(), entry, update)
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: LAST_ACC, Value: lastaccess}}}}
+	cli.Collection.UpdateOne(context.TODO(), entry, update)
 	utils.FormattedTimestamp()
 	fmt.Println("Get: found", entry)
 	return &entry
@@ -120,7 +120,7 @@ Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per id
 func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
 	coll := cli.Collection
 	var result bson.M
-	err := coll.FindOne(context.TODO(), bson.D{{ID, key}}).Decode(&result)
+	err := coll.FindOne(context.TODO(), bson.D{primitive.E{Key: ID, Value: key}}).Decode(&result)
 	if err != nil {
 		fmt.Println("Read Error:", err)
 		return nil
@@ -149,15 +149,17 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 	strVal := utils.FormatValue(value)
-	doc := bson.D{{ID, key}, {VALUE, strVal}, {TIME, timestamp}, {LAST_ACC, timestamp}}
+	doc := bson.D{primitive.E{Key: ID, Value: key}, primitive.E{Key: VALUE, Value: strVal},
+		primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: timestamp}}
 	_, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
 		if strings.Contains(err.Error(), "E11000") {
 			fmt.Printf("Put: Entry %s già presente nello storage\n", key)
 			fmt.Println("Updating Entry Value...")
-			old := bson.D{{ID, key}}
+			old := bson.D{primitive.E{Key: ID, Value: key}}
 			timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
-			update := bson.D{{"$set", bson.D{{VALUE, strVal}, {TIME, timestamp}, {LAST_ACC, timestamp}}}}
+			update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: VALUE, Value: strVal},
+				primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: timestamp}}}}
 			_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 			if err != nil {
 				fmt.Println(err)
@@ -184,7 +186,7 @@ Viene inoltre aggiornato il timestamp di quell'entry
 func (cli *MongoClient) AppendValue(key string, arg1 string) error {
 	utils.FormattedTimestamp()
 	fmt.Printf("Append | Appending %s to %s\n", arg1, key)
-	old := bson.D{{ID, key}}
+	old := bson.D{primitive.E{Key: ID, Value: key}}
 	oldEntry := cli.GetEntry(key)
 	if oldEntry == nil {
 		fmt.Println("Append Error: No entry found with key", key)
@@ -192,7 +194,8 @@ func (cli *MongoClient) AppendValue(key string, arg1 string) error {
 	}
 	append := utils.AppendValue(oldEntry.Value, arg1)
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
-	update := bson.D{{"$set", bson.D{{VALUE, append}, {TIME, timestamp}, {LAST_ACC, timestamp}}}}
+	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: VALUE, Value: append},
+		primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: timestamp}}}}
 	_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 	if err != nil {
 		fmt.Println(err)
@@ -209,7 +212,7 @@ func (cli *MongoClient) DeleteEntry(key string) error {
 	utils.FormattedTimestamp()
 	fmt.Printf("Delete | Deleting %s\n", key)
 	coll := cli.Collection
-	entry := bson.D{{ID, key}}
+	entry := bson.D{primitive.E{Key: ID, Value: key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
 	if err != nil {
 		fmt.Println("Delete Error:", err)
@@ -248,7 +251,8 @@ func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
 	timestamp := entry.Timest
 	lastaccess := entry.LastAcc
 
-	doc := bson.D{{ID, key}, {VALUE, value}, {TIME, timestamp}, {LAST_ACC, lastaccess}}
+	doc := bson.D{primitive.E{Key: ID, Value: key}, primitive.E{Key: VALUE, Value: value},
+		primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: lastaccess}}
 	_, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
 		fmt.Println("PutMongoEntry Error:", err)
@@ -380,11 +384,11 @@ effettuare una migrazione delle risorse verso il cloud S3
 func (cli *MongoClient) CheckRarelyAccessed() {
 	for {
 		time.Sleep(time.Hour)
-		opts := options.Find().SetSort(bson.D{{"_id", 1}})
-		cursor, err := cli.Collection.Find(context.TODO(), bson.D{}, opts)
+		opts := options.Find().SetSort(bson.D{primitive.E{Key: ID, Value: 1}})
+		cursor, _ := cli.Collection.Find(context.TODO(), bson.D{}, opts)
 		var results []bson.M
 
-		if err = cursor.All(context.TODO(), &results); err != nil {
+		if err := cursor.All(context.TODO(), &results); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("\n===== Check Rarely Accessed Files =====")
