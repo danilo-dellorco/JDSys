@@ -25,6 +25,7 @@ func main() {
 	}
 
 	go checkTerminatingNodes()
+
 	fmt.Printf("Server Registry Waiting For Incoming Connection... \n")
 	service := InitializeService()
 	rpc.Register(service)
