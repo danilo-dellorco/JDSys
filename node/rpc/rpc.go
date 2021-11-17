@@ -47,11 +47,13 @@ func (s *RPCservice) GetRPC(args *Args, reply *string) error {
 		return nil
 	}
 
-	fmt.Println("None.\nForwarding Get Request on DHT...")
+	fmt.Println("Key not found.")
 	if s.Node.GetSuccessor().String() == "" {
 		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
 		return nil
 	}
+
+	fmt.Println("None.\nForwarding Get Request on DHT...")
 	succ := s.Node.GetSuccessor().GetIpAddr()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, err := rpc.DialHTTP("tcp", utils.ParseAddrRPC(addr))
@@ -127,7 +129,6 @@ func (s *RPCservice) DeleteRPC(args Args, reply *string) error {
 	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(handlerNode))
 	client.Call("RPCservice.DeleteHandling", args, &reply)
 	return nil
-
 }
 
 /*
@@ -244,7 +245,7 @@ func (s *RPCservice) DeleteReplicating(args *Args, reply *string) error {
 	// la ricostruzione della DHT Chord finchè non viene completata la Delete!
 retry:
 	if s.Node.GetSuccessor().String() == "" {
-		*reply = "Node hasn't a successor, wait for the reconstruction..."
+		fmt.Println("Node hasn't a successor, wait for the reconstruction...")
 		goto retry
 	}
 	next := s.Node.GetSuccessor().GetIpAddr()
@@ -259,13 +260,93 @@ retry:
 
 /*
 Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per la terminazione
-Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati
+Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati.
+Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo la possibilità di
+aggiornare altri dati obsoleti mantenuti dal successore
 */
 
 func (s *RPCservice) TerminateInstanceRPC(args *Args, reply *string) error {
+retry:
+	if s.Node.GetSuccessor().String() == "" {
+		fmt.Println("Node hasn't a successor, wait for the reconstruction of the DHT")
+		goto retry
+	}
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	fmt.Println("Instance Scheduled to Terminating...")
 	mongo.SendUpdate(s.Db, addr)
 	*reply = "Instance Terminating"
+	return nil
+}
+
+/*
+Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
+Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
+*/
+
+func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
+	fmt.Println("Final consistency requested by service registry...")
+
+	if s.Node.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT"
+		return nil
+	}
+
+	//imposto il nodo da cui partirà l'aggiornamento dell'anello
+	me := s.Node.GetIpAddress()
+	args.Handler = me
+
+	//nodo effettua export del DB e lo invia al successore
+	addr := s.Node.GetSuccessor().GetIpAddr()
+	fmt.Println("Sending DB export to my successor...")
+	mongo.SendUpdate(s.Db, addr)
+
+	//invoco esecuzione da parte del successore del trasferimento del DB
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	fmt.Println("Request forwarded to successor:", addr+utils.RPC_PORT)
+	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
+	return nil
+}
+
+/*
+Metodo invocato dal nodo random scelto dal Service Registry per raggiungere la consistenza finale
+Ogni nodo invia il DB al successore, completato il giro, e quindi ritornati al nodo scelto dal registry,
+se non si sono verificati aggiornamenti, tutti i dati saranno consistenti.
+*/
+func (s *RPCservice) ConsistencySuccessor(args *Args, reply *string) error {
+
+	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
+	if s.Node.GetIpAddress() == args.Handler {
+		// campo usato come contatore per fare 2 giri nell'anello
+		if !args.Deleted {
+			args.Deleted = true
+		} else {
+			*reply = "Request returned to the node invoked by the registry two times, ring updates correctly"
+			return nil
+		}
+	}
+
+	// Se i nodi successivi non hanno successore aspettiamo la ricostruzione della DHT Chord
+	//finchè non viene completato l'aggiornamento dell'anello
+retry:
+	if s.Node.GetSuccessor().String() == "" {
+		fmt.Println("Node hasn't a successor, wait for the reconstruction...")
+		goto retry
+	}
+
+	//nodo effettua export del DB e lo invia al successore
+	addr := s.Node.GetSuccessor().GetIpAddr()
+	fmt.Println("Sending DB export to my successor...")
+	mongo.SendUpdate(s.Db, addr)
+
+	//invoco esecuzione da parte del successore per continuare propagazione del DB nell'anello
+	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	fmt.Println("Request forwarded to successor:", addr+utils.RPC_PORT)
+	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
