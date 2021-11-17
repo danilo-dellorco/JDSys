@@ -92,7 +92,7 @@ func checkActiveNodes() []services.Instance {
 }
 
 /*
-Controlla ogni tot secondi quali sono le istanze in terminazione. Invia a queste un segnale in modo che prima
+Controlla periodicamente quali sono le istanze in terminazione. Invia a queste un segnale in modo che prima
 di terminare possano inviare le proprie entry ad un altro nodo
 */
 func checkTerminatingNodes() {
@@ -127,12 +127,12 @@ func sendTerminatingSignalRPC(ip string) {
 }
 
 /*
-Avvia ogni tot secondi il processo iterativo di scambio di aggiornamenti tra un nodo e il suo successore.
+Avvia periodicamento il processo iterativo di scambio di aggiornamenti tra un nodo e il suo successore per la riconciliazione.
 Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
 */
 func startPeriodicUpdates() {
 	time.Sleep(time.Minute)
-	fmt.Println("Starting periodic updates for final consistency Routine....")
+	fmt.Println("Starting periodic updates for reconciliation Routine....")
 retry:
 	for {
 		nodes := checkActiveNodes()

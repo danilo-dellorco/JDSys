@@ -167,7 +167,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 			}
 			utils.FormattedTimestamp()
 			fmt.Println("Update:", key+", changed value into", value)
-			return nil
+			return errors.New("Updated")
 
 		} else {
 			fmt.Println("Put Error:", err)

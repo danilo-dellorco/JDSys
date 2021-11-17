@@ -34,8 +34,9 @@ var RR1_RETRIES = 5                                                // Numero di 
 var TEST_STEADY_TIME = 5 * time.Second                             // Tempo per inizializzare il workload nei test
 
 // Port Settings
-var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
-var UPDATES_PORT string = ":6666"   // Porta su cui il nodo ascolta l'update mongo da altri nodi
-var RPC_PORT string = ":80"         // Porta su cui il nodo ascolta le chiamate RPC
-var REGISTRY_PORT string = ":4444"  // Porta tramite cui il nodo instaura una connessione con il Service Registry
-var CHORD_PORT string = ":5555"     // Porta tramite cui il nodo riceve ed invia i messaggi necessari ad aggiornare la DHT Chord
+var HEARTBEAT_PORT string = ":8888"             // Porta su cui il nodo ascolta i segnali da load balancer e registry
+var FILETR_TERMINATING_PORT string = ":7777"    // Porta su cui il nodo ascolta l'update mongo da altri nodi
+var FILETR_RECONCILIATION_PORT string = ":6666" // Porta su cui il nodo ascolta l'update mongo da altri nodi
+var RPC_PORT string = ":80"                     // Porta su cui il nodo ascolta le chiamate RPC
+var REGISTRY_PORT string = ":4444"              // Porta tramite cui il nodo instaura una connessione con il Service Registry
+var CHORD_PORT string = ":3333"                 // Porta tramite cui il nodo riceve ed invia i messaggi necessari ad aggiornare la DHT Chord
