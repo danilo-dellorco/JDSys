@@ -31,6 +31,7 @@ var ACTIVITY_CACHE_FLUSH_INTERVAL time.Duration = 40 * time.Minute // Ogni quant
 var CHORD_FIX_INTERVAL time.Duration = 10 * time.Second            // Ogni quanto un nodo contatta i suoi vicini per aggiornare le Finger Table
 var RR1_TIMEOUT time.Duration = 100 * time.Millisecond             // Tempo dopo il quale si considera perso un messaggio client-server
 var RR1_RETRIES = 5                                                // Numero di ritrasmissioni RR1
+var TEST_STEADY_TIME = 5 * time.Second                             // Tempo per inizializzare il workload nei test
 
 // Port Settings
 var HEARTBEAT_PORT string = ":8888" // Porta su cui il nodo ascolta i segnali da load balancer e registry
