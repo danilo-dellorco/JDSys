@@ -50,6 +50,7 @@ Struttura per il passaggio dei parametri alla RPC
 */
 type Args struct {
 	Handler string
+	Deleted bool
 }
 
 /*
@@ -161,6 +162,7 @@ func startFinalConsistencyRPC(ip string) {
 	var reply string
 	args := Args{}
 	args.Handler = ""
+	args.Deleted = false
 	err = client.Call("RPCservice.ConsistencyHandlerRPC", args, &reply)
 	if err != nil {
 		log.Fatal("GetRPC error:", err)

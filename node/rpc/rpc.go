@@ -290,6 +290,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 		return nil
 	}
 
+	//imposto il nodo da cui partirà l'aggiornamento dell'anello
 	me := s.Node.GetIpAddress()
 	args.Handler = me
 
@@ -317,8 +318,13 @@ func (s *RPCservice) ConsistencySuccessor(args *Args, reply *string) error {
 
 	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
 	if s.Node.GetIpAddress() == args.Handler {
-		*reply = "Request returned to the node invoked by the registry, ring updates correctly"
-		return nil
+		// campo usato come contatore per fare 2 giri nell'anello
+		if !args.Deleted {
+			args.Deleted = true
+		} else {
+			*reply = "Request returned to the node invoked by the registry two times, ring updates correctly"
+			return nil
+		}
 	}
 
 	// Se i nodi successivi non hanno successore aspettiamo la ricostruzione della DHT Chord
