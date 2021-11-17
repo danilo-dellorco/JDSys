@@ -24,6 +24,7 @@ var mongoClient structures.MongoClient
 var me *chord.ChordNode
 
 func main() {
+	//NodeLocalSetup()
 	NodeSetup()
 
 Loop:
@@ -223,4 +224,20 @@ func NodeSetup() {
 	InitChordDHT()
 	InitRPCService()
 	go SendPeriodicUpdates()
+}
+
+/*
+DEBUG testa il mongo reconciliation
+*/
+func NodeLocalSetup() {
+	mongoClient = mongo.InitLocalSystem()
+	mongoClient.DropDatabase()
+	mongoClient.PutEntry("Key1", "Value1")
+	mongoClient.PutEntry("Key2", "Value2")
+	mongoClient.PutEntry("Key3", "Value3")
+	mongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
+	fmt.Print("Continue after modified DB: ")
+	var wait string
+	fmt.Scan(&wait)
+	mongoClient.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
 }

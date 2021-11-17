@@ -83,7 +83,7 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
 		cli.downloadEntryFromS3(key)
-		cli.UpdateCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
+		cli.MergeCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
 		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
 		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
 		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
@@ -361,23 +361,6 @@ func (cli *MongoClient) downloadEntryFromS3(key string) {
 }
 
 /*
-Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
-Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.
-*/
-func (cli *MongoClient) UpdateCollection(exportFile string, receivedFile string) {
-	cli.ExportCollection(exportFile) // Dump del database Locale
-	localExport := ParseCSV(exportFile)
-	receivedUpdate := ParseCSV(receivedFile)
-	mergedEntries := MergeEntries(localExport, receivedUpdate)
-	cli.Collection.Drop(context.TODO())
-	for _, entry := range mergedEntries {
-		cli.PutMongoEntry(entry)
-	}
-	cli.Collection.Find(context.TODO(), nil)
-	fmt.Println("Local DB ReceivedCorrectly")
-}
-
-/*
 Routine che ogni ora controlla tutte le entry per vedere se è possibile
 effettuare una migrazione delle risorse verso il cloud S3
 */
@@ -407,5 +390,38 @@ func (cli *MongoClient) CheckRarelyAccessed() {
 		}
 		fmt.Print("=======================\n\n")
 	}
+}
 
+/*
+Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
+Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.
+*/
+func (cli *MongoClient) MergeCollection(exportFile string, receivedFile string) {
+	cli.ExportCollection(exportFile) // Dump del database Locale
+	localExport := ParseCSV(exportFile)
+	receivedUpdate := ParseCSV(receivedFile)
+	mergedEntries := MergeEntries(localExport, receivedUpdate)
+	cli.Collection.Drop(context.TODO())
+	for _, entry := range mergedEntries {
+		cli.PutMongoEntry(entry)
+	}
+	cli.Collection.Find(context.TODO(), nil)
+	fmt.Println("Local DB ReceivedCorrectly")
+}
+
+/*
+Invocato quando si riceve un update di riconciliazione. Si utilizza
+last-write-wins per risolvere i conflitti tra le entry
+*/
+func (cli *MongoClient) ReconciliateCollection(exportFile string, receivedFile string) {
+	cli.ExportCollection(exportFile) // Dump del database Locale
+	localExport := ParseCSV(exportFile)
+	receivedUpdate := ParseCSV(receivedFile)
+	reconEntries := ReconciliateEntries(localExport, receivedUpdate)
+	cli.Collection.Drop(context.TODO())
+	for _, entry := range reconEntries {
+		cli.PutMongoEntry(entry)
+	}
+	cli.Collection.Find(context.TODO(), nil)
+	fmt.Println("Local DB ReceivedCorrectly")
 }

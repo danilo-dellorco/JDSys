@@ -5,6 +5,8 @@ package main
 // TODO verificare il comportamento con la concorrenza. RPC dovrebbe gestirla già da sola, Bisonga vedere Mongo in locale
 // come si comporta rispetto ad esempio a due PUT sullo stesso dato.
 // TODO Testare la Delete
+// TODO migliorare leggibilità del codice
+// TODO fare RPC DropDatabase su tutti i nodi per poter fare sempre un test pulito
 
 import (
 	"fmt"

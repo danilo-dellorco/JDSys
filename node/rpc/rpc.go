@@ -10,7 +10,8 @@ import (
 	"progetto-sdcc/utils"
 )
 
-//TODO testare il nuovo delete e verificare che fa tutto il giro dell'anello partendo dal nodo che deve gestire la risorsa
+// TODO dà un problema su Send Update e Receive forse perche servono porte diverse
+// TODO Replicazione: Handler riceve la scrittura e la pro
 
 /*
 Servizio RPC del nodo. Mantiene un riferimento al ChordNode ed al MongoClient
