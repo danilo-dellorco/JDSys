@@ -226,6 +226,9 @@ func NodeSetup() {
 	go SendPeriodicUpdates()
 }
 
+/*
+DEBUG testa il mongo reconciliation
+*/
 func NodeLocalSetup() {
 	mongoClient = mongo.InitLocalSystem()
 	mongoClient.DropDatabase()
