@@ -37,7 +37,7 @@ func StartReceiver(fileChannel chan string, mode string) {
 			fmt.Println("Error: ", err)
 			os.Exit(1)
 		}
-		fmt.Println("Node connected!")
+		fmt.Println("Node want to send is updates!")
 		receiveFile(connection, fileChannel)
 	}
 }

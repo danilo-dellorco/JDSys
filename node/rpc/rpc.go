@@ -300,10 +300,12 @@ Effettua il trasferimento del proprio DB al nodo successore nella rete per reali
 */
 
 func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
+	fmt.Println("\n\n========================================================")
 	fmt.Println("Final consistency requested by service registry...")
 
 	if s.Node.GetSuccessor().String() == "" {
-		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT"
+		*reply = "Node hasn't a successor, abort and wait for the reconstruction of the DHT."
+		fmt.Println(*reply)
 		return nil
 	}
 
@@ -314,7 +316,6 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
-	fmt.Println("Sending DB export to my successor...")
 	mongo.SendCollectionMsg(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore del trasferimento del DB
@@ -322,7 +323,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Request forwarded to successor:", addr+utils.RPC_PORT)
+	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
@@ -333,7 +334,7 @@ Ogni nodo invia il DB al successore, completato il giro, e quindi ritornati al n
 se non si sono verificati aggiornamenti, tutti i dati saranno consistenti.
 */
 func (s *RPCservice) ConsistencySuccessor(args *Args, reply *string) error {
-
+	fmt.Println("Incoming request for final consistency, start update successor...")
 	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
 	if s.Node.GetIpAddress() == args.Handler {
 		// campo usato come contatore per fare 2 giri nell'anello
@@ -341,6 +342,8 @@ func (s *RPCservice) ConsistencySuccessor(args *Args, reply *string) error {
 			args.Deleted = true
 		} else {
 			*reply = "Request returned to the node invoked by the registry two times, ring updates correctly"
+			fmt.Println(*reply)
+			fmt.Print("========================================================\n\n\n")
 			return nil
 		}
 	}
@@ -355,7 +358,6 @@ retry:
 
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
-	fmt.Println("Sending DB export to my successor...")
 	mongo.SendCollectionMsg(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore per continuare propagazione del DB nell'anello
@@ -363,7 +365,7 @@ retry:
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	fmt.Println("Request forwarded to successor:", addr+utils.RPC_PORT)
+	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }

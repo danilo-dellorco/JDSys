@@ -11,7 +11,7 @@ import (
 Ottiene una lista di Entry partendo da un file CSV
 */
 func ParseCSV(file string) []MongoEntry {
-	fmt.Println("Parsing CSV:", file)
+	fmt.Println("\n\nParsing CSV:", file)
 	csvFile, err := os.Open(file)
 	if err != nil {
 		fmt.Println("ParseCSV Error:", err)
@@ -93,7 +93,7 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 Risolve i conflitti secondo Last Write Wins
 */
 func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
-	fmt.Println("Merging Database Entries...")
+	fmt.Println("\n\nMerging Database Entries...")
 
 	var reconEntries []MongoEntry
 
