@@ -16,7 +16,7 @@ var Round int
 Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
 i listener e le routine per la gestione degli updates.
 */
-func InitLocalSystem(node *chord.ChordNode) structures.MongoClient {
+func InitLocalSystem(node chord.ChordNode) structures.MongoClient {
 	fmt.Println("Starting Mongo Local System...")
 	client := structures.MongoClient{}
 	client.OpenConnection()
@@ -54,7 +54,7 @@ func ListenUpdateMessages(cli structures.MongoClient) {
 Resta in ascolto per la ricezione dei messaggi di riconciliazione. Ogni volta che si riceve un messaggio vengono
 risolti i conflitti aggiornando il database
 */
-func ListenReconciliationMessages(cli structures.MongoClient, node *chord.ChordNode) {
+func ListenReconciliationMessages(cli structures.MongoClient, node chord.ChordNode) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel, "reconciliation")
 	fmt.Println("Started Reconciliation Message listening Service...")
@@ -70,7 +70,7 @@ func ListenReconciliationMessages(cli structures.MongoClient, node *chord.ChordN
 			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			//completato l'aggiornamento dell'anello
 		retry:
-			if node.GetSuccessor() == nil {
+			if node.GetSuccessor().String() == "" {
 				fmt.Println("Node hasn't a successor, wait for the reconstruction...")
 				goto retry
 			}
