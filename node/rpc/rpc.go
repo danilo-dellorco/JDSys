@@ -8,7 +8,6 @@ import (
 	mongo "progetto-sdcc/node/localsys"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
-	"time"
 )
 
 // TODO dà un problema su Send Update e Receive forse perche servono porte diverse
@@ -345,7 +344,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
 
 	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
-	time.Sleep(3 * time.Second)
+	//time.Sleep(3 * time.Second)
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
@@ -390,7 +389,7 @@ retry:
 	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
 	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
 	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
-	time.Sleep(3 * time.Second)
+	//time.Sleep(3 * time.Second)
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
