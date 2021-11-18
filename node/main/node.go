@@ -119,7 +119,7 @@ Esegue tutte le attività per rendere il nodo UP & Running
 func NodeSetup(node *Node) {
 	InitHealthyNode(node)
 	InitChordDHT(node)
-	InitRPCService(node)
+	InitRPCService()
 
 	go ListenUpdateMessages(node)
 
@@ -202,7 +202,8 @@ Inizializza il listener delle chiamate RPC per il funzionamento del sistema di s
 Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da poter gestire correttamente la comunicazione
 tra i nodi del sistema.
 */
-func InitRPCService(node *Node) {
+func InitRPCService() {
+	node := new(Node)
 	rpc.Register(node)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", utils.RPC_PORT)
