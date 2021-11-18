@@ -32,7 +32,7 @@ type Node struct {
 func main() {
 	//NodeLocalSetup()
 	node := new(Node)
-	node.NodeSetup()
+	node.nodeSetup()
 
 Loop:
 	for {
@@ -116,7 +116,7 @@ func JoinDHT(registryAddr string) []string {
 /*
 Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer e configura il DB locale
 */
-func (n *Node) InitHealthyNode() {
+func (n *Node) initHealthyNode() {
 
 	// Configura il sistema di storage locale
 	n.MongoClient = mongo.InitLocalSystem()
@@ -134,7 +134,7 @@ func (n *Node) InitHealthyNode() {
 Permette al nodo di entrare a far parte della DHT Chord in base alle informazioni ottenute dal Service Registry.
 Inizia anche due routine per aggiornamento periodico delle FT del nodo stesso e degli altri nodi della rete
 */
-func (n *Node) InitChordDHT() {
+func (n *Node) initChordDHT() {
 	fmt.Println("Initializing Chord DHT...")
 
 	// Setup dei Flags
@@ -187,7 +187,7 @@ Inizializza il listener delle chiamate RPC per il funzionamento del sistema di s
 Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da poter gestire correttamente la comunicazione
 tra i nodi del sistema.
 */
-func (n *Node) InitRPCService() {
+func (n *Node) initRPCService() {
 	rpc.Register(n)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", utils.RPC_PORT)
@@ -203,10 +203,10 @@ func (n *Node) InitRPCService() {
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
 */
-func (n *Node) NodeSetup() {
-	n.InitHealthyNode()
-	n.InitChordDHT()
-	n.InitRPCService()
+func (n *Node) nodeSetup() {
+	n.initHealthyNode()
+	n.initChordDHT()
+	n.initRPCService()
 
 	go n.ListenUpdateMessages()
 
