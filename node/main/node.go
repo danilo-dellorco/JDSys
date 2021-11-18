@@ -12,20 +12,24 @@ import (
 	"os"
 	chord "progetto-sdcc/node/chord/net"
 	mongo "progetto-sdcc/node/localsys"
+	"progetto-sdcc/node/localsys/communication"
 	"progetto-sdcc/node/localsys/structures"
-	nodeRPC "progetto-sdcc/node/rpc"
 	"progetto-sdcc/utils"
 	"time"
 )
 
-type EmptyArgs struct{}
+type Node struct {
+	MongoClient structures.MongoClient
+	ChordClient *chord.ChordNode
 
-var mongoClient structures.MongoClient
-var me *chord.ChordNode
+	//variabili per la realizzazione della consistenza finale
+	Handler bool
+	Round   int
+}
 
 func main() {
-	//NodeLocalSetup()
-	NodeSetup()
+	node := new(Node)
+	NodeSetup(node)
 
 Loop:
 	for {
@@ -34,19 +38,19 @@ Loop:
 		switch {
 		case cmd == "print":
 			//stampa successore e predecessore
-			fmt.Printf("%s", me.String())
+			fmt.Printf("%s", node.ChordClient.String())
 		case cmd == "fingers":
 			//stampa la finger table
-			fmt.Printf("%s", me.ShowFingers())
+			fmt.Printf("%s", node.ChordClient.ShowFingers())
 		case cmd == "succ":
 			//stampa la lista di successori
-			fmt.Printf("%s", me.ShowSucc())
+			fmt.Printf("%s", node.ChordClient.ShowSucc())
 		case err == io.EOF:
 			break Loop
 		}
 
 	}
-	me.Finalize()
+	node.ChordClient.Finalize()
 	select {}
 }
 
@@ -81,24 +85,13 @@ func GetOutboundIP() net.IP {
 }
 
 /*
-Permette di instaurare una connessione HTTP con il server all'indirizzo specificato.
-*/
-func HttpConnect(registryAddr string) (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", registryAddr+utils.REGISTRY_PORT)
-	if err != nil {
-		log.Fatal("Connection error: ", err)
-	}
-	return client, err
-}
-
-/*
 Permette al nodo di inserirsi nell'anello chord contattando il server specificato
 */
 func JoinDHT(registryAddr string) []string {
-	args := EmptyArgs{}
+	args := Args{}
 	var reply []string
 
-	client, _ := HttpConnect(registryAddr)
+	client, _ := utils.HttpConnect(registryAddr, utils.REGISTRY_PORT)
 	err := client.Call("DHThandler.JoinRing", args, &reply)
 	if err != nil {
 		log.Fatal("RPC error: ", err)
@@ -107,12 +100,27 @@ func JoinDHT(registryAddr string) []string {
 }
 
 /*
+Esegue tutte le attività per rendere il nodo UP & Running
+*/
+func NodeSetup(node *Node) {
+	InitHealthyNode(node)
+	InitChordDHT(node)
+	InitRPCService(node)
+
+	go ListenUpdateMessages(node)
+
+	node.Handler = false
+	node.Round = 0
+	go ListenReconciliationMessages(node)
+}
+
+/*
 Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer e configura il DB locale
 */
-func InitHealthyNode(node chord.ChordNode) {
+func InitHealthyNode(node *Node) {
 
 	// Configura il sistema di storage locale
-	mongoClient = mongo.InitLocalSystem(node)
+	node.MongoClient = mongo.InitLocalSystem()
 
 	// Inizia a ricevere gli HeartBeat dal LB
 	go StartHeartBeatListener()
@@ -127,7 +135,7 @@ func InitHealthyNode(node chord.ChordNode) {
 Permette al nodo di entrare a far parte della DHT Chord in base alle informazioni ottenute dal Service Registry.
 Inizia anche due routine per aggiornamento periodico delle FT del nodo stesso e degli altri nodi della rete
 */
-func InitChordDHT() {
+func InitChordDHT(node *Node) {
 	fmt.Println("Initializing Chord DHT...")
 
 	// Setup dei Flags
@@ -137,7 +145,7 @@ func InitChordDHT() {
 
 	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
 	*addressPtr = GetOutboundIP().String()
-	me = new(chord.ChordNode)
+	node.ChordClient = new(chord.ChordNode)
 
 	// Controlla le istanze attive contattando il Service Registry per entrare nella rete
 waitLB:
@@ -154,7 +162,7 @@ waitLB:
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(result) == 1 {
 		if result[0] == *addressPtr {
-			me = chord.Create(*addressPtr + utils.CHORD_PORT)
+			node.ChordClient = chord.Create(*addressPtr + utils.CHORD_PORT)
 		} else {
 			goto waitLB
 		}
@@ -168,7 +176,7 @@ waitLB:
 				break
 			}
 		}
-		me, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
+		node.ChordClient, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 	}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
@@ -180,11 +188,8 @@ Inizializza il listener delle chiamate RPC per il funzionamento del sistema di s
 Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da poter gestire correttamente la comunicazione
 tra i nodi del sistema.
 */
-func InitRPCService() {
-	rpcServ := new(nodeRPC.RPCservice)
-	rpcServ.Db = mongoClient
-	rpcServ.Node = *me
-	rpc.Register(rpcServ)
+func InitRPCService(node *Node) {
+	rpc.Register(node)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", utils.RPC_PORT)
 	if e != nil {
@@ -197,49 +202,78 @@ func InitRPCService() {
 }
 
 /*
-//TODO buttare via al 99%
-Routine per l'invio periodico del proprio DB al nodo successore. Garantisce la replicazione dei dati
-func SendPeriodicUpdates() {
-	//aspettiamo 2 minuti dallo startup del nodo per essere sicuri che prenda il successore quando partono i primi 2
-	time.Sleep(utils.NODE_SUCC_TIME)
-	fmt.Println("Starting Periodic Updates Routine...")
+Resta in ascolto per messaggi di aggiornamento del database. Utilizzato per ricevere i DB dei nodi in terminazione
+e le entry replicate.
+*/
+func ListenUpdateMessages(node *Node) {
+	fileChannel := make(chan string)
+	go communication.StartReceiver(fileChannel, "update")
+	fmt.Println("Started Update Message listening Service...")
 	for {
-		restart:
-		time.Sleep(utils.SEND_UPDATES_TIME)
-		//potrebbe esserci un unico nodo senza successore
-		if me.GetSuccessor().String() == "" {
-			goto restart
+		received := <-fileChannel
+		if received == "rcvd" {
+			node.MongoClient.MergeCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
+			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 		}
-		addr := me.GetSuccessor().GetIpAddr()
-		fmt.Println("PeriodicUpdate: Sending DB export to my successor...")
-		mongo.SendUpdate(mongoClient, addr)
 	}
 }
-*/
 
 /*
-Esegue tutte le attività per rendere il nodo UP & Running
+Resta in ascolto per la ricezione dei messaggi di riconciliazione. Ogni volta che si riceve un messaggio vengono
+risolti i conflitti aggiornando il database
 */
-func NodeSetup() {
-	InitHealthyNode(*me)
-	InitChordDHT()
-	InitRPCService()
-	//TODO da buttare al 99%
-	//	go SendPeriodicUpdates()
+func ListenReconciliationMessages(node *Node) {
+	fileChannel := make(chan string)
+	go communication.StartReceiver(fileChannel, "reconciliation")
+	fmt.Println("Started Reconciliation Message listening Service...")
+	for {
+		//si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
+		received := <-fileChannel
+		if received == "rcvd" {
+			node.MongoClient.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
+			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
+
+			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
+			//completato l'aggiornamento dell'anello
+		retry:
+			if node.ChordClient.GetSuccessor().String() == "" {
+				fmt.Println("Node hasn't a successor, wait for the reconstruction...")
+				goto retry
+			}
+
+			//nodo effettua export del DB e lo invia al successore
+			addr := node.ChordClient.GetSuccessor().GetIpAddr()
+			fmt.Print("DB forwarded to successor:", addr, "\n\n")
+
+			//solamente per il nodo che ha iniziato l'aggiornamento incrementiamo il contatore che ci permette
+			//di interrompere dopo 2 giri non effettuando la SendCollectionMsg
+			if node.Handler {
+				node.Round++
+				if node.Round == 2 {
+					fmt.Println("Request returned to the node invoked by the registry two times, ring updates correctly")
+					fmt.Print("========================================================\n\n\n")
+					//ripristiniamo le variabili per le future riconciliazioni
+					node.Handler = false
+					node.Round = 0
+				} else {
+					SendReplicationMsg(node, addr, "reconciliation")
+				}
+				//se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
+			} else {
+				SendReplicationMsg(node, addr, "reconciliation")
+			}
+		}
+	}
 }
 
 /*
-DEBUG testa il mongo reconciliation
+Esporta il file CSV e lo invia al nodo remoto
 */
-func NodeLocalSetup() {
-	mongoClient = mongo.InitLocalSystem(*me)
-	mongoClient.DropDatabase()
-	mongoClient.PutEntry("Key1", "Value1")
-	mongoClient.PutEntry("Key2", "Value2")
-	mongoClient.PutEntry("Key3", "Value3")
-	mongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
-	fmt.Print("Continue after modified DB: ")
-	var wait string
-	fmt.Scan(&wait)
-	mongoClient.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
+func SendReplicationMsg(node *Node, address string, mode string) {
+	file := utils.UPDATES_EXPORT_FILE
+	node.MongoClient.ExportCollection(file)
+	communication.StartSender(file, address, mode)
+	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 }

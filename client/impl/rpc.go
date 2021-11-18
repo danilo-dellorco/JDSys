@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-var GET string = "RPCservice.GetRPC"
-var PUT string = "RPCservice.PutRPC"
-var DEL string = "RPCservice.DeleteRPC"
-var APP string = "RPCservice.AppendRPC"
+var GET string = "Node.GetRPC"
+var PUT string = "Node.PutRPC"
+var DEL string = "Node.DeleteRPC"
+var APP string = "Node.AppendRPC"
 
 /*
 Struttura che mantiene i parametri delle RPC

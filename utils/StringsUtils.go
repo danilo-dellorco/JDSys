@@ -3,6 +3,8 @@ package utils
 import (
 	"crypto/sha256"
 	"fmt"
+	"log"
+	"net/rpc"
 	"os"
 	"path/filepath"
 	"strings"
@@ -104,4 +106,15 @@ func RemovePort(addr string) string {
 
 func ClearScreen() {
 	fmt.Print("\033[H\033[2J")
+}
+
+/*
+Permette di instaurare una connessione HTTP con il server all'indirizzo e porta specificati.
+*/
+func HttpConnect(addr string, port string) (*rpc.Client, error) {
+	client, err := rpc.DialHTTP("tcp", addr+port)
+	if err != nil {
+		log.Fatal("Connection error: ", err)
+	}
+	return client, err
 }
