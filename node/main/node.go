@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/rpc"
 	chord "progetto-sdcc/node/chord/net"
+	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
 )
 
@@ -22,6 +23,25 @@ import (
 //ho posso capire sui vari nodi chi è l'handler della riconciliazione!
 //--> per forza RPC perchè devo passare argomenti tra i nodi, aggiungendo canale attiviamo su ogni nodo
 //	  SendCollectionMsg al termine di merge + remove file, procedendo solo a questo punto con l'invio al succ
+
+/*
+Struttura che mantiene i parametri delle RPC
+*/
+type Args struct {
+	Key     string
+	Value   string
+	Handler string
+	Deleted bool
+}
+
+type Node struct {
+	MongoClient structures.MongoClient
+	ChordClient *chord.ChordNode
+
+	//variabili per la realizzazione della consistenza finale
+	Handler bool
+	Round   int
+}
 
 /*
 Effettua la RPC per la Get di una Key.
@@ -329,5 +349,44 @@ retry:
 	}
 	fmt.Println("Delete request forwarded to:", next+utils.RPC_PORT)
 	client.Call("RPCservice.DeleteReplicating", args, &reply)
+	return nil
+}
+
+/*
+Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
+Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
+*/
+
+func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
+	fmt.Println("\n\n========================================================")
+	fmt.Println("Final consistency requested by service registry...")
+
+	if n.ChordClient.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, abort and wait for the reconstruction of the DHT."
+		fmt.Println(*reply)
+		return nil
+	}
+
+	//imposto il nodo corrente come gestore dell'aggiornamento dell'anello, così da incrementare solo
+	//per lui il contatore che permette l'interruzione dopo 2 giri
+	n.Handler = true
+
+	//nodo effettua export del DB e lo invia al successore
+	addr := n.ChordClient.GetSuccessor().GetIpAddr()
+	SendReplicationMsg(n, addr, "reconciliation")
+
+	//invoco esecuzione da parte del successore del trasferimento del DB
+	//client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	//if err != nil {
+	//	log.Fatal("dialing:", err)
+	//}
+
+	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
+	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
+	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
+
+	//fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
+	//time.Sleep(3 * time.Second)
+	//client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
