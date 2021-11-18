@@ -171,7 +171,7 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 	if ok {
 		next := n.ChordClient.GetSuccessor().GetIpAddr()
 		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
-		n.SendReplicationMsg(next, "replication")
+		SendReplicationMsg(n, next, "replication")
 	}
 	return nil
 }
@@ -190,7 +190,7 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 		// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
 		next := n.ChordClient.GetSuccessor().GetIpAddr()
 		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
-		n.SendReplicationMsg(next, "replication")
+		SendReplicationMsg(n, next, "replication")
 	} else {
 		*reply = "Entry not found"
 	}
@@ -290,7 +290,7 @@ retry:
 	}
 	addr := n.ChordClient.GetSuccessor().GetIpAddr()
 	fmt.Println("Instance Scheduled to Terminating...")
-	n.SendReplicationMsg(addr, "update")
+	SendReplicationMsg(n, addr, "update")
 	*reply = "Instance Terminating"
 	return nil
 }
@@ -316,7 +316,7 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 
 	//nodo effettua export del DB e lo invia al successore
 	addr := n.ChordClient.GetSuccessor().GetIpAddr()
-	n.SendReplicationMsg(addr, "reconciliation")
+	SendReplicationMsg(n, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore del trasferimento del DB
 	//client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
