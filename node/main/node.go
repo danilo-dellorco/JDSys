@@ -20,12 +20,15 @@ import (
 
 type EmptyArgs struct{}
 
-var mongoClient structures.MongoClient
-var me *chord.ChordNode
+type Node struct {
+	mongoClient structures.MongoClient
+	me          *chord.ChordNode
+}
 
 func main() {
 	//NodeLocalSetup()
-	NodeSetup()
+	node := new(Node)
+	node.NodeSetup()
 
 Loop:
 	for {
@@ -34,19 +37,19 @@ Loop:
 		switch {
 		case cmd == "print":
 			//stampa successore e predecessore
-			fmt.Printf("%s", me.String())
+			fmt.Printf("%s", node.me.String())
 		case cmd == "fingers":
 			//stampa la finger table
-			fmt.Printf("%s", me.ShowFingers())
+			fmt.Printf("%s", node.me.ShowFingers())
 		case cmd == "succ":
 			//stampa la lista di successori
-			fmt.Printf("%s", me.ShowSucc())
+			fmt.Printf("%s", node.me.ShowSucc())
 		case err == io.EOF:
 			break Loop
 		}
 
 	}
-	me.Finalize()
+	node.me.Finalize()
 	select {}
 }
 
@@ -109,10 +112,10 @@ func JoinDHT(registryAddr string) []string {
 /*
 Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer e configura il DB locale
 */
-func InitHealthyNode(node chord.ChordNode) {
+func (n *Node) InitHealthyNode() {
 
 	// Configura il sistema di storage locale
-	mongoClient = mongo.InitLocalSystem(node)
+	n.mongoClient = mongo.InitLocalSystem()
 
 	// Inizia a ricevere gli HeartBeat dal LB
 	go StartHeartBeatListener()
@@ -127,7 +130,7 @@ func InitHealthyNode(node chord.ChordNode) {
 Permette al nodo di entrare a far parte della DHT Chord in base alle informazioni ottenute dal Service Registry.
 Inizia anche due routine per aggiornamento periodico delle FT del nodo stesso e degli altri nodi della rete
 */
-func InitChordDHT() {
+func (n *Node) InitChordDHT() {
 	fmt.Println("Initializing Chord DHT...")
 
 	// Setup dei Flags
@@ -137,7 +140,7 @@ func InitChordDHT() {
 
 	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
 	*addressPtr = GetOutboundIP().String()
-	me = new(chord.ChordNode)
+	n.me = new(chord.ChordNode)
 
 	// Controlla le istanze attive contattando il Service Registry per entrare nella rete
 waitLB:
@@ -154,7 +157,7 @@ waitLB:
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(result) == 1 {
 		if result[0] == *addressPtr {
-			me = chord.Create(*addressPtr + utils.CHORD_PORT)
+			n.me = chord.Create(*addressPtr + utils.CHORD_PORT)
 		} else {
 			goto waitLB
 		}
@@ -168,7 +171,7 @@ waitLB:
 				break
 			}
 		}
-		me, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
+		n.me, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 	}
 	fmt.Printf("My address is: %s.\n", *addressPtr)
 	fmt.Printf("Join address is: %s.\n", *joinPtr)
@@ -180,10 +183,10 @@ Inizializza il listener delle chiamate RPC per il funzionamento del sistema di s
 Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da poter gestire correttamente la comunicazione
 tra i nodi del sistema.
 */
-func InitRPCService() {
+func (n *Node) InitRPCService() {
 	rpcServ := new(nodeRPC.RPCservice)
-	rpcServ.Db = mongoClient
-	rpcServ.Node = *me
+	rpcServ.Db = n.mongoClient
+	rpcServ.Node = *n.me
 	rpc.Register(rpcServ)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", utils.RPC_PORT)
@@ -201,16 +204,16 @@ func InitRPCService() {
 Routine per l'invio periodico del proprio DB al nodo successore. Garantisce la replicazione dei dati
 func SendPeriodicUpdates() {
 	//aspettiamo 2 minuti dallo startup del nodo per essere sicuri che prenda il successore quando partono i primi 2
-	time.Sleep(utils.NODE_SUCC_TIME)
+	tinode.me.Sleep(utils.NODE_SUCC_TIME)
 	fmt.Println("Starting Periodic Updates Routine...")
 	for {
 		restart:
-		time.Sleep(utils.SEND_UPDATES_TIME)
+		tinode.me.Sleep(utils.SEND_UPDATES_TIME)
 		//potrebbe esserci un unico nodo senza successore
-		if me.GetSuccessor().String() == "" {
+		if node.me.GetSuccessor().String() == "" {
 			goto restart
 		}
-		addr := me.GetSuccessor().GetIpAddr()
+		addr := node.me.GetSuccessor().GetIpAddr()
 		fmt.Println("PeriodicUpdate: Sending DB export to my successor...")
 		mongo.SendUpdate(mongoClient, addr)
 	}
@@ -220,26 +223,8 @@ func SendPeriodicUpdates() {
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
 */
-func NodeSetup() {
-	InitHealthyNode(*me)
-	InitChordDHT()
-	InitRPCService()
-	//TODO da buttare al 99%
-	//	go SendPeriodicUpdates()
-}
-
-/*
-DEBUG testa il mongo reconciliation
-*/
-func NodeLocalSetup() {
-	mongoClient = mongo.InitLocalSystem(*me)
-	mongoClient.DropDatabase()
-	mongoClient.PutEntry("Key1", "Value1")
-	mongoClient.PutEntry("Key2", "Value2")
-	mongoClient.PutEntry("Key3", "Value3")
-	mongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
-	fmt.Print("Continue after modified DB: ")
-	var wait string
-	fmt.Scan(&wait)
-	mongoClient.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
+func (n *Node) NodeSetup() {
+	n.InitHealthyNode()
+	n.InitChordDHT()
+	n.InitRPCService()
 }

@@ -2,7 +2,6 @@ package localsys
 
 import (
 	"fmt"
-	chord "progetto-sdcc/node/chord/net"
 	"progetto-sdcc/node/localsys/communication"
 	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
@@ -16,7 +15,7 @@ var Round int
 Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
 i listener e le routine per la gestione degli updates.
 */
-func InitLocalSystem(node chord.ChordNode) structures.MongoClient {
+func InitLocalSystem() structures.MongoClient {
 	fmt.Println("Starting Mongo Local System...")
 	client := structures.MongoClient{}
 	client.OpenConnection()
@@ -26,7 +25,7 @@ func InitLocalSystem(node chord.ChordNode) structures.MongoClient {
 	Handler = false
 	Round = 0
 
-	go ListenReconciliationMessages(client, node)
+	go ListenReconciliationMessages(client)
 
 	fmt.Println("Mongo is Up & Running...")
 	return client
@@ -54,7 +53,7 @@ func ListenUpdateMessages(cli structures.MongoClient) {
 Resta in ascolto per la ricezione dei messaggi di riconciliazione. Ogni volta che si riceve un messaggio vengono
 risolti i conflitti aggiornando il database
 */
-func ListenReconciliationMessages(cli structures.MongoClient, node chord.ChordNode) {
+func ListenReconciliationMessages(cli structures.MongoClient) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel, "reconciliation")
 	fmt.Println("Started Reconciliation Message listening Service...")
@@ -69,7 +68,7 @@ func ListenReconciliationMessages(cli structures.MongoClient, node chord.ChordNo
 			fmt.Println("Mesa che schioppa al nodo")
 			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			//completato l'aggiornamento dell'anello
-		retry:
+			/*retry:
 			if node.GetSuccessor().String() == "" {
 				fmt.Println("Node hasn't a successor, wait for the reconstruction...")
 				goto retry
@@ -78,7 +77,7 @@ func ListenReconciliationMessages(cli structures.MongoClient, node chord.ChordNo
 			//nodo effettua export del DB e lo invia al successore
 			addr := node.GetSuccessor().GetIpAddr()
 			fmt.Print("DB forwarded to successor:", addr, "\n\n")
-
+			*/
 			//solamente per il nodo che ha iniziato l'aggiornamento incrementiamo il contatore che ci permette
 			//di interrompere dopo 2 giri non effettuando la SendCollectionMsg
 			if Handler {
@@ -90,11 +89,11 @@ func ListenReconciliationMessages(cli structures.MongoClient, node chord.ChordNo
 					Handler = false
 					Round = 0
 				} else {
-					SendCollectionMsg(cli, addr, "reconciliation")
+					SendCollectionMsg(cli, "d", "reconciliation")
 				}
 				//se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
 			} else {
-				SendCollectionMsg(cli, addr, "reconciliation")
+				SendCollectionMsg(cli, "addr", "reconciliation")
 			}
 		}
 	}
