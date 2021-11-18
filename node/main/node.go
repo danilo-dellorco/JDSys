@@ -295,6 +295,16 @@ func SendReplicationMsg(node *Node, address string, mode string) {
 }
 
 /*
+Struttura che mantiene i parametri delle RPC
+*/
+type Args struct {
+	Key     string
+	Value   string
+	Handler string
+	Deleted bool
+}
+
+/*
 Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
 Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
 */

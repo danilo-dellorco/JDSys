@@ -24,16 +24,6 @@ import (
 //	  SendCollectionMsg al termine di merge + remove file, procedendo solo a questo punto con l'invio al succ
 
 /*
-Struttura che mantiene i parametri delle RPC
-*/
-type Args struct {
-	Key     string
-	Value   string
-	Handler string
-	Deleted bool
-}
-
-/*
 Effettua la RPC per la Get di una Key.
  1) Si verifica se il nodo ha una copia della risorsa
  2) Lookup per trovare il nodo che hosta la risorsa
