@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"progetto-sdcc/node/localsys/structures"
+	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/utils"
 	"strconv"
 	"time"
@@ -35,7 +35,7 @@ func main() {
 	select {}
 }
 
-func localPutTest(mongo structures.MongoClient) {
+func localPutTest(mongo mongo.MongoInstance) {
 	i := 0
 	for {
 		go mongo.PutEntry("key_test", strconv.Itoa(i))
@@ -43,7 +43,7 @@ func localPutTest(mongo structures.MongoClient) {
 	}
 }
 
-func localGetTest(mongo structures.MongoClient) {
+func localGetTest(mongo mongo.MongoInstance) {
 	i := 0
 	for {
 		go mongo.GetEntry("key_test")

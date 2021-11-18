@@ -1,4 +1,4 @@
-package structures
+package mongo
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"progetto-sdcc/registry/services"
+	"progetto-sdcc/registry/amazon"
 	"progetto-sdcc/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,7 +35,7 @@ var DeletedKeys []string
 /*
 Struttura che mantiene una connessione verso una specifica collezione MongoDB
 */
-type MongoClient struct {
+type MongoInstance struct {
 	Client     *mongo.Client
 	Database   *mongo.Database
 	Collection *mongo.Collection
@@ -45,7 +45,7 @@ type MongoClient struct {
 /*
 Apre la connessione con il database, inizializzando la collection utilizzata
 */
-func (cli *MongoClient) OpenConnection() {
+func (cli *MongoInstance) OpenConnection() {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	cli.Client = client
@@ -65,7 +65,7 @@ func (cli *MongoClient) OpenConnection() {
 /*
 Chiude la connessione con il database
 */
-func (cli *MongoClient) CloseConnection() {
+func (cli *MongoInstance) CloseConnection() {
 	err := cli.Client.Disconnect(context.TODO())
 
 	if err != nil {
@@ -77,7 +77,7 @@ func (cli *MongoClient) CloseConnection() {
 /*
 Ritorna una entry specificando la sua chiave
 */
-func (cli *MongoClient) GetEntry(key string) *MongoEntry {
+func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 	utils.FormattedTimestamp()
 	fmt.Println("Get | Searching for:", key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
@@ -117,7 +117,7 @@ func (cli *MongoClient) GetEntry(key string) *MongoEntry {
 /*
 Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per identificare le entry raramente utilizzate
 */
-func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
+func (cli *MongoInstance) ReadEntry(key string) *MongoEntry {
 	coll := cli.Collection
 	var result bson.M
 	err := coll.FindOne(context.TODO(), bson.D{primitive.E{Key: ID, Value: key}}).Decode(&result)
@@ -143,7 +143,7 @@ func (cli *MongoClient) ReadEntry(key string) *MongoEntry {
 Inserisce un'entry, specificando la chiave ed il suo valore.
 Al momento del get viene calcolato il timestamp
 */
-func (cli *MongoClient) PutEntry(key string, value string) error {
+func (cli *MongoInstance) PutEntry(key string, value string) error {
 	utils.FormattedTimestamp()
 	fmt.Printf("PUT | Inserting {%s,%s}\n", key, value)
 	coll := cli.Collection
@@ -183,7 +183,7 @@ func (cli *MongoClient) PutEntry(key string, value string) error {
 Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
 Viene inoltre aggiornato il timestamp di quell'entry
 */
-func (cli *MongoClient) AppendValue(key string, arg1 string) error {
+func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 	utils.FormattedTimestamp()
 	fmt.Printf("Append | Appending %s to %s\n", arg1, key)
 	old := bson.D{primitive.E{Key: ID, Value: key}}
@@ -208,7 +208,7 @@ func (cli *MongoClient) AppendValue(key string, arg1 string) error {
 /*
 Cancella un'entry dal database, specificandone la chiave
 */
-func (cli *MongoClient) DeleteEntry(key string) error {
+func (cli *MongoInstance) DeleteEntry(key string) error {
 	utils.FormattedTimestamp()
 	fmt.Printf("Delete | Deleting %s\n", key)
 	coll := cli.Collection
@@ -231,7 +231,7 @@ func (cli *MongoClient) DeleteEntry(key string) error {
 /*
 Cancella un database e tutte le sue collezioni
 */
-func (cli *MongoClient) DropDatabase() {
+func (cli *MongoInstance) DropDatabase() {
 	err := cli.Database.Drop(context.TODO())
 	if err != nil {
 		fmt.Print(err)
@@ -244,7 +244,7 @@ func (cli *MongoClient) DropDatabase() {
 Inserisce un oggetto MongoEntry nel db.
 Utilizzata durante l'aggiornamento delle entry del DB locale
 */
-func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
+func (cli *MongoInstance) PutMongoEntry(entry MongoEntry) {
 	coll := cli.Collection
 	key := entry.Key
 	value := entry.Value
@@ -263,7 +263,7 @@ func (cli *MongoClient) PutMongoEntry(entry MongoEntry) {
 /*
 Esporta una collezione, scrivendola su un file csv
 */
-func (cli *MongoClient) ExportCollection(filename string) {
+func (cli *MongoInstance) ExportCollection(filename string) {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
 	arg2 := "--db=" + DB_NAME
@@ -282,7 +282,7 @@ func (cli *MongoClient) ExportCollection(filename string) {
 /*
 Esporta una entry specifica in formato CSV.
 */
-func (cli *MongoClient) ExportDocument(key string, filename string) {
+func (cli *MongoInstance) ExportDocument(key string, filename string) {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
 	arg2 := "--db=" + DB_NAME
@@ -302,11 +302,11 @@ func (cli *MongoClient) ExportDocument(key string, filename string) {
 /*
 Carica una chiave sul bucket s3, rimuovendola dal database locale
 */
-func (cli *MongoClient) uploadToS3(key string) {
+func (cli *MongoInstance) uploadToS3(key string) {
 	filename := key + ".csv"
 	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+filename)
 	fmt.Println("Starting S3 Upload")
-	sess := services.CreateSession()
+	sess := amazon.CreateSession()
 	uploader := s3manager.NewUploader(sess)
 
 	f, err := os.Open(utils.CLOUD_EXPORT_PATH + filename)
@@ -336,8 +336,8 @@ func (cli *MongoClient) uploadToS3(key string) {
 /*
 Ottiene la chiave specificata dal bucket S3, salvandola in un file locale
 */
-func (cli *MongoClient) downloadEntryFromS3(key string) {
-	sess := services.CreateSession()
+func (cli *MongoInstance) downloadEntryFromS3(key string) {
+	sess := amazon.CreateSession()
 	filename := key + utils.CSV
 	downloader := s3manager.NewDownloader(sess)
 
@@ -364,7 +364,7 @@ func (cli *MongoClient) downloadEntryFromS3(key string) {
 Routine che ogni ora controlla tutte le entry per vedere se è possibile
 effettuare una migrazione delle risorse verso il cloud S3
 */
-func (cli *MongoClient) CheckRarelyAccessed() {
+func (cli *MongoInstance) CheckRarelyAccessed() {
 	for {
 		time.Sleep(time.Hour)
 		opts := options.Find().SetSort(bson.D{primitive.E{Key: ID, Value: 1}})
@@ -396,7 +396,7 @@ func (cli *MongoClient) CheckRarelyAccessed() {
 Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
 Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.
 */
-func (cli *MongoClient) MergeCollection(exportFile string, receivedFile string) {
+func (cli *MongoInstance) MergeCollection(exportFile string, receivedFile string) {
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
@@ -413,7 +413,7 @@ func (cli *MongoClient) MergeCollection(exportFile string, receivedFile string) 
 Invocato quando si riceve un update di riconciliazione. Si utilizza
 last-write-wins per risolvere i conflitti tra le entry
 */
-func (cli *MongoClient) ReconciliateCollection(exportFile string, receivedFile string) {
+func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile string) {
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
@@ -424,4 +424,17 @@ func (cli *MongoClient) ReconciliateCollection(exportFile string, receivedFile s
 	}
 	cli.Collection.Find(context.TODO(), nil)
 	fmt.Println("Local DB ReceivedCorrectly")
+}
+
+/*
+Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
+i listener e le routine per la gestione degli updates.
+*/
+func InitLocalSystem() MongoInstance {
+	fmt.Println("Starting Mongo Local System...")
+	client := MongoInstance{}
+	client.OpenConnection()
+
+	fmt.Println("Mongo is Up & Running...")
+	return client
 }

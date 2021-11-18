@@ -1,4 +1,4 @@
-package services
+package amazon
 
 import (
 	"fmt"

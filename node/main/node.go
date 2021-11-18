@@ -10,19 +10,18 @@ import (
 	"net/http"
 	"net/rpc"
 	"os"
-	chord "progetto-sdcc/node/chord/net"
-	mongo "progetto-sdcc/node/localsys"
-	"progetto-sdcc/node/localsys/communication"
-	"progetto-sdcc/node/localsys/structures"
+	chord "progetto-sdcc/node/chord/api"
+	mongo "progetto-sdcc/node/mongo/api"
+	"progetto-sdcc/node/mongo/communication"
 	"progetto-sdcc/utils"
 	"time"
 )
 
 type Node struct {
-	MongoClient structures.MongoClient
+	MongoClient mongo.MongoInstance
 	ChordClient *chord.ChordNode
 
-	//variabili per la realizzazione della consistenza finale
+	// Variabili per la realizzazione della consistenza finale
 	Handler bool
 	Round   int
 }
