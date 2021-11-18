@@ -14,10 +14,17 @@ import (
 // TODO dà un problema su Send Update e Receive forse perche servono porte diverse
 // TODO Replicazione: Handler riceve la scrittura e la pro
 // TODO testare filetransfer di riconciliazione e terminazione con le porte nuove eccetera
+
 // TODO problema consistenza: il successore riceve l'export e parte la routine per il merge, il nodo
-//il nodo avviando subito la RPC non da tempo al successore di completare il merge, per cui si effettua
-//l'export del DB locale per la Send presente nell'RPC ma il file viene buttato prima dell'invio dalla
-//routine alla fine del merge --> intanto c'ho messo uno sleep di 3 secondi
+//avviando subito la RPC non da tempo al successore di completare il merge, per cui si effettua l'export
+//del local DB per la Send presente nell'RPC ma il file viene buttato prima dell'invio dalla routine alla
+//fine del merge
+//--> intanto c'ho messo uno sleep di 3 secondi
+//RIFLESSIONE: non possiamo farlo senza RPC, se uso SendCollectionMsg dopo il merge riesco a tx da nodo
+//a successore ma non posso bloccare il giro, i parametri che passo alla funzione sono locali quindi non
+//ho posso capire sui vari nodi chi è l'handler della riconciliazione!
+//--> per forza RPC perchè devo passare argomenti tra i nodi, aggiungendo canale attiviamo su ogni nodo
+//	  SendCollectionMsg al termine di merge + remove file, procedendo solo a questo punto con l'invio al succ
 
 /*
 Servizio RPC del nodo. Mantiene un riferimento al ChordNode ed al MongoClient
@@ -35,6 +42,9 @@ type Args struct {
 	Value   string
 	Handler string
 	Deleted bool
+
+	//parametro per consistenza finale
+	Round int
 }
 
 /*
@@ -314,10 +324,11 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 		return nil
 	}
 
-	//imposto il nodo da cui partirà l'aggiornamento dell'anello
+	//imposto il nodo da cui partirà l'aggiornamento dell'anello, più il contatore per interrompere
+	//dopo 2 giri e il canale per avviare al termine della ricezione l'invio al successore
 	me := s.Node.GetIpAddress()
 	args.Handler = me
-	args.Deleted = false
+	args.Round = 0
 
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
@@ -331,7 +342,7 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 
 	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
 	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
-	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file per l'invio!
+	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
 
 	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
 	time.Sleep(3 * time.Second)
@@ -348,10 +359,8 @@ func (s *RPCservice) ConsistencySuccessor(args *Args, reply *string) error {
 	fmt.Println("Incoming request for final consistency, start update successor...")
 	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
 	if s.Node.GetIpAddress() == args.Handler {
-		// campo usato come contatore per fare 2 giri nell'anello
-		if !args.Deleted {
-			args.Deleted = true
-		} else {
+		args.Round++
+		if args.Round == 2 {
 			*reply = "Request returned to the node invoked by the registry two times, ring updates correctly"
 			fmt.Println(*reply)
 			fmt.Print("========================================================\n\n\n")
@@ -379,7 +388,7 @@ retry:
 
 	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
 	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
-	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file per l'invio!
+	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
 	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
 	time.Sleep(3 * time.Second)
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
