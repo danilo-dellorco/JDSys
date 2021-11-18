@@ -293,3 +293,42 @@ func SendReplicationMsg(node *Node, address string, mode string) {
 	communication.StartSender(file, address, mode)
 	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 }
+
+/*
+Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
+Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
+*/
+
+func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
+	fmt.Println("\n\n========================================================")
+	fmt.Println("Final consistency requested by service registry...")
+
+	if n.ChordClient.GetSuccessor().String() == "" {
+		*reply = "Node hasn't a successor, abort and wait for the reconstruction of the DHT."
+		fmt.Println(*reply)
+		return nil
+	}
+
+	//imposto il nodo corrente come gestore dell'aggiornamento dell'anello, così da incrementare solo
+	//per lui il contatore che permette l'interruzione dopo 2 giri
+	n.Handler = true
+
+	//nodo effettua export del DB e lo invia al successore
+	addr := n.ChordClient.GetSuccessor().GetIpAddr()
+	SendReplicationMsg(n, addr, "reconciliation")
+
+	//invoco esecuzione da parte del successore del trasferimento del DB
+	//client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	//if err != nil {
+	//	log.Fatal("dialing:", err)
+	//}
+
+	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
+	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
+	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
+
+	//fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
+	//time.Sleep(3 * time.Second)
+	//client.Call("RPCservice.ConsistencySuccessor", args, &reply)
+	return nil
+}
