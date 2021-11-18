@@ -66,6 +66,7 @@ func ListenReconciliationMessages(cli structures.MongoClient, node *chord.ChordN
 			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 
+			fmt.Println("Mesa che schioppa al nodo")
 			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			//completato l'aggiornamento dell'anello
 		retry:
@@ -76,6 +77,7 @@ func ListenReconciliationMessages(cli structures.MongoClient, node *chord.ChordN
 
 			//nodo effettua export del DB e lo invia al successore
 			addr := node.GetSuccessor().GetIpAddr()
+			fmt.Print("DB forwarded to successor:", addr, "\n\n")
 
 			//solamente per il nodo che ha iniziato l'aggiornamento incrementiamo il contatore che ci permette
 			//di interrompere dopo 2 giri non effettuando la SendCollectionMsg
