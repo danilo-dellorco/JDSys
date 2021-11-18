@@ -70,7 +70,7 @@ func ListenReconciliationMessages(cli structures.MongoClient, node *chord.ChordN
 			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			//completato l'aggiornamento dell'anello
 		retry:
-			if node.GetSuccessor().String() == "" {
+			if node.GetSuccessor() == nil {
 				fmt.Println("Node hasn't a successor, wait for the reconstruction...")
 				goto retry
 			}
