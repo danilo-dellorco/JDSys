@@ -1,7 +1,7 @@
-/**
+/*
 Insieme di strutture e metodi per implementare l'algoritmo Chord
 */
-package net
+package api
 
 import (
 	"crypto/sha256"

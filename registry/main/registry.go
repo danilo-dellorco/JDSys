@@ -9,7 +9,7 @@ import (
 	"net/rpc"
 	"os"
 	"os/signal"
-	"progetto-sdcc/registry/services"
+	"progetto-sdcc/registry/amazon"
 	"progetto-sdcc/utils"
 	"syscall"
 	"time"
@@ -84,8 +84,8 @@ func InitializeService() *DHThandler {
 /*
 Restituisce tutte le istanze healthy presenti
 */
-func checkActiveNodes() []services.Instance {
-	instances := services.GetActiveNodes()
+func checkActiveNodes() []amazon.Instance {
+	instances := amazon.GetActiveNodes()
 	//fmt.Println("Healthy Instances:")
 	//fmt.Println(instances)
 	return instances
@@ -97,9 +97,9 @@ di terminare possano inviare le proprie entry ad un altro nodo
 */
 func checkTerminatingNodes() {
 	fmt.Println("Starting Check Terminating Nodes Routine....")
-	go services.Start_cache_flush_service()
+	go amazon.Start_cache_flush_service()
 	for {
-		terminating := services.GetTerminatingInstances()
+		terminating := amazon.GetTerminatingInstances()
 		for _, t := range terminating {
 			sendTerminatingSignalRPC(t.PrivateIP)
 		}

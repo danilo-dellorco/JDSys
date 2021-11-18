@@ -1,10 +1,20 @@
-package main
+package impl
 
 import (
 	"fmt"
-	chord "progetto-sdcc/node/chord/net"
+	chord "progetto-sdcc/node/chord/api"
+	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/utils"
 )
+
+type Node struct {
+	MongoClient mongo.MongoInstance
+	ChordClient *chord.ChordNode
+
+	// Variabili per la realizzazione della consistenza finale
+	Handler bool
+	Round   int
+}
 
 // TODO testare filetransfer di riconciliazione e terminazione con le porte nuove eccetera
 /*
@@ -106,7 +116,6 @@ func (n *Node) DeleteRPC(args Args, reply *string) error {
 Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
 Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
 */
-
 func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	fmt.Println("\n\n========================================================")
 	fmt.Println("Final consistency requested by service registry...")
@@ -117,11 +126,11 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 		return nil
 	}
 
-	//imposto il nodo corrente come gestore dell'aggiornamento dell'anello, così da incrementare solo
-	//per lui il contatore che permette l'interruzione dopo 2 giri
+	// Imposto il nodo corrente come gestore dell'aggiornamento dell'anello, così da incrementare solo
+	// per lui il contatore che permette l'interruzione dopo 2 giri
 	n.Handler = true
 
-	//nodo effettua export del DB e lo invia al successore
+	// Effettuo l' export del DB e lo invio al successore
 	addr := n.ChordClient.GetSuccessor().GetIpAddr()
 	SendReplicationMsg(n, addr, "reconciliation")
 	return nil
@@ -131,7 +140,7 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per la terminazione
 Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati.
 Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo la possibilità di
-aggiornare altri dati obsoleti mantenuti dal successore
+aggiornare altri dati obsoleti mantenuti dal successore.
 */
 
 func (n *Node) TerminateInstanceRPC(args *Args, reply *string) error {

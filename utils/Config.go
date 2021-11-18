@@ -3,6 +3,8 @@ package utils
 import "time"
 
 // MongoDB Settings
+// TODO cambiare i path forse metterli assoluti perche tocca vede da do vengono invocati sti cosi
+// ALtra cosa: se poi compiliamo etc varranno ancora sti path relativi?
 var CSV string = ".csv"
 var CLOUD_EXPORT_PATH string = "../localsys/communication/cloud/export/"
 var CLOUD_RECEIVE_PATH string = "../localsys/communication/cloud/receive/"
@@ -18,6 +20,9 @@ var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
 var AUTOSCALING_NAME string = "sdcc-autoscaling"
 var BUCKET_NAME string = "sdcc-cloud-resources"
 var LB_DNS_NAME string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
+
+// TODO inserisci il registry
+var REGISTRY_IP string = "TODO"
 
 // Time Settings
 // TODO impostare questi parametri a valori reali
