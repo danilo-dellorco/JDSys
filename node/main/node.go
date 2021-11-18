@@ -235,7 +235,6 @@ func ListenReconciliationMessages(node *Node) {
 			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 
-			fmt.Println("Mesa che schioppa al nodo")
 			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			//completato l'aggiornamento dell'anello
 		retry:
