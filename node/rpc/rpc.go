@@ -41,9 +41,6 @@ type Args struct {
 	Value   string
 	Handler string
 	Deleted bool
-
-	//parametro per consistenza finale
-	Round int
 }
 
 /*
@@ -323,29 +320,27 @@ func (s *RPCservice) ConsistencyHandlerRPC(args *Args, reply *string) error {
 		return nil
 	}
 
-	//imposto il nodo da cui partirà l'aggiornamento dell'anello, più il contatore per interrompere
-	//dopo 2 giri e il canale per avviare al termine della ricezione l'invio al successore
-	me := s.Node.GetIpAddress()
-	args.Handler = me
-	args.Round = 0
+	//imposto il nodo corrente come gestore dell'aggiornamento dell'anello, così da incrementare solo
+	//per lui il contatore che permette l'interruzione dopo 2 giri
+	mongo.Handler = true
 
 	//nodo effettua export del DB e lo invia al successore
 	addr := s.Node.GetSuccessor().GetIpAddr()
 	mongo.SendCollectionMsg(s.Db, addr, "reconciliation")
 
 	//invoco esecuzione da parte del successore del trasferimento del DB
-	client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
+	//client, err := rpc.DialHTTP("tcp", addr+utils.RPC_PORT)
+	//if err != nil {
+	//	log.Fatal("dialing:", err)
+	//}
 
 	//non forwardiamo immediatamente la richiesta al successore, così gli diamo il tempo di fare il
 	//merge dei DB prima di gestire l'RPC, che richiederà il suo export da inviare al suo successore
 	//--> senza l'attesa il nodo fa l'export del DB, ma la routine che riceve l'export da questo fa il merge e butta l'export locale, quindi non si trova il file creato per l'invio!
 
-	fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
+	//fmt.Print("Request forwarded to successor:", addr+utils.RPC_PORT, "\n\n\n")
 	//time.Sleep(3 * time.Second)
-	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
+	//client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
 
@@ -354,6 +349,7 @@ Metodo invocato dal nodo random scelto dal Service Registry per raggiungere la c
 Ogni nodo invia il DB al successore, completato il giro, e quindi ritornati al nodo scelto dal registry,
 se non si sono verificati aggiornamenti, tutti i dati saranno consistenti.
 */
+/*
 func (s *RPCservice) ConsistencySuccessor(args *Args, reply *string) error {
 	fmt.Println("Incoming request for final consistency, start update successor...")
 	// La richiesta ha completato il giro dell'anello se è tornata al nodo che gestisce quella chiave
@@ -393,3 +389,4 @@ retry:
 	client.Call("RPCservice.ConsistencySuccessor", args, &reply)
 	return nil
 }
+*/

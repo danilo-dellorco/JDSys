@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"progetto-sdcc/node/localsys/structures"
 	"progetto-sdcc/utils"
 	"strconv"
 	"strings"
@@ -46,7 +45,7 @@ func StartReceiver(fileChannel chan string, mode string) {
 /*
 Apre la connessione verso un altro nodo per trasmettere un file
 */
-func StartSender(cli structures.MongoClient, filename string, address string, mode string) {
+func StartSender(filename string, address string, mode string) {
 	var addr string
 	switch mode {
 	case "update":
@@ -61,7 +60,7 @@ func StartSender(cli structures.MongoClient, filename string, address string, mo
 	}
 	defer connection.Close()
 	fmt.Println("Ready to send DB export...")
-	sendFile(cli, connection, filename)
+	sendFile(connection, filename)
 }
 
 /*
@@ -98,16 +97,10 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 /*
 Utility per inviare un file tramite la connessione
 */
-func sendFile(cli structures.MongoClient, connection net.Conn, filename string) {
-retry:
+func sendFile(connection net.Conn, filename string) {
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
-		if err.Error() == "open exported.csv: no such file or directory" {
-			fmt.Println("DB export removed from previous merge, retry creation and send to successor...")
-			cli.ExportCollection(filename)
-			goto retry
-		}
 		return
 	}
 	fileInfo, err := file.Stat()

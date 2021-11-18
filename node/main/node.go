@@ -109,10 +109,10 @@ func JoinDHT(registryAddr string) []string {
 /*
 Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer e configura il DB locale
 */
-func InitHealthyNode() {
+func InitHealthyNode(node *chord.ChordNode) {
 
 	// Configura il sistema di storage locale
-	mongoClient = mongo.InitLocalSystem()
+	mongoClient = mongo.InitLocalSystem(node)
 
 	// Inizia a ricevere gli HeartBeat dal LB
 	go StartHeartBeatListener()
@@ -221,7 +221,7 @@ func SendPeriodicUpdates() {
 Esegue tutte le attività per rendere il nodo UP & Running
 */
 func NodeSetup() {
-	InitHealthyNode()
+	InitHealthyNode(me)
 	InitChordDHT()
 	InitRPCService()
 	//TODO da buttare al 99%
@@ -232,7 +232,7 @@ func NodeSetup() {
 DEBUG testa il mongo reconciliation
 */
 func NodeLocalSetup() {
-	mongoClient = mongo.InitLocalSystem()
+	mongoClient = mongo.InitLocalSystem(me)
 	mongoClient.DropDatabase()
 	mongoClient.PutEntry("Key1", "Value1")
 	mongoClient.PutEntry("Key2", "Value2")
