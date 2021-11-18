@@ -1,10 +1,20 @@
-package main
+package impl
 
 import (
 	"fmt"
 	chord "progetto-sdcc/node/chord/api"
+	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/utils"
 )
+
+type Node struct {
+	MongoClient mongo.MongoInstance
+	ChordClient *chord.ChordNode
+
+	// Variabili per la realizzazione della consistenza finale
+	Handler bool
+	Round   int
+}
 
 // TODO testare filetransfer di riconciliazione e terminazione con le porte nuove eccetera
 /*
