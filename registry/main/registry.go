@@ -118,7 +118,7 @@ func sendTerminatingSignalRPC(ip string) {
 	}
 	var reply string
 	args := Args{}
-	err = client.Call("RPCservice.TerminateInstanceRPC", args, &reply)
+	err = client.Call("Node.TerminateInstanceRPC", args, &reply)
 	if err != nil {
 		log.Fatal("GetRPC error:", err)
 	}
@@ -164,7 +164,7 @@ func startFinalConsistencyRPC(ip string) {
 	args := Args{}
 	args.Handler = ""
 	args.Deleted = false
-	err = client.Call("RPCservice.ConsistencyHandlerRPC", args, &reply)
+	err = client.Call("Node.ConsistencyHandlerRPC", args, &reply)
 	if err != nil {
 		log.Fatal("GetRPC error:", err)
 	}
