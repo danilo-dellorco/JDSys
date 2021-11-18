@@ -102,6 +102,7 @@ func sendFile(cli structures.MongoClient, connection net.Conn, filename string) 
 retry:
 	file, err := os.Open(filename)
 	if err != nil {
+		fmt.Println(err)
 		if err.Error() == "open exported.csv: no such file or directory" {
 			fmt.Println("DB export removed from previous merge, retry creation and send to successor...")
 			cli.ExportCollection(filename)
