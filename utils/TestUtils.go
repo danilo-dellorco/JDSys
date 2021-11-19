@@ -52,7 +52,3 @@ func PrintHeaderL3(message string) {
 func PrintTailerL1() {
 	fmt.Println(strings.Repeat("═", HL) + "\n")
 }
-
-func PrintTailerL2() {
-	//fmt.Println(strings.Repeat("—", HL))
-}

@@ -21,8 +21,7 @@ Esegue tutte le attività per rendere il nodo UP & Running
 func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
-
-	InitChordDHT(node)
+	//InitChordDHT(node)
 	InitRPCService(node)
 	InitListeningServices(node)
 	time.Sleep(1 * time.Millisecond)
@@ -45,7 +44,6 @@ func InitHealthyNode(node *Node) {
 	utils.PrintTs("Waiting for ELB Health Checking...")
 	time.Sleep(utils.NODE_HEALTHY_TIME)
 	utils.PrintTs("EC2 Node Up & Running!")
-	utils.PrintTailerL2()
 }
 
 /*
@@ -53,7 +51,7 @@ Permette al nodo di entrare a far parte della DHT Chord in base alle informazion
 Inizia anche due routine per aggiornamento periodico delle FT del nodo stesso e degli altri nodi della rete
 */
 func InitChordDHT(node *Node) {
-	fmt.Println("Initializing Chord DHT")
+	utils.PrintHeaderL2("Initializing Chord DHT")
 
 	// Setup dei Flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
@@ -79,12 +77,14 @@ waitLB:
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(result) == 1 {
 		if result[0] == *addressPtr {
+			utils.PrintTs("Creating Chord Ring")
 			node.ChordClient = chord.Create(*addressPtr + utils.CHORD_PORT)
 		} else {
 			goto waitLB
 		}
 	} else {
 		// Se c'è più di un'istanza attiva viene contattato un altro nodo random per fare la Join
+		utils.PrintTs("Joining Chord Ring")
 		*joinPtr = result[rand.Intn(len(result))]
 		for {
 			if *joinPtr == *addressPtr {
@@ -98,7 +98,6 @@ waitLB:
 	utils.PrintTs("My address is: " + *addressPtr)
 	utils.PrintTs("Join address is: " + *joinPtr)
 	utils.PrintTs("Chord Node Started Succesfully!")
-	utils.PrintTailerL2()
 }
 
 /*
@@ -119,7 +118,6 @@ func InitRPCService(node *Node) {
 	utils.PrintTs("Start Serving RPC request on port " + utils.RPC_PORT)
 	utils.PrintTs("RPC Service Correctly Started")
 	go http.Serve(l, nil)
-	utils.PrintTailerL2()
 }
 
 func InitListeningServices(node *Node) {
