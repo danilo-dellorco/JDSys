@@ -5,6 +5,7 @@ import (
 	chord "progetto-sdcc/node/chord/api"
 	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/utils"
+	"time"
 )
 
 type Node struct {
@@ -44,13 +45,13 @@ func (n *Node) GetRPC(args *Args, reply *string) error {
 	}
 
 	fmt.Println("Key not found.")
-	if n.ChordClient.GetSuccessor().String() == "" {
+	succ := n.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
 		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
 		return nil
 	}
 
 	fmt.Println("None.\nForwarding Get Request on DHT...")
-	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, _ := utils.HttpConnect(utils.RemovePort(addr), utils.RPC_PORT)
 	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
@@ -120,7 +121,8 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	fmt.Println("\n\n========================================================")
 	fmt.Println("Final consistency requested by service registry...")
 
-	if n.ChordClient.GetSuccessor().String() == "" {
+	succ := n.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
 		*reply = "Node hasn't a successor, abort and wait for the reconstruction of the DHT."
 		fmt.Println(*reply)
 		return nil
@@ -131,8 +133,7 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	n.Handler = true
 
 	// Effettuo l' export del DB e lo invio al successore
-	addr := n.ChordClient.GetSuccessor().GetIpAddr()
-	SendReplicationMsg(n, addr, "reconciliation")
+	SendReplicationMsg(n, succ, "reconciliation")
 	return nil
 }
 
@@ -144,14 +145,15 @@ aggiornare altri dati obsoleti mantenuti dal successore.
 */
 
 func (n *Node) TerminateInstanceRPC(args *Args, reply *string) error {
+	fmt.Println("Instance Scheduled to Terminating...")
 retry:
-	if n.ChordClient.GetSuccessor().String() == "" {
+	succ := n.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
 		fmt.Println("Node hasn't a successor, wait for the reconstruction of the DHT")
+		time.Sleep(2 * time.Second)
 		goto retry
 	}
-	addr := n.ChordClient.GetSuccessor().GetIpAddr()
-	fmt.Println("Instance Scheduled to Terminating...")
-	SendReplicationMsg(n, addr, "update")
+	SendReplicationMsg(n, succ, "update")
 	*reply = "Instance Terminating"
 	return nil
 }
@@ -190,18 +192,15 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 		ok = false
 	}
 
-retry:
-	fmt.Println("succ: ", n.ChordClient.GetSuccessor().GetIpAddr())
-	if n.ChordClient.GetSuccessor().GetIpAddr() == "" {
-		fmt.Println("Node hasn't a successor, wait for the reconstruction of the DHT for replicate data")
-		goto retry
-	}
-
-	// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
+	// Se non ho avuto errori, se è presente il successore inviamo l'entry per fargli gestire una replica.
 	if ok {
-		next := n.ChordClient.GetSuccessor().GetIpAddr()
+		succ := n.ChordClient.GetSuccessor().GetIpAddr()
+		if succ == "" {
+			fmt.Println("Node hasn't a successor, data will be replicated later")
+			return nil
+		}
 		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
-		SendReplicationMsg(n, next, "replication")
+		SendReplicationMsg(n, succ, "replication")
 	}
 	return nil
 }
@@ -218,9 +217,9 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 		*reply = "Value correctly appended"
 
 		// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
-		next := n.ChordClient.GetSuccessor().GetIpAddr()
+		succ := n.ChordClient.GetSuccessor().GetIpAddr()
 		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
-		SendReplicationMsg(n, next, "replication")
+		SendReplicationMsg(n, succ, "replication")
 	} else {
 		*reply = "Entry not found"
 	}
@@ -232,14 +231,6 @@ Effettua il delete della risorsa sul nodo che deve gestirla.
 Ritorna 0 se l'operazione è avvenuta con successo, altrimenti l'errore specifico
 */
 func (n *Node) DeleteHandling(args *Args, reply *string) error {
-	// Delete deve essere propagata a tutti i nodi, se il nodo che gestisce la precisa chiave non ha
-	// un successore, non effettuiamo la cancellazione ma aspettiamo che venga ricostruita la DHT
-	if n.ChordClient.GetSuccessor().String() == "" {
-		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
-		return nil
-	}
-
-	// Nodo gestore ha correttamente un successore, procediamo con la delete sul DB locale
 	fmt.Println("Deleting value on local storage...")
 	err := n.MongoClient.DeleteEntry(args.Key)
 	if err == nil {
@@ -254,9 +245,15 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 
 	// Se l'entry esiste ed è stata cancellata, procediamo inoltrando la richiesta al nodo successore
 	// così da eliminare tutte le repliche nell'anello
-	next := n.ChordClient.GetSuccessor().GetIpAddr()
-	client, _ := utils.HttpConnect(next, utils.RPC_PORT)
-	fmt.Println("Delete request forwarded to replication node:", next+utils.RPC_PORT)
+	// Se non è presente, il nodo potrebbe essere da solo, o un eventuale successore ancora non identificato
+	// verrà poi aggiornato successivamente tramite la riconciliazione
+	succ := n.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
+		*reply = "Entry successfully deleted"
+		return nil
+	}
+	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
+	fmt.Println("Delete request forwarded to replication node:", succ+utils.RPC_PORT)
 	client.Call("Node.DeleteReplicating", args, &reply)
 	return nil
 }
@@ -287,13 +284,14 @@ func (n *Node) DeleteReplicating(args *Args, reply *string) error {
 	// è già stata effettuata, per questo se i nodi successivi non hanno successore aspettiamo
 	// la ricostruzione della DHT Chord finchè non viene completata la Delete!
 retry:
-	if n.ChordClient.GetSuccessor().String() == "" {
+	succ := n.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
 		fmt.Println("Node hasn't a successor, wait for the reconstruction...")
+		time.Sleep(2 * time.Second)
 		goto retry
 	}
-	next := n.ChordClient.GetSuccessor().GetIpAddr()
-	client, _ := utils.HttpConnect(next, utils.RPC_PORT)
-	fmt.Println("Delete request forwarded to:", next+utils.RPC_PORT)
+	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
+	fmt.Println("Delete request forwarded to:", succ+utils.RPC_PORT)
 	client.Call("Node.DeleteReplicating", args, &reply)
 	return nil
 }
