@@ -242,6 +242,7 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 	err := n.MongoClient.DeleteEntry(args.Key)
 	if err == nil {
 		args.Deleted = true
+		*reply = "Entry successfully deleted"
 	} else {
 		// Entry non è presente nel DB del nodo gestore, quindi non esiste
 		if err.Error() == "Entry Not Found" {
@@ -256,7 +257,7 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 	// verrà poi aggiornato successivamente tramite la riconciliazione
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
-		*reply = "Entry successfully deleted"
+		fmt.Println(reply)
 		return nil
 	}
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
