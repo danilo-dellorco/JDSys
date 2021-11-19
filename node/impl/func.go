@@ -27,7 +27,7 @@ Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat de
 ed i segnali di terminazione dal service registry.
 */
 func StartHeartBeatListener() {
-	fmt.Println("Start Listening Heartbeats from LB on port:", utils.HEARTBEAT_PORT)
+	utils.PrintTs("Start Listening Heartbeats from LB on port: " + utils.HEARTBEAT_PORT)
 	http.HandleFunc("/", lb_handler)
 	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
 }
@@ -64,8 +64,9 @@ func JoinDHT(registryAddr string) []string {
 Esegue tutte le attività per rendere il nodo UP & Running
 */
 func InitNode(node *Node) {
+	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
-	//InitChordDHT(node)
+	InitChordDHT(node)
 	InitRPCService(node)
 
 	go ListenUpdateMessages(node)
@@ -73,13 +74,15 @@ func InitNode(node *Node) {
 	node.Handler = false
 	node.Round = 0
 	go ListenReconciliationMessages(node)
+
+	utils.PrintTailerL1("NODE SETUP COMPLETED")
 }
 
 /*
 Permette al nodo di essere rilevato come Healthy Instance dal Load Balancer e configura il DB locale
 */
 func InitHealthyNode(node *Node) {
-
+	utils.PrintHeaderL2("Initializing EC2 node")
 	// Configura il sistema di storage locale
 	node.MongoClient = mongo.InitLocalSystem()
 
@@ -87,9 +90,10 @@ func InitHealthyNode(node *Node) {
 	go StartHeartBeatListener()
 
 	// Attende di diventare healthy per il Load Balancer
-	fmt.Println("Waiting for ELB Health Checking...")
+	utils.PrintTs("Waiting for ELB Health Checking...")
 	time.Sleep(utils.NODE_HEALTHY_TIME)
-	fmt.Println("EC2 Node Up & Running!")
+	utils.PrintTs("EC2 Node Up & Running!")
+	utils.PrintTailerL2()
 }
 
 /*
@@ -97,7 +101,7 @@ Permette al nodo di entrare a far parte della DHT Chord in base alle informazion
 Inizia anche due routine per aggiornamento periodico delle FT del nodo stesso e degli altri nodi della rete
 */
 func InitChordDHT(node *Node) {
-	fmt.Println("Initializing Chord DHT...")
+	fmt.Println("Initializing Chord DHT")
 
 	// Setup dei Flags
 	addressPtr := flag.String("addr", "", "the port you will listen on for incomming messages")
@@ -139,9 +143,10 @@ waitLB:
 		}
 		node.ChordClient, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 	}
-	fmt.Printf("My address is: %s.\n", *addressPtr)
-	fmt.Printf("Join address is: %s.\n", *joinPtr)
-	fmt.Println("Chord Node Started Succesfully!")
+	utils.PrintTs("My address is: " + *addressPtr)
+	utils.PrintTs("Join address is: " + *joinPtr)
+	utils.PrintTs("Chord Node Started Succesfully!")
+	utils.PrintTailerL2()
 }
 
 /*
@@ -150,6 +155,8 @@ Và invocata dopo aver inizializzato sia MongoDB che la DHT Chord in modo da pot
 tra i nodi del sistema.
 */
 func InitRPCService(node *Node) {
+	utils.PrintHeaderL2("Starting RPC Service")
+
 	rpc.Register(node)
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", utils.RPC_PORT)
@@ -157,14 +164,15 @@ func InitRPCService(node *Node) {
 		log.Fatal("listen error:", e)
 	}
 
-	fmt.Println("RPC Service Started...")
-	fmt.Println("Start Serving RPC request on port:", utils.RPC_PORT)
+	utils.PrintTs("Start Serving RPC request on port: " + utils.RPC_PORT)
+	utils.PrintTs("RPC Service Correctly Started")
 	go http.Serve(l, nil)
+	utils.PrintTailerL2()
 }
 
 /*
-Resta in ascolto per messaggi di aggiornamento del database. Utilizzato per ricevere i DB dei nodi in terminazione
-e le entry replicate.
+Resta in ascolto per messaggi di aggiornamento del database. Utilizzato per ricevere i database dai nodi
+schedulati per la terminazione
 */
 func ListenUpdateMessages(node *Node) {
 	fileChannel := make(chan string)
@@ -189,39 +197,39 @@ func ListenReconciliationMessages(node *Node) {
 	go communication.StartReceiver(fileChannel, "reconciliation")
 	fmt.Println("Started Reconciliation Message listening Service...")
 	for {
-		//si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
+		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
 		received := <-fileChannel
 		if received == "rcvd" {
 			node.MongoClient.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
 			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
 
-			//nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
-			//completato l'aggiornamento dell'anello
+			// Nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
+			// completato l'aggiornamento dell'anello
 		retry:
 			if node.ChordClient.GetSuccessor().String() == "" {
 				fmt.Println("Node hasn't a successor, wait for the reconstruction...")
 				goto retry
 			}
 
-			//nodo effettua export del DB e lo invia al successore
+			// Il nodo effettua export del DB e lo invia al successore
 			addr := node.ChordClient.GetSuccessor().GetIpAddr()
 			fmt.Print("DB forwarded to successor:", addr, "\n\n")
 
-			//solamente per il nodo che ha iniziato l'aggiornamento incrementiamo il contatore che ci permette
-			//di interrompere dopo 2 giri non effettuando la SendCollectionMsg
+			// Solamente per il nodo che ha iniziato l'aggiornamento incrementiamo il contatore che ci permette
+			// di interrompere dopo 2 giri non effettuando la SendCollectionMsg
 			if node.Handler {
 				node.Round++
 				if node.Round == 2 {
 					fmt.Println("Request returned to the node invoked by the registry two times, ring updates correctly")
 					fmt.Print("========================================================\n\n\n")
-					//ripristiniamo le variabili per le future riconciliazioni
+					// Ripristiniamo le variabili per le future riconciliazioni
 					node.Handler = false
 					node.Round = 0
 				} else {
 					SendReplicationMsg(node, addr, "reconciliation")
 				}
-				//se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
+				// Se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
 			} else {
 				SendReplicationMsg(node, addr, "reconciliation")
 			}
@@ -230,7 +238,8 @@ func ListenReconciliationMessages(node *Node) {
 }
 
 /*
-Esporta il file CSV e lo invia al nodo remoto
+Esporta il file CSV e lo invia al nodo remoto. Con mode specifichiamo se il nodo remoto dovrà fare il merge delle
+entry ricevute o solo la riconciliazione
 */
 func SendReplicationMsg(node *Node, address string, mode string) {
 	file := utils.UPDATES_EXPORT_FILE

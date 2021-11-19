@@ -78,7 +78,7 @@ func (cli *MongoInstance) CloseConnection() {
 Ritorna una entry specificando la sua chiave
 */
 func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
-	utils.FormattedTimestamp()
+	utils.PrintFormattedTimestamp()
 	fmt.Println("Get | Searching for:", key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
@@ -109,7 +109,7 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: LAST_ACC, Value: lastaccess}}}}
 	cli.Collection.UpdateOne(context.TODO(), entry, update)
-	utils.FormattedTimestamp()
+	utils.PrintFormattedTimestamp()
 	fmt.Println("Get: found", entry)
 	return &entry
 }
@@ -144,7 +144,7 @@ Inserisce un'entry, specificando la chiave ed il suo valore.
 Al momento del get viene calcolato il timestamp
 */
 func (cli *MongoInstance) PutEntry(key string, value string) error {
-	utils.FormattedTimestamp()
+	utils.PrintFormattedTimestamp()
 	fmt.Printf("PUT | Inserting {%s,%s}\n", key, value)
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
@@ -165,7 +165,7 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 				fmt.Println(err)
 				return err
 			}
-			utils.FormattedTimestamp()
+			utils.PrintFormattedTimestamp()
 			fmt.Println("Update:", key+", changed value into", value)
 			return errors.New("Updated")
 
@@ -174,7 +174,7 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 		}
 		return err
 	}
-	utils.FormattedTimestamp()
+	utils.PrintFormattedTimestamp()
 	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
 	return nil
 }
@@ -184,7 +184,7 @@ Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegn
 Viene inoltre aggiornato il timestamp di quell'entry
 */
 func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
-	utils.FormattedTimestamp()
+	utils.PrintFormattedTimestamp()
 	fmt.Printf("Append | Appending %s to %s\n", arg1, key)
 	old := bson.D{primitive.E{Key: ID, Value: key}}
 	oldEntry := cli.GetEntry(key)
@@ -209,7 +209,7 @@ func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 Cancella un'entry dal database, specificandone la chiave
 */
 func (cli *MongoInstance) DeleteEntry(key string) error {
-	utils.FormattedTimestamp()
+	utils.PrintFormattedTimestamp()
 	fmt.Printf("Delete | Deleting %s\n", key)
 	coll := cli.Collection
 	entry := bson.D{primitive.E{Key: ID, Value: key}}
@@ -414,6 +414,8 @@ Invocato quando si riceve un update di riconciliazione. Si utilizza
 last-write-wins per risolvere i conflitti tra le entry
 */
 func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile string) {
+	utils.PrintTs("Starting Reconciliation")
+
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
@@ -423,7 +425,7 @@ func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
-	fmt.Println("Local DB ReceivedCorrectly")
+	utils.PrintTs("Local DB ReceivedCorrectly")
 }
 
 /*
@@ -431,10 +433,10 @@ Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanc
 i listener e le routine per la gestione degli updates.
 */
 func InitLocalSystem() MongoInstance {
-	fmt.Println("Starting Mongo Local System...")
+	utils.PrintTs("Starting Mongo Local System")
 	client := MongoInstance{}
 	client.OpenConnection()
 
-	fmt.Println("Mongo is Up & Running...")
+	utils.PrintTs("Mongo is Up & Running")
 	return client
 }
