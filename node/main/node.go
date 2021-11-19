@@ -17,20 +17,20 @@ Loop:
 	for {
 		var cmd string
 		_, err := fmt.Scan(&cmd)
+		var s string
 		switch {
-
 		// Stampa successore e predecessore
 		case cmd == "print":
-			fmt.Printf("%s", node.ChordClient.String())
-
+			s = fmt.Sprintf("%s", node.ChordClient.String())
+			utils.PrintTs(s)
 		// Stampa la finger table
 		case cmd == "fingers":
-			fmt.Printf("%s", node.ChordClient.ShowFingers())
-
+			s = fmt.Sprintf("%s", node.ChordClient.ShowFingers())
+			utils.PrintTs(s)
 		// Stampa la lista di successori
 		case cmd == "succ":
-			fmt.Printf("%s", node.ChordClient.ShowSucc())
-
+			s = fmt.Sprintf("%s", node.ChordClient.ShowSucc())
+			utils.PrintTs(s)
 		// Errore
 		case err == io.EOF:
 			break Loop

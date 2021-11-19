@@ -2,8 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
+
+var HL int = 80
 
 func GetTimestamp() time.Time {
 	return time.Now()
@@ -28,26 +31,24 @@ func PrintTs(message string) {
 }
 
 func PrintHeaderL1(message string) {
-	for i := 0; i <= len(message)+3; i++ {
-		fmt.Print("*")
-	}
-	fmt.Println("\n*", message, "*")
-	for i := 0; i <= len(message)+3; i++ {
-		fmt.Print("*")
-	}
+	center := (HL-len(message))/2 - 2
+	before := strings.Repeat("═", center) + "╣ "
+	after := " ╠" + strings.Repeat("═", center)
+	fmt.Print(before + message + after)
 }
 
 func PrintHeaderL2(message string) {
-	fmt.Println("\n----------------------------------------------------------------------------")
+	fmt.Println("\n" + strings.Repeat("—", HL))
 	PrintTs(message)
-	fmt.Println("----------------------------------------------------------------------------")
+	fmt.Println(strings.Repeat("—", HL))
 }
 
-func PrintTailerL2() {
-	fmt.Println("----------------------------------------------------------------------------")
+func PrintHeaderL3(message string) {
+	fmt.Println("\n" + strings.Repeat("-", HL))
+	PrintTs(message)
+	fmt.Println(strings.Repeat("-", HL))
 }
 
-func PrintTailerL1(message string) {
-	fmt.Printf(message + "\n")
-	fmt.Printf("****************************************************************************\n")
+func PrintTailerL1() {
+	fmt.Println(strings.Repeat("═", HL) + "\n")
 }
