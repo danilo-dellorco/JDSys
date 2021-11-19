@@ -22,7 +22,7 @@ var BUCKET_NAME string = "sdcc-cloud-resources"
 var LB_DNS_NAME string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
 
 // TODO inserisci il registry
-var REGISTRY_IP string = "TODO"
+var REGISTRY_IP string = "10.0.0.64"
 
 // Time Settings
 // TODO impostare questi parametri a valori reali
