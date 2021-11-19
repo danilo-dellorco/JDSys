@@ -59,7 +59,7 @@ func (cli *MongoInstance) OpenConnection() {
 	}
 	cli.Database = client.Database(DB_NAME)
 	cli.Collection = cli.Database.Collection(COLL_NAME)
-	fmt.Println("Connected to MongoDB!")
+	utils.PrintTs("Connected to MongoDB!")
 }
 
 /*
@@ -274,7 +274,7 @@ func (cli *MongoInstance) ExportCollection(filename string) {
 	cmd := exec.Command(app, arg1, arg2, arg3, arg4, arg5)
 	_, err := cmd.Output()
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.PrintTs(err.Error())
 		return
 	}
 }
@@ -294,7 +294,7 @@ func (cli *MongoInstance) ExportDocument(key string, filename string) {
 	cmd := exec.Command(app, arg1, arg2, arg3, arg4, arg5, arg6)
 	_, err := cmd.Output()
 	if err != nil {
-		fmt.Println(err.Error())
+		utils.PrintTs(err.Error())
 		return
 	}
 }

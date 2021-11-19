@@ -16,66 +16,18 @@ import (
 )
 
 /*
-Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
-*/
-func lb_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "SDCC Distributed Key-Value Storage")
-}
-
-/*
-Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat del Load Balancer,
-ed i segnali di terminazione dal service registry.
-*/
-func StartHeartBeatListener() {
-	utils.PrintTs("Start Listening Heartbeats from LB on port: " + utils.HEARTBEAT_PORT)
-	http.HandleFunc("/", lb_handler)
-	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
-}
-
-/*
-Restituisce l'indirizzo IP in uscita preferito della macchina che hosta il nodo
-*/
-func GetOutboundIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP
-}
-
-/*
-Permette al nodo di inserirsi nell'anello chord contattando il server specificato
-*/
-func JoinDHT(registryAddr string) []string {
-	args := Args{}
-	var reply []string
-
-	client, _ := utils.HttpConnect(registryAddr, utils.REGISTRY_PORT)
-	err := client.Call("DHThandler.JoinRing", args, &reply)
-	if err != nil {
-		log.Fatal("RPC error: ", err)
-	}
-	return reply
-}
-
-/*
 Esegue tutte le attività per rendere il nodo UP & Running
 */
 func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
+
 	InitChordDHT(node)
 	InitRPCService(node)
+	InitListeningServices(node)
+	time.Sleep(1 * time.Millisecond)
 
-	go ListenUpdateMessages(node)
-
-	node.Handler = false
-	node.Round = 0
-	go ListenReconciliationMessages(node)
-
-	utils.PrintTailerL1("NODE SETUP COMPLETED")
+	utils.PrintTailerL1()
 }
 
 /*
@@ -164,10 +116,64 @@ func InitRPCService(node *Node) {
 		log.Fatal("listen error:", e)
 	}
 
-	utils.PrintTs("Start Serving RPC request on port: " + utils.RPC_PORT)
+	utils.PrintTs("Start Serving RPC request on port " + utils.RPC_PORT)
 	utils.PrintTs("RPC Service Correctly Started")
 	go http.Serve(l, nil)
 	utils.PrintTailerL2()
+}
+
+func InitListeningServices(node *Node) {
+	utils.PrintHeaderL2("Starting Listening Services")
+
+	go ListenUpdateMessages(node)
+	node.Handler = false
+	node.Round = 0
+	go ListenReconciliationMessages(node)
+}
+
+/*
+Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
+*/
+func lb_handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "SDCC Distributed Key-Value Storage")
+}
+
+/*
+Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat del Load Balancer,
+ed i segnali di terminazione dal service registry.
+*/
+func StartHeartBeatListener() {
+	utils.PrintTs("Start Listening Heartbeats from LB on port: " + utils.HEARTBEAT_PORT)
+	http.HandleFunc("/", lb_handler)
+	http.ListenAndServe(utils.HEARTBEAT_PORT, nil)
+}
+
+/*
+Restituisce l'indirizzo IP in uscita preferito della macchina che hosta il nodo
+*/
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP
+}
+
+/*
+Permette al nodo di inserirsi nell'anello chord contattando il server specificato
+*/
+func JoinDHT(registryAddr string) []string {
+	args := Args{}
+	var reply []string
+
+	client, _ := utils.HttpConnect(registryAddr, utils.REGISTRY_PORT)
+	err := client.Call("DHThandler.JoinRing", args, &reply)
+	if err != nil {
+		log.Fatal("RPC error: ", err)
+	}
+	return reply
 }
 
 /*
@@ -177,7 +183,7 @@ schedulati per la terminazione
 func ListenUpdateMessages(node *Node) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel, "update")
-	fmt.Println("Started Update Message listening Service...")
+	utils.PrintTs("Started Update Message listening Service")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
@@ -195,7 +201,7 @@ risolti i conflitti aggiornando il database
 func ListenReconciliationMessages(node *Node) {
 	fileChannel := make(chan string)
 	go communication.StartReceiver(fileChannel, "reconciliation")
-	fmt.Println("Started Reconciliation Message listening Service...")
+	utils.PrintTs("Started Reconciliation Message listening Service")
 	for {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
 		received := <-fileChannel
@@ -242,8 +248,16 @@ Esporta il file CSV e lo invia al nodo remoto. Con mode specifichiamo se il nodo
 entry ricevute o solo la riconciliazione
 */
 func SendReplicationMsg(node *Node, address string, mode string) {
+	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	file := utils.UPDATES_EXPORT_FILE
-	node.MongoClient.ExportCollection(file)
+
+	// TODO vedere bene ma penso è cosi perche se inviamo un singolo documento replica lo esportiamo
+	// gia dalla rpc quindi qui non devo esporta un'altra volta. Replichiamo per ora solo al put!!
+	if mode != "replication" {
+		node.MongoClient.ExportCollection(file)
+	}
 	communication.StartSender(file, address, mode)
 	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+	utils.PrintTs("Message sent correctly.")
+
 }
