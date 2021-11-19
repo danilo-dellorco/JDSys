@@ -22,7 +22,11 @@ type NodeInfo struct {
 }
 
 func (info *NodeInfo) GetIpAddr() string {
-	return info.ipaddr[:len(info.ipaddr)-5]
+	if info.ipaddr == "" {
+		return ""
+	} else {
+		return utils.RemovePort(info.ipaddr)
+	}
 }
 
 type request struct {
@@ -172,7 +176,7 @@ func (node *ChordNode) GetPedecessor() *NodeInfo {
 Restituisce l'indirizzo IP del nodo
 */
 func (node *ChordNode) GetIpAddress() string {
-	return node.ipaddr[:len(node.ipaddr)-5]
+	return utils.RemovePort(node.ipaddr)
 }
 
 //Lookup returns the address of the ChordNode that is responsible

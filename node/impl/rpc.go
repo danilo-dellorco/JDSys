@@ -191,8 +191,8 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 	}
 
 retry:
-	fmt.Println("succ: ", n.ChordClient.GetSuccessor().String())
-	if n.ChordClient.GetSuccessor().String() == "" {
+	fmt.Println("succ: ", n.ChordClient.GetSuccessor().GetIpAddr())
+	if n.ChordClient.GetSuccessor().GetIpAddr() == "" {
 		fmt.Println("Node hasn't a successor, wait for the reconstruction of the DHT for replicate data")
 		goto retry
 	}
