@@ -3,8 +3,6 @@ package utils
 import "time"
 
 // MongoDB Settings
-// TODO cambiare i path forse metterli assoluti perche tocca vede da do vengono invocati sti cosi
-// ALtra cosa: se poi compiliamo etc varranno ancora sti path relativi?
 var CSV string = ".csv"
 var CLOUD_EXPORT_PATH string = "../mongo/communication/cloud/export/"
 var CLOUD_RECEIVE_PATH string = "../mongo/communication/cloud/receive/"
@@ -31,7 +29,7 @@ var NODE_HEALTHY_TIME time.Duration = 30 * time.Second             // Tempo di a
 var NODE_SUCC_TIME time.Duration = 2 * time.Minute                 // Tempo di attesa di un nodo per essere sicuri che abbia il successore allo startup
 var SEND_UPDATES_TIME time.Duration = time.Minute                  // Ogni quanto effettuare l'invio del backup del DB al nodo successore
 var CHECK_TERMINATING_INTERVAL time.Duration = 30 * time.Second    // Ogni quanto effettuare il controllo sulle istanze in terminazione
-var START_CONSISTENCY_INTERVAL time.Duration = 30 * time.Second    // Ogni quanto avviare il processo di scambio di aggiornamenti tra i nodi per la consistenza finale
+var START_CONSISTENCY_INTERVAL time.Duration = time.Minute         // Ogni quanto avviare il processo di scambio di aggiornamenti tra i nodi per la consistenza finale
 var ACTIVITY_CACHE_FLUSH_INTERVAL time.Duration = 40 * time.Minute // Ogni quanto flushare la cache sulle istanze in terminazione
 var CHORD_FIX_INTERVAL time.Duration = 10 * time.Second            // Ogni quanto un nodo contatta i suoi vicini per aggiornare le Finger Table
 var RR1_TIMEOUT time.Duration = 100 * time.Millisecond             // Tempo dopo il quale si considera perso un messaggio client-server

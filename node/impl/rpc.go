@@ -54,7 +54,7 @@ func (n *Node) GetRPC(args *Args, reply *string) error {
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, _ := utils.HttpConnect(utils.RemovePort(addr), utils.RPC_PORT)
 	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
-	client.Call("RPCservice.GetImpl", args, &reply)
+	client.Call("Node.GetImpl", args, &reply)
 	return nil
 }
 
@@ -70,7 +70,7 @@ func (n *Node) PutRPC(args Args, reply *string) error {
 	addr, _ := chord.Lookup(utils.HashString(args.Key), me+utils.CHORD_PORT)
 	client, _ := utils.HttpConnect(utils.RemovePort(addr), utils.RPC_PORT)
 	fmt.Println("Request sent to:", utils.ParseAddrRPC(addr))
-	client.Call("RPCservice.PutImpl", args, &reply)
+	client.Call("Node.PutImpl", args, &reply)
 	return nil
 }
 
@@ -88,7 +88,7 @@ func (n *Node) AppendRPC(args Args, reply *string) error {
 	client, _ := utils.HttpConnect(utils.RemovePort(addr), utils.RPC_PORT)
 
 	fmt.Println("Request send to:", utils.ParseAddrRPC(addr))
-	client.Call("RPCservice.AppendImpl", args, &reply)
+	client.Call("Node.AppendImpl", args, &reply)
 	return nil
 }
 
@@ -108,7 +108,7 @@ func (n *Node) DeleteRPC(args Args, reply *string) error {
 
 	client, _ := utils.HttpConnect(utils.RemovePort(handlerNode), utils.RPC_PORT)
 	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(handlerNode))
-	client.Call("RPCservice.DeleteHandling", args, &reply)
+	client.Call("Node.DeleteHandling", args, &reply)
 	return nil
 }
 
@@ -250,7 +250,7 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 	next := n.ChordClient.GetSuccessor().GetIpAddr()
 	client, _ := utils.HttpConnect(next, utils.RPC_PORT)
 	fmt.Println("Delete request forwarded to replication node:", next+utils.RPC_PORT)
-	client.Call("RPCservice.DeleteReplicating", args, &reply)
+	client.Call("Node.DeleteReplicating", args, &reply)
 	return nil
 }
 
@@ -287,6 +287,6 @@ retry:
 	next := n.ChordClient.GetSuccessor().GetIpAddr()
 	client, _ := utils.HttpConnect(next, utils.RPC_PORT)
 	fmt.Println("Delete request forwarded to:", next+utils.RPC_PORT)
-	client.Call("RPCservice.DeleteReplicating", args, &reply)
+	client.Call("Node.DeleteReplicating", args, &reply)
 	return nil
 }
