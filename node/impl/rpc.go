@@ -190,6 +190,12 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 		ok = false
 	}
 
+retry:
+	if n.ChordClient.GetSuccessor().String() == "" {
+		fmt.Println("Node hasn't a successor, wait for the reconstruction of the DHT for replicate data")
+		goto retry
+	}
+
 	// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
 	if ok {
 		next := n.ChordClient.GetSuccessor().GetIpAddr()
