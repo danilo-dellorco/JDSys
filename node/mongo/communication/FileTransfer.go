@@ -53,7 +53,7 @@ func StartSender(filename string, address string, mode string) {
 	case "reconciliation":
 		addr = address + utils.FILETR_RECONCILIATION_PORT
 	}
-
+	fmt.Println("indirizzo dial Start Sender: ", addr)
 	connection, err := net.Dial("tcp", addr)
 	if err != nil {
 		panic(err)
