@@ -45,9 +45,12 @@ func (n *Node) GetRPC(args *Args, reply *string) error {
 	}
 
 	fmt.Println("Key not found.")
+	// senza successore non possiamo propagare la richiesta, il nodo potrebbe essere da solo e la chiave non c'è realmente,
+	// oppure il gestore della chiave è un altro, quindi il client è costretto a riprovare in attesa che si ricostruisca
+	// l'anello per recuperare effettivamente il valore associato alla chiave
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
-		*reply = "Node hasn't a successor, wait for the reconstruction of the DHT and retry"
+		*reply = "Key not found"
 		return nil
 	}
 
@@ -216,8 +219,12 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 	if err == nil {
 		*reply = "Value correctly appended"
 
-		// Se non ho avuto errori invo l'entry aggiunta al successore, che gestirà quindi una replica.
+		// Se non ho avuto errori, se è presente il successore inviamo l'entry per fargli gestire una replica.
 		succ := n.ChordClient.GetSuccessor().GetIpAddr()
+		if succ == "" {
+			fmt.Println("Node hasn't a successor, data will be replicated later")
+			return nil
+		}
 		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
 		SendReplicationMsg(n, succ, "replication")
 	} else {
