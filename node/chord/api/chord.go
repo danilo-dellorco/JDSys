@@ -163,7 +163,8 @@ Restituisce il successore del nodo
 */
 func (node *ChordNode) GetSuccessor() *NodeInfo {
 	if node.successor == nil {
-		return &NodeInfo{}
+		id := utils.HashString("")
+		return &NodeInfo{id, ""}
 	}
 	return node.successor
 }
