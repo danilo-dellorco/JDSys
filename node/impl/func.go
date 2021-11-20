@@ -234,10 +234,12 @@ func ListenReconciliationMessages(node *Node) {
 					node.Handler = false
 					node.Round = 0
 				} else {
+					node.MongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
 					SendReplicationMsg(node, addr, "reconciliation")
 				}
 				// Se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
 			} else {
+				node.MongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
 				SendReplicationMsg(node, addr, "reconciliation")
 			}
 		}
@@ -252,11 +254,6 @@ func SendReplicationMsg(node *Node, address string, mode string) {
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	file := utils.UPDATES_EXPORT_FILE
 
-	// TODO vedere bene ma penso è cosi perche se inviamo un singolo documento replica lo esportiamo
-	// gia dalla rpc quindi qui non devo esporta un'altra volta. Replichiamo per ora solo al put!!
-	if mode != "replication" {
-		node.MongoClient.ExportCollection(file)
-	}
 	communication.StartSender(file, address, mode)
 	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 	utils.PrintTs("Message sent correctly.")
@@ -273,6 +270,6 @@ retry:
 		goto retry
 	}
 	node.MongoClient.ExportDocument(key, utils.UPDATES_EXPORT_FILE)
-	SendReplicationMsg(node, succ, "replication")
+	SendReplicationMsg(node, succ, "update")
 	utils.PrintTs("Replica sent Correctly")
 }

@@ -51,8 +51,6 @@ func StartSender(filename string, address string, mode string) {
 		addr = address + utils.FILETR_TERMINATING_PORT
 	case "reconciliation":
 		addr = address + utils.FILETR_RECONCILIATION_PORT
-	case "replication":
-		addr = address + utils.FILETR_REPLICATION_PORT
 	}
 	connection, err := net.Dial("tcp", addr)
 	if err != nil {
