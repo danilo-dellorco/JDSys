@@ -17,7 +17,6 @@ type Node struct {
 	Round   int
 }
 
-// TODO testare filetransfer di riconciliazione e terminazione con le porte nuove eccetera
 /*
 Struttura che mantiene i parametri delle RPC
 */
