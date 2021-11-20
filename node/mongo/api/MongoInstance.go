@@ -366,7 +366,7 @@ effettuare una migrazione delle risorse verso il cloud S3
 */
 func (cli *MongoInstance) CheckRarelyAccessed() {
 	for {
-		time.Sleep(time.Hour)
+		time.Sleep(utils.RARELY_ACCESSED_TIME)
 		opts := options.Find().SetSort(bson.D{primitive.E{Key: ID, Value: 1}})
 		cursor, _ := cli.Collection.Find(context.TODO(), bson.D{}, opts)
 		var results []bson.M
