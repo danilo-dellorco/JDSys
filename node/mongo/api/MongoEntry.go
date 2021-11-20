@@ -20,7 +20,9 @@ type MongoEntry struct {
 /*
 Stampa l'entry ed il relativo timestamp
 */
-func (me *MongoEntry) print() {
+// TODO fare qualcosa per formattare l'entry
+func (me *MongoEntry) Format() string {
 	fmt.Print("{" + me.Key + ", " + me.Value + ", " + me.Timest.String() + "}")
 	fmt.Printf(" %t\n", me.Conflict)
+	return "TODO"
 }

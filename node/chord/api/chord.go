@@ -560,9 +560,8 @@ func (node *ChordNode) fix(which int) {
 Termina tutte le comunicazioni e rimuove il ChordNode dall'anello
 */
 func (node *ChordNode) Finalize() {
-	//send message to all children to terminate
-
-	fmt.Printf("Exiting...\n")
+	// Send message to all children to terminate
+	utils.PrintHeaderL2("Exiting from Chord Node")
 }
 
 /*

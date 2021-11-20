@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"progetto-sdcc/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -62,7 +63,6 @@ func (node *ChordNode) send(msg []byte, addr string) (reply []byte, err error) {
 
 	conn, ok := node.connections[addr]
 	if !ok {
-		//fmt.Printf("Connection from %s to %s didn't exist. Creating new...\n", node.ipaddr, addr)
 		laddr := new(net.TCPAddr)
 		laddr.IP = net.ParseIP(strings.Split(node.ipaddr, ":")[0])
 		laddr.Port = 0
@@ -84,14 +84,11 @@ func (node *ChordNode) send(msg []byte, addr string) (reply []byte, err error) {
 		checkError(err)
 		conn = *newconn
 		node.connections[addr] = conn
-		//fmt.Printf("node %s has %d connections.\n", node.ipaddr, len(node.connections))
 	}
 
 	_, err = conn.Write(msg)
 	conn.SetDeadline(time.Now().Add(3 * time.Minute))
 	if err != nil {
-		//might have timed out
-		//fmt.Printf("Connection from %s to %s is no good. Creating new...\n", node.ipaddr, addr)
 		laddr := new(net.TCPAddr)
 		laddr.IP = net.ParseIP(strings.Split(node.ipaddr, ":")[0])
 		laddr.Port = 0
@@ -131,11 +128,11 @@ func (node *ChordNode) send(msg []byte, addr string) (reply []byte, err error) {
 
 //Listens at an address for incoming messages
 func (node *ChordNode) listen(addr string) {
-	fmt.Printf("Chord node %x is listening on %s...\n", node.id, addr)
+	utils.PrintTs(fmt.Sprintf("Chord node %x is listening on %s", node.id, addr))
 	c := make(chan []byte)
 	c2 := make(chan []byte)
 	go func() {
-		defer fmt.Printf("No longer listening...\n")
+		defer utils.PrintTs("No longer listening")
 		for {
 			message := <-c
 			node.parseMessage(message, c2)
@@ -149,7 +146,7 @@ func (node *ChordNode) listen(addr string) {
 	listener, err := net.ListenTCP("tcp", laddr)
 	checkError(err)
 	go func() {
-		defer fmt.Printf("No longer listening...\n")
+		defer utils.PrintTs("No longer listening")
 		for {
 			if conn, err := listener.AcceptTCP(); err == nil {
 				err = conn.SetDeadline(time.Now().Add(3 * time.Minute))
@@ -174,14 +171,12 @@ func handleMessage(conn net.Conn, c chan []byte, c2 chan []byte) {
 		conn.SetDeadline(time.Now().Add(3 * time.Minute))
 		n, err := conn.Read(data)
 		if n >= 4095 {
-			fmt.Printf("Ran out of buffer room.\n")
+			utils.PrintTs("Ran out of buffer room.\n")
 		}
 		if err == io.EOF { //exit cleanly
 			return
 		}
 		if err != nil {
-			//fmt.Printf("Uh oh in handle message.\n")
-			//checkError(err)
 			return
 		}
 
@@ -193,12 +188,12 @@ func handleMessage(conn net.Conn, c chan []byte, c2 chan []byte) {
 		conn.SetDeadline(time.Now().Add(3 * time.Minute))
 		n, err = conn.Write(response)
 		if err != nil {
-			fmt.Printf("Uh oh (3).. ")
+			utils.PrintTs("Uh oh (3)")
 			checkError(err)
 			return
 		}
 		if n > 100000 {
-			fmt.Printf("Uh oh. Wrote %d bytes.\n", n)
+			utils.PrintTs(fmt.Sprintf("Uh oh. Wrote %d bytes.\n", n))
 		}
 	}
 }

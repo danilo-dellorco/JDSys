@@ -184,7 +184,7 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 	utils.PrintTs(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 
-	// inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
+	// Inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
 	if ok {
 		go SendReplicaToSuccessor(n, args.Key)
 	}
@@ -229,7 +229,6 @@ func (n *Node) DeleteReplicating(args *Args, reply *string) error {
 	if n.ChordClient.GetIpAddress() == args.Handler {
 		utils.PrintTs("Delete Request returned to the handling node")
 		if args.Deleted {
-			fmt.Println("Entry correctly removed from every node!")
 			*reply = "Entry succesfully deleted"
 		} else {
 			*reply = "Entry to delete not found"
@@ -238,20 +237,20 @@ func (n *Node) DeleteReplicating(args *Args, reply *string) error {
 		return nil
 	}
 	utils.PrintHeaderL2("Received Delete RPC for key " + args.Key)
-	// Cancella la richiesta sul db locale
+
+	// Cancella l'entry richiesta sul db locale
 	utils.PrintTs("Deleting replicated value on local storage")
 	n.MongoClient.DeleteEntry(args.Key)
 
 	// Propaga la Delete al nodo successivo, la cancellazione sul nodo che gestisce la chiave
 	// è già stata effettuata, per questo se i nodi successivi non hanno successore aspettiamo
 	// la ricostruzione della DHT Chord finchè non viene completata la Delete!
-
 	utils.PrintTs("Forwarding delete request")
 retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor, wait for the reconstruction...")
-		time.Sleep(2 * time.Second)
+		time.Sleep(10 * time.Second)
 		goto retry
 	}
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
@@ -260,20 +259,17 @@ retry:
 	return nil
 }
 
-// TODO continuare da qui Print Refactoring
 /*
 Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
 Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
 */
 func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
-	fmt.Println("\n\n========================================================")
-	fmt.Println("Final consistency requested by service registry...")
+	utils.PrintHeaderL2("Reconciliation requested by service registry")
 
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
-	fmt.Println(succ)
 	if succ == "" {
 		*reply = "Node hasn't a successor, abort and wait for the reconstruction of the DHT."
-		fmt.Println(*reply)
+		utils.PrintTs(*reply)
 		return nil
 	}
 
@@ -294,28 +290,17 @@ aggiornare altri dati obsoleti mantenuti dal successore.
 */
 
 func (n *Node) TerminateInstanceRPC(args *Args, reply *string) error {
-	fmt.Println("Instance Scheduled to Terminating...")
+	utils.PrintHeaderL2("Terminating Node")
+	utils.PrintTs("Instance Scheduled to Terminating")
 retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
-		fmt.Println("Node hasn't a successor, wait for the reconstruction of the DHT")
+		utils.PrintTs("Node hasn't a successor, wait for the reconstruction of the DHT")
 		time.Sleep(2 * time.Second)
 		goto retry
 	}
 	SendReplicationMsg(n, succ, "update")
-	*reply = "Instance Terminating"
+	*reply = "Instance can safely terminate"
+	utils.PrintTs(*reply)
 	return nil
-}
-
-func DeleteReplicas(node *Node, args *Args, reply *string) {
-	utils.PrintTs("Forwarding delete request")
-retry:
-	succ := node.ChordClient.GetSuccessor().GetIpAddr()
-	if succ == "" {
-		fmt.Println("Node hasn't a successor yet, replicas will be deleted later")
-		goto retry
-	}
-	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
-	utils.PrintTs("Delete request forwarded to replication node: " + succ + utils.RPC_PORT)
-	client.Call("Node.DeleteReplicating", args, &reply)
 }

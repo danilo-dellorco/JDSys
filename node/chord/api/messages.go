@@ -1,9 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"progetto-sdcc/node/chord/internal"
+	"progetto-sdcc/utils"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -271,7 +271,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 	err := proto.Unmarshal(data, msg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh in network parse message of node %s\n", node.ipaddr)
+		utils.PrintTs("Uh oh in network parse message of node " + node.ipaddr)
 		return
 	}
 
@@ -288,7 +288,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 	err = proto.Unmarshal(chorddata, chordmsg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh (1) in chord parse message of node %s\n", node.ipaddr)
+		utils.PrintTs("Uh oh (1) in chord parse message of node " + node.ipaddr)
 		return
 	}
 
@@ -311,11 +311,11 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		return
 	case cmd == internal.ChordMessage_Command_value["GetFingers"]:
 		table := make([]NodeInfo, 32*8+1)
-		//fmt.Printf("Fingers of node %s:\n", node.ipaddr)
+		//utils.PrintTs("Fingers of node %s:\n", node.ipaddr)
 		for i := range table {
 			node.request <- request{false, false, i}
 			f := <-node.finger
-			//fmt.Printf("\t%s\n", f.String())
+			//utils.PrintTs("\t%s\n", f.String())
 			table[i] = f
 		}
 
@@ -350,7 +350,7 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		return
 
 	}
-	fmt.Printf("No matching commands.\n")
+	utils.PrintTs("No matching commands.\n")
 }
 
 //parseFingers can be called to return a finger table from a received
@@ -367,7 +367,7 @@ func parseFingers(data []byte) (ft []NodeInfo, err error) {
 	err = proto.Unmarshal(chorddata, chordmsg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh (2) in chord parse message.\n")
+		utils.PrintTs("Uh oh (2) in chord parse message.\n")
 		return
 	}
 	if chordmsg == nil {
@@ -393,7 +393,7 @@ func parseFinger(data []byte) (f NodeInfo, err error) {
 	err = proto.Unmarshal(data, msg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh (3) in network parse message.\n")
+		utils.PrintTs("Uh oh (3) in network parse message.\n")
 		return
 	}
 
@@ -406,7 +406,7 @@ func parseFinger(data []byte) (f NodeInfo, err error) {
 	err = proto.Unmarshal(chorddata, chordmsg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh (3) in chord parse message.\n")
+		utils.PrintTs("Uh oh (3) in chord parse message.\n")
 		return
 	}
 
@@ -430,7 +430,7 @@ func parseId(data []byte) (id [32]byte, err error) {
 	err = proto.Unmarshal(chorddata, chordmsg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh (4) in chord parse message.\n")
+		utils.PrintTs("Uh oh (4) in chord parse message.\n")
 		return
 	}
 
@@ -454,7 +454,7 @@ func parsePong(data []byte) (success bool, err error) {
 	}
 
 	if msg.GetProto() != 1 {
-		fmt.Printf("Something went wrong!\n")
+		utils.PrintTs("Something went wrong!\n")
 		return
 	}
 
@@ -463,7 +463,7 @@ func parsePong(data []byte) (success bool, err error) {
 	err = proto.Unmarshal(chorddata, chordmsg)
 	checkError(err)
 	if err != nil {
-		fmt.Printf("Uh oh (5) in chord parse message.\n")
+		utils.PrintTs("Uh oh (5) in chord parse message.\n")
 		return
 	}
 

@@ -273,3 +273,19 @@ retry:
 	SendReplicationMsg(node, succ, "update")
 	utils.PrintTs("Replica sent Correctly")
 }
+
+/*
+Permette di propagare la richiesta di Delete a tutte le repliche
+*/
+func DeleteReplicas(node *Node, args *Args, reply *string) {
+	utils.PrintTs("Forwarding delete request")
+retry:
+	succ := node.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
+		fmt.Println("Node hasn't a successor yet, replicas will be deleted later")
+		goto retry
+	}
+	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
+	utils.PrintTs("Delete request forwarded to replication node: " + succ + utils.RPC_PORT)
+	client.Call("Node.DeleteReplicating", args, &reply)
+}

@@ -36,7 +36,6 @@ func StartReceiver(fileChannel chan string, mode string) {
 			utils.PrintTs("Error: " + err.Error())
 			os.Exit(1)
 		}
-		utils.PrintTs("Ready to receive the file")
 		receiveFile(connection, fileChannel)
 	}
 }
