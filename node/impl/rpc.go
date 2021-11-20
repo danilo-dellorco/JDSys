@@ -149,7 +149,7 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 	ok := true
 	if err == nil {
 		*reply = "Entry correctly inserted in the DB"
-	} else if err.Error() == "Update" {
+	} else if err.Error() == "Updated" {
 		*reply = "Entry correctly updated"
 	} else {
 		*reply = err.Error()
