@@ -266,7 +266,7 @@ retry:
 	succ := node.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor yet, data will be replicated later")
-		time.Sleep(5 * time.Second)
+		time.Sleep(15 * time.Second)
 		goto retry
 	}
 	node.MongoClient.ExportDocument(key, utils.UPDATES_EXPORT_FILE)
