@@ -16,8 +16,6 @@ const BUFFERSIZE = 1024
 Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi
 */
 func StartReceiver(fileChannel chan string, mode string) {
-	utils.PrintTs("A node wants to send his updates via TCP")
-
 	var port string
 	switch mode {
 	case "update":
@@ -69,6 +67,8 @@ Utility per ricevere un file tramite la connessione
 func receiveFile(connection net.Conn, fileChannel chan string) {
 	var receivedBytes int64
 	bufferFileSize := make([]byte, 10)
+
+	utils.PrintTs("A node wants to send his updates via TCP")
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)

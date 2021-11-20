@@ -291,12 +291,13 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	fmt.Println("\n\n========================================================")
 	fmt.Println("Final consistency requested by service registry...")
 
-	succ := n.ChordClient.GetSuccessor().GetIpAddr()
-	if succ == "" {
+	if n.ChordClient.GetSuccessor().GetIpAddr() == "" {
 		*reply = "Node hasn't a successor, abort and wait for the reconstruction of the DHT."
 		fmt.Println(*reply)
 		return nil
 	}
+
+	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 
 	// Imposto il nodo corrente come gestore dell'aggiornamento dell'anello, così da incrementare solo
 	// per lui il contatore che permette l'interruzione dopo 2 giri
