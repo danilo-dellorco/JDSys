@@ -160,6 +160,7 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 
 	// inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
 	if ok {
+		fmt.Println("diocane")
 		go SendReplicaToSuccessor(n, args.Key)
 	}
 	return nil
