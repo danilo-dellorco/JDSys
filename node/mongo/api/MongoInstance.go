@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"progetto-sdcc/node/mongo/communication"
 	"progetto-sdcc/registry/amazon"
 	"progetto-sdcc/utils"
 
@@ -306,7 +307,7 @@ func (cli *MongoInstance) uploadToS3(key string) {
 	filename := key + ".csv"
 	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+filename)
 	fmt.Println("Starting S3 Upload")
-	sess := amazon.CreateSession()
+	sess := communication.CreateSession()
 	uploader := s3manager.NewUploader(sess)
 
 	f, err := os.Open(utils.CLOUD_EXPORT_PATH + filename)
