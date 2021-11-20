@@ -157,7 +157,7 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 	}
 	utils.PrintTs(*reply)
 	utils.PrintTs("Finished. Replying to caller")
-
+	fmt.Println("che cazzo è:", ok)
 	// inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
 	if ok {
 		fmt.Println("diocane")
