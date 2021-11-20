@@ -72,7 +72,7 @@ func (cli *MongoInstance) CloseConnection() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connection to MongoDB closed.")
+	utils.PrintTs("Connection to MongoDB closed.")
 }
 
 /*
@@ -80,9 +80,9 @@ Ritorna una entry specificando la sua chiave
 */
 func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 	utils.PrintFormattedTimestamp()
-	fmt.Println("Get | Searching for:", key)
+	utils.PrintHeaderL3("Mongo Get, Searching for: " + key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
-		fmt.Printf("Entry %s presente nel cloud. Downloading...\n", key)
+		utils.PrintTs("Entry on Cloud System. Downloading...\n")
 		cli.downloadEntryFromS3(key)
 		cli.MergeCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
 		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
@@ -111,10 +111,11 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: LAST_ACC, Value: lastaccess}}}}
 	cli.Collection.UpdateOne(context.TODO(), entry, update)
 	utils.PrintFormattedTimestamp()
-	fmt.Println("Get: found", entry)
+	utils.PrintTs("Found: " + entry.Format())
 	return &entry
 }
 
+// TODO Danilo: continuare da qui per il Print Reafactoring
 /*
 Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per identificare le entry raramente utilizzate
 */
