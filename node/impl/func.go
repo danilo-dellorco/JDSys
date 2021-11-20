@@ -40,6 +40,9 @@ func InitHealthyNode(node *Node) {
 	// Inizia a ricevere gli HeartBeat dal LB
 	go StartHeartBeatListener()
 
+	// Inizia a inviare valori poco acceduti su S3
+	go node.MongoClient.CheckRarelyAccessed()
+
 	// Attende di diventare healthy per il Load Balancer
 	utils.PrintTs("Waiting for ELB Health Checking...")
 	time.Sleep(utils.NODE_HEALTHY_TIME)

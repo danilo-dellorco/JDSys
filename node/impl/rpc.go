@@ -40,19 +40,20 @@ func (n *Node) GetRPC(args *Args, reply *string) error {
 	if entry != nil {
 		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
 		return nil
+	} else {
+		utils.PrintTs("Key not found on local storage.")
 	}
 
-	utils.PrintTs("Key not found on local storage.")
 	// senza successore non possiamo propagare la richiesta, il nodo potrebbe essere da solo e la chiave non c'è realmente,
 	// oppure il gestore della chiave è un altro, quindi il client è costretto a riprovare in attesa che si ricostruisca
 	// l'anello per recuperare effettivamente il valore associato alla chiave
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
-	if succ == "" {
+	if succ == "" && entry == nil {
 		*reply = "Key not found."
 		return nil
 	}
 
-	utils.PrintTs("Forwarding Get Request on DHT")
+	utils.PrintTs("Forwarding Get Request on Handling Node")
 	addr, _ := chord.Lookup(utils.HashString(args.Key), succ+utils.CHORD_PORT)
 	client, _ := utils.HttpConnect(utils.RemovePort(addr), utils.RPC_PORT)
 	utils.PrintTs("Request sent to: " + utils.ParseAddrRPC(addr))
