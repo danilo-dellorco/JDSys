@@ -21,7 +21,7 @@ Esegue tutte le attività per rendere il nodo UP & Running
 func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
-	//InitChordDHT(node)
+	InitChordDHT(node)
 	InitRPCService(node)
 	InitListeningServices(node)
 	time.Sleep(1 * time.Millisecond)

@@ -162,10 +162,6 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 Restituisce il successore del nodo
 */
 func (node *ChordNode) GetSuccessor() *NodeInfo {
-	if node.successor == nil {
-		id := utils.HashString("")
-		return &NodeInfo{id, ""}
-	}
 	return node.successor
 }
 
