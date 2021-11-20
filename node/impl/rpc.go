@@ -149,7 +149,7 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 	ok := true
 	if err == nil {
 		*reply = "Entry correctly inserted in the DB"
-	} else if err.Error() == "Update" {
+	} else if err.Error() == "Updated" {
 		*reply = "Entry correctly updated"
 	} else {
 		*reply = err.Error()
@@ -157,19 +157,11 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 	}
 	utils.PrintTs(*reply)
 	utils.PrintTs("Finished. Replying to caller")
-
-	// TODO fare questo in una goroutine perchè intanto rispondo alla RPC poi replico..
-	// Se non ho avuto errori, se è presente il successore inviamo l'entry per fargli gestire una replica.
-	utils.PrintTs("Sending Replica to successor")
+	fmt.Println("che cazzo è:", ok)
+	// inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
 	if ok {
-		succ := n.ChordClient.GetSuccessor().GetIpAddr()
-		if succ == "" {
-			utils.PrintTs("Node hasn't a successor yet, data will be replicated later")
-			return nil
-		}
-		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
-		SendReplicationMsg(n, succ, "replication")
-		utils.PrintTs("Replica sent Correctly")
+		fmt.Println("diocane")
+		go SendReplicaToSuccessor(n, args.Key)
 	}
 	return nil
 }
@@ -183,26 +175,20 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 	arg1 := args.Key
 	arg2 := args.Value
 	err := n.MongoClient.AppendValue(arg1, arg2)
+	ok := true
 	if err == nil {
 		*reply = "Value correctly appended"
-		utils.PrintTs(*reply)
-		utils.PrintTs("Forwarding replica updates to successor")
-
-		// TODO forse in goroutine come Get Impl
-		// Se non ho avuto errori, se è presente il successore inviamo l'entry per fargli gestire una replica.
-		succ := n.ChordClient.GetSuccessor().GetIpAddr()
-		if succ == "" {
-			utils.PrintTs("Node hasn't a successor yet, data will be replicated later")
-			return nil
-		}
-		n.MongoClient.ExportDocument(args.Key, utils.UPDATES_EXPORT_FILE)
-		SendReplicationMsg(n, succ, "replication")
-		utils.PrintTs("Replica sent Correctly")
 	} else {
 		*reply = "Entry not found"
-		utils.PrintTs(*reply)
+		ok = false
 	}
+	utils.PrintTs(*reply)
 	utils.PrintTs("Finished. Replying to caller")
+
+	// inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
+	if ok {
+		go SendReplicaToSuccessor(n, args.Key)
+	}
 	return nil
 }
 
@@ -222,6 +208,7 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 		// Entry non è presente nel DB del nodo gestore, quindi non esiste
 		if err.Error() == "Entry Not Found" {
 			*reply = "The key searched for delete not exist"
+			utils.PrintTs(*reply)
 			return nil
 		}
 	}
@@ -229,16 +216,7 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 
 	// Se l'entry esiste ed è stata cancellata, procediamo inoltrando la richiesta al nodo successore
 	// così da eliminare tutte le repliche nell'anello
-	// Se non è presente, il nodo potrebbe essere da solo, o un eventuale successore ancora non identificato
-	// verrà poi aggiornato successivamente tramite la riconciliazione
-	succ := n.ChordClient.GetSuccessor().GetIpAddr()
-	if succ == "" {
-		fmt.Println(reply)
-		return nil
-	}
-	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
-	utils.PrintTs("Delete request forwarded to replication node: " + succ + utils.RPC_PORT)
-	client.Call("Node.DeleteReplicating", args, &reply)
+	go DeleteReplicas(n, args, reply)
 	return nil
 }
 
@@ -328,4 +306,17 @@ retry:
 	SendReplicationMsg(n, succ, "update")
 	*reply = "Instance Terminating"
 	return nil
+}
+
+func DeleteReplicas(node *Node, args *Args, reply *string) {
+	utils.PrintTs("Forwarding delete request")
+retry:
+	succ := node.ChordClient.GetSuccessor().GetIpAddr()
+	if succ == "" {
+		fmt.Println("Node hasn't a successor yet, replicas will be deleted later")
+		goto retry
+	}
+	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
+	utils.PrintTs("Delete request forwarded to replication node: " + succ + utils.RPC_PORT)
+	client.Call("Node.DeleteReplicating", args, &reply)
 }
