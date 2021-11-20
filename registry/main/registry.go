@@ -130,10 +130,10 @@ Avvia periodicamento il processo iterativo di scambio di aggiornamenti tra un no
 Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
 */
 func startPeriodicUpdates() {
-	time.Sleep(time.Minute)
 	fmt.Println("Starting periodic updates for reconciliation Routine....")
 retry:
 	for {
+		time.Sleep(utils.START_CONSISTENCY_INTERVAL)
 		nodes := checkActiveNodes()
 		if len(nodes) == 0 || len(nodes) == 1 {
 			fmt.Println("Wait the correct construction of the DHT to start the updates routine of the ring")
@@ -146,7 +146,6 @@ retry:
 			list[i] = nodes[i].PrivateIP
 		}
 		startFinalConsistencyRPC(list[rand.Intn(len(list))])
-		time.Sleep(utils.START_CONSISTENCY_INTERVAL)
 	}
 }
 
