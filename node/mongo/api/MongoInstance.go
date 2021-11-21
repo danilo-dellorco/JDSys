@@ -31,8 +31,6 @@ var VALUE string = "value"
 var TIME string = "timest"
 var LAST_ACC string = "lastAcc"
 
-var DeletedKeys []string
-
 /*
 Struttura che mantiene una connessione verso una specifica collezione MongoDB
 */
@@ -79,7 +77,6 @@ func (cli *MongoInstance) CloseConnection() {
 Ritorna una entry specificando la sua chiave
 */
 func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
-	utils.PrintFormattedTimestamp()
 	utils.PrintHeaderL3("Mongo Get, Searching for: " + key)
 	if utils.StringInSlice(key, cli.CloudKeys) {
 		utils.PrintTs("Entry on Cloud System. Downloading...\n")
@@ -115,7 +112,6 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 	return &entry
 }
 
-// TODO Danilo: continuare da qui per il Print Reafactoring
 /*
 Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per identificare le entry raramente utilizzate
 */
@@ -124,7 +120,7 @@ func (cli *MongoInstance) ReadEntry(key string) *MongoEntry {
 	var result bson.M
 	err := coll.FindOne(context.TODO(), bson.D{primitive.E{Key: ID, Value: key}}).Decode(&result)
 	if err != nil {
-		fmt.Println("Read Error:", err)
+		utils.PrintTs("Read Error: " + err.Error())
 		return nil
 	}
 	entry := MongoEntry{}
@@ -137,7 +133,7 @@ func (cli *MongoInstance) ReadEntry(key string) *MongoEntry {
 	entry.Value = value
 	entry.Timest = timest.Time()
 	entry.LastAcc = lastAcc.Time()
-	fmt.Println("Read:", entry)
+	utils.PrintTs("Read:" + entry.Format())
 	return &entry
 }
 
@@ -146,8 +142,8 @@ Inserisce un'entry, specificando la chiave ed il suo valore.
 Al momento del get viene calcolato il timestamp
 */
 func (cli *MongoInstance) PutEntry(key string, value string) error {
-	utils.PrintFormattedTimestamp()
-	fmt.Printf("PUT | Inserting {%s,%s}\n", key, value)
+	entry := fmt.Sprintf("{ %s , %s }", key, value)
+	utils.PrintHeaderL3("Mongo Put, inserting " + entry)
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 	strVal := utils.FormatValue(value)
@@ -156,8 +152,8 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 	_, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
 		if strings.Contains(err.Error(), "E11000") {
-			fmt.Printf("Put: Entry %s già presente nello storage\n", key)
-			fmt.Println("Updating Entry Value...")
+			utils.PrintTs("An entry for key " + key + " is already present on local storage")
+			fmt.Println("Updating Entry Value")
 			old := bson.D{primitive.E{Key: ID, Value: key}}
 			timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 			update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: VALUE, Value: strVal},
@@ -168,30 +164,28 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 				return err
 			}
 			utils.PrintFormattedTimestamp()
-			fmt.Println("Update:", key+", changed value into", value)
+			utils.PrintTs("Update: Entry for key " + key + ", updated into " + entry)
 			return errors.New("Updated")
 
 		} else {
-			fmt.Println("Put Error:", err)
+			utils.PrintTs("Put Error: " + err.Error())
 		}
 		return err
 	}
-	utils.PrintFormattedTimestamp()
-	fmt.Println("Put: Entry {"+key, value+"} inserita correttamente nel database")
+	fmt.Println("Entry " + entry + " succesfully inserted into local storage")
 	return nil
 }
 
 /*
-Aggiorna un'entry del database, specificando la chiave ed il nuovo valore assegnato.
+Aggiorna un'entry del database, specificando la chiave ed il nuovo valore da aggiungere.
 Viene inoltre aggiornato il timestamp di quell'entry
 */
 func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
-	utils.PrintFormattedTimestamp()
-	fmt.Printf("Append | Appending %s to %s\n", arg1, key)
+	utils.PrintHeaderL3("Mongo Append, adding argument " + arg1 + " to key " + key)
 	old := bson.D{primitive.E{Key: ID, Value: key}}
 	oldEntry := cli.GetEntry(key)
 	if oldEntry == nil {
-		fmt.Println("Append Error: No entry found with key", key)
+		utils.PrintTs("Append Error: No entry found with key " + key)
 		return errors.New("NoKeyFound")
 	}
 	append := utils.AppendValue(oldEntry.Value, arg1)
@@ -203,7 +197,7 @@ func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 		fmt.Println(err)
 		return err
 	}
-	fmt.Println("Append: inserted", arg1, "to key", key)
+	utils.PrintTs("Append: inserted " + arg1 + " to key " + key)
 	return nil
 }
 
@@ -211,35 +205,34 @@ func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 Cancella un'entry dal database, specificandone la chiave
 */
 func (cli *MongoInstance) DeleteEntry(key string) error {
-	utils.PrintFormattedTimestamp()
-	fmt.Printf("Delete | Deleting %s\n", key)
+	utils.PrintHeaderL3("Mongo Delete, removing entry with key " + key)
 	coll := cli.Collection
 	entry := bson.D{primitive.E{Key: ID, Value: key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
 	if err != nil {
-		fmt.Println("Delete Error:", err)
+		utils.PrintTs("Delete Error: " + err.Error())
 		return err
 	}
 
 	if result.DeletedCount == 1 {
-		fmt.Println("Delete: Cancellata", key)
-		DeletedKeys = append(DeletedKeys, key)
+		fmt.Println("Deleted", key)
 		return nil
 	}
-	fmt.Println("Delete: non è stata trovata nessuna entry con chiave", key)
-	return errors.New("Entry Not Found")
+	utils.PrintTs("Delete Error: No entry found with key " + key)
+	return errors.New("EntryNotFound")
 }
 
 /*
 Cancella un database e tutte le sue collezioni
 */
 func (cli *MongoInstance) DropDatabase() {
+	utils.PrintHeaderL3("Mongo Drop Database")
 	err := cli.Database.Drop(context.TODO())
 	if err != nil {
 		fmt.Print(err)
 		return
 	}
-	fmt.Println("Drop: Database", cli.Database.Name(), "dropped successfully")
+	utils.PrintTs("Local storage dropped succesfully")
 }
 
 /*
@@ -257,7 +250,7 @@ func (cli *MongoInstance) PutMongoEntry(entry MongoEntry) {
 		primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: lastaccess}}
 	_, err := coll.InsertOne(context.TODO(), doc)
 	if err != nil {
-		fmt.Println("PutMongoEntry Error:", err)
+		utils.PrintTs("PutMongoEntry Error: " + err.Error())
 		return
 	}
 }
@@ -305,21 +298,22 @@ func (cli *MongoInstance) ExportDocument(key string, filename string) {
 Carica una chiave sul bucket s3, rimuovendola dal database locale
 */
 func (cli *MongoInstance) uploadToS3(key string) {
+	utils.PrintHeaderL3("Uploading Entry to S3")
+
 	filename := key + ".csv"
+	utils.PrintTs("Exporting csv " + filename)
 	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+filename)
-	fmt.Println("Starting S3 Upload")
 	sess := communication.CreateSession()
 	uploader := s3manager.NewUploader(sess)
 
 	f, err := os.Open(utils.CLOUD_EXPORT_PATH + filename)
 	if err != nil {
-		fmt.Printf("Open Error: ")
-		fmt.Println(err)
+		utils.PrintTs("Open Error: " + err.Error())
 		return
 	}
 
 	// Carica il file su S3
-	result, err := uploader.Upload(&s3manager.UploadInput{
+	_, err = uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(utils.BUCKET_NAME),
 		Key:    aws.String(filename),
 		Body:   f,
@@ -328,17 +322,21 @@ func (cli *MongoInstance) uploadToS3(key string) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("file uploaded to, %s\n", result.Location)
+	utils.PrintTs("Entry succesfully uploaded to cloud storage")
 
 	// Caricato il file da s3 lo rimuovo in locale, e salvo il fatto che è presente sul cloud
+	utils.PrintTs("Removing entry from local storage")
 	cli.CloudKeys = append(cli.CloudKeys, key)
 	cli.DeleteEntry(key)
+	utils.PrintTs("Migration to S3 completed")
+
 }
 
 /*
 Ottiene la chiave specificata dal bucket S3, salvandola in un file locale
 */
 func (cli *MongoInstance) downloadEntryFromS3(key string) {
+	utils.PrintHeaderL3("Downlaoding Entry from S3")
 	sess := amazon.CreateSession()
 	filename := key + utils.CSV
 	downloader := s3manager.NewDownloader(sess)
@@ -346,20 +344,20 @@ func (cli *MongoInstance) downloadEntryFromS3(key string) {
 	// Crea il file in cui verrà scritto l'oggetto scaricato da S3
 	f, err := os.Create(utils.CLOUD_RECEIVE_PATH + filename)
 	if err != nil {
-		fmt.Printf("failed to create file %q, %v", filename, err)
+		utils.PrintTs(fmt.Sprintf("failed to create file %q, %v", filename, err))
 		return
 	}
 
 	// Scrive il contenuto dell'oggetto S3 sul file
-	n, err := downloader.Download(f, &s3.GetObjectInput{
+	_, err = downloader.Download(f, &s3.GetObjectInput{
 		Bucket: aws.String(utils.BUCKET_NAME),
 		Key:    aws.String(filename),
 	})
 	if err != nil {
-		fmt.Printf("failed to download file, %v", err)
+		utils.PrintTs(fmt.Sprintf("failed to download file, %v", err))
 		return
 	}
-	fmt.Printf("file downloaded, %d bytes\n", n)
+	fmt.Printf("Entry succesfully retrieved form cloud storage")
 }
 
 /*
@@ -376,24 +374,24 @@ func (cli *MongoInstance) CheckRarelyAccessed() {
 		if err := cursor.All(context.TODO(), &results); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("\n===== Check Rarely Accessed Files =====")
+		utils.PrintHeaderL2("Check Rarely Acccessed Entries")
 		for _, result := range results {
 			key := result[ID].(string)
 			entry := cli.ReadEntry(key)
 			if entry != nil {
 				timeNow, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 				diff := timeNow.Sub(entry.LastAcc)
-				fmt.Println("Key", key, "non-accessed since:", diff)
+				utils.PrintTs("Key " + key + " non-accessed since " + diff.String())
 				if diff >= utils.RARELY_ACCESSED_TIME {
-					fmt.Println("Elemento Non acceduto da tanto, Migrazione su cloud...")
+					utils.PrintTs("Entry not accessed for a long time. Migrating on Cloud")
 					cli.uploadToS3(entry.Key)
 				}
 			}
 		}
-		fmt.Print("=======================\n\n")
 	}
 }
 
+// TODO continuare da qui print refactoring
 /*
 Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
 Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.

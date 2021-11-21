@@ -205,8 +205,8 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 		*reply = "Entry successfully deleted"
 	} else {
 		// Entry non è presente nel DB del nodo gestore, quindi non esiste
-		if err.Error() == "Entry Not Found" {
-			*reply = "The key searched for delete not exist"
+		if err.Error() == "EntryNotFound" {
+			*reply = "the key searched for the deletion does not exist"
 			utils.PrintTs(*reply)
 			return nil
 		}

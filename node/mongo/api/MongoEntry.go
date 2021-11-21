@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"fmt"
+	"progetto-sdcc/utils"
 	"time"
 )
 
@@ -20,9 +21,15 @@ type MongoEntry struct {
 /*
 Stampa l'entry ed il relativo timestamp
 */
-// TODO fare qualcosa per formattare l'entry
 func (me *MongoEntry) Format() string {
-	fmt.Print("{" + me.Key + ", " + me.Value + ", " + me.Timest.String() + "}")
-	fmt.Printf(" %t\n", me.Conflict)
-	return "TODO"
+	return fmt.Sprintf("{ %s , %s , %s }", me.Key, me.Value, me.Timest.String())
+}
+
+/*
+Formatta l'entry per essere visualizzata chiaramente dal client.
+*/
+func (me *MongoEntry) FormatClient() string {
+	key := "Key   | " + me.Key
+	value := "Value | " + utils.RemoveBrackets(me.Value)
+	return utils.StringInBoxL2(key, value)
 }

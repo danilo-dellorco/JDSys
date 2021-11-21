@@ -86,6 +86,16 @@ func FormatValue(str string) string {
 	return "[" + str + "]"
 }
 
+func RemoveBrackets(str string) string {
+	if strings.Contains(str, "[") && strings.Contains(str, "]") {
+		return str[1 : len(str)-1]
+	}
+	return str
+}
+
+/*
+Appende un valore ad una stringa, mantenendo la lista contenuta tra due parentesi quadre
+*/
 func AppendValue(str string, arg1 string) string {
 	temp := GetStringInBetween(str, "[", "]")
 	append := temp + "," + arg1
