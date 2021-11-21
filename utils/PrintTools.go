@@ -71,3 +71,32 @@ Stampa una stringa per chiudere l'Header di Livello 1
 func PrintTailerL1() {
 	fmt.Println(strings.Repeat("═", HL) + "\n")
 }
+
+func StringInBox(message string) string {
+	top := "+" + strings.Repeat("—", len(message)+2) + "+\n"
+	middle := "| " + message + " |\n"
+	bottom := top
+
+	return top + middle + bottom
+}
+
+func StringInBoxL2(msg1 string, msg2 string) string {
+	var lenght int
+	var diff1 int
+	var diff2 int
+	if len(msg1) >= len(msg2) {
+		lenght = len(msg1)
+		diff1 = 0
+		diff2 = lenght - len(msg2)
+	} else {
+		lenght = len(msg2)
+		diff2 = 0
+		diff1 = lenght - len(msg1)
+	}
+	top := "+" + strings.Repeat("—", lenght+2) + "+\n"
+	middle1 := "| " + msg1 + strings.Repeat(" ", diff1) + " |\n"
+	middle2 := "| " + msg2 + strings.Repeat(" ", diff2) + " |\n"
+	bottom := top
+
+	return top + middle1 + middle2 + bottom
+}
