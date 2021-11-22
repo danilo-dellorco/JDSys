@@ -330,6 +330,8 @@ func Join(myaddr string, addr string) (*ChordNode, error) {
 Gestisce le operazioni di lettura e scrittura sulla struttura dati del nodo
 */
 func (node *ChordNode) data() {
+	var i int
+	exist := false
 	for {
 		req := <-node.request
 		if req.write {
@@ -343,7 +345,17 @@ func (node *ChordNode) data() {
 					node.fingerTable[1] = *node.successor
 					node.successorList[0] = *node.successor
 				} else {
-					node.fingerTable[req.index] = <-node.finger
+					prova := <-node.finger
+					for i = 0; i < len(node.fingerTable); i++ {
+						if prova == node.fingerTable[i] {
+							exist = true
+						} else {
+							continue
+						}
+					}
+					if !exist {
+						node.fingerTable[req.index] = prova
+					}
 				}
 			}
 		} else { //req.read
