@@ -8,6 +8,8 @@ package main
 // TODO testare migrazione e GET da S3
 // TODO vedere se si puo dispatchare un nuovo thread ad ogni connessione tcp di file transfer perche cosi non abbiamo concorrenza.
 // o comunque vedere se resta in coda e non muore
+
+// TODO print refactoring vedere perche non stampa l'entry formattata al GET
 import (
 	"fmt"
 	"io"
