@@ -346,17 +346,17 @@ func (node *ChordNode) data() {
 					node.successorList[0] = *node.successor
 				} else {
 					prova := <-node.finger
-					fmt.Println("vicino:", prova)
+					//fmt.Println("vicino:", prova)
 					for i = 0; i < len(node.fingerTable); i++ {
 						if prova == node.fingerTable[i] {
-							fmt.Println("già presente in FT")
+							//fmt.Println("già presente in FT")
 							exist = true
 						} else {
 							continue
 						}
 					}
 					if !exist {
-						fmt.Println("non ce l'avevo, lo metto in FT")
+						//fmt.Println("non ce l'avevo, lo metto in FT")
 						node.fingerTable[req.index] = prova
 					}
 				}
