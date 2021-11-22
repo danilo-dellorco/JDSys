@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	mongo "progetto-sdcc/node/mongo/api"
+	"progetto-sdcc/test/impl"
 	"progetto-sdcc/utils"
 	"strconv"
 	"time"
@@ -15,7 +16,7 @@ var PERC_40 float32 = 0.40
 var PERC_20 float32 = 0.20
 
 func main() {
-	if len(os.Args) != 2 {
+	if len(os.Args) != 3 {
 		fmt.Println("You need to specify the workload type to test.")
 		fmt.Println("Usage: go run test.go WORKLOAD SIZE")
 		return
@@ -28,6 +29,7 @@ func main() {
 	case "workload1":
 		workload1(test_size)
 		time.Sleep(utils.TEST_STEADY_TIME)
+		utils.PrintHeaderL3("System it's at steady-state")
 		measureResponseTime()
 	case "workload2":
 		workload2(test_size)
@@ -55,11 +57,12 @@ func localGetTest(mongo mongo.MongoInstance) {
 Effettua una richiesta di Put, una di Update, una di Get, una di Append e una di Delete, misurando poi il tempo medio di risposta
 */
 func measureResponseTime() {
-	rt1 := TestPut("rt_key", "rt_value")
-	rt2 := TestPut("rt_key", "rt_value_upd")
-	rt3 := TestGet("rt_key")
-	rt4 := TestAppend("rt_key", "rt_value_app")
-	rt5 := TestDelete("rt_key")
+	utils.PrintHeaderL2("Starting Measuring Response Time")
+	rt1 := impl.TestPut("rt_key", "rt_value", true)
+	rt2 := impl.TestPut("rt_key", "rt_value_upd", true)
+	rt3 := impl.TestGet("rt_key", true)
+	rt4 := impl.TestAppend("rt_key", "rt_value_app", true)
+	rt5 := impl.TestDelete("rt_key", true)
 
 	total := rt1 + rt2 + rt3 + rt4 + rt5
 	meanRt := total / 5
@@ -75,8 +78,11 @@ E' possibile specificare tramite il parametro size il numero totali di query da 
 func workload1(size float32) {
 	numGet := int(PERC_75 * size)
 	numPut := int(PERC_15 * size)
-	go runGetQueries(numGet)
+	utils.PrintHeaderL2("Start Spawning Threads for Workload 1")
+	utils.PrintStringInBoxL2("# Get | "+strconv.Itoa(numGet), "# Put | "+strconv.Itoa(numPut))
+	utils.PrintLineL2()
 	go runPutQueries(numPut)
+	go runGetQueries(numGet)
 }
 
 /*
@@ -91,6 +97,10 @@ func workload2(size float32) {
 	numPut := int(PERC_40 * size)
 	numApp := int(PERC_20 * size)
 
+	utils.PrintHeaderL2("Start Spawning Threads for Workload 2")
+	utils.PrintStringInBoxL2("# Get | "+strconv.Itoa(numGet), "# Put | "+strconv.Itoa(numPut))
+	utils.PrintLineL2()
+
 	go runGetQueries(numGet)
 	go runPutQueries(numPut)
 	go runAppendQueries(numApp)
@@ -99,7 +109,7 @@ func workload2(size float32) {
 func runGetQueries(num int) {
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
-		go TestGet(key)
+		go impl.TestGet(key, false)
 	}
 }
 
@@ -107,7 +117,7 @@ func runPutQueries(num int) {
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
 		value := "test_value_" + strconv.Itoa(i)
-		go TestPut(key, value)
+		go impl.TestPut(key, value, false)
 	}
 }
 
@@ -115,6 +125,6 @@ func runAppendQueries(num int) {
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
 		arg := "_test_arg_" + strconv.Itoa(i)
-		go TestAppend(key, arg)
+		go impl.TestAppend(key, arg, false)
 	}
 }

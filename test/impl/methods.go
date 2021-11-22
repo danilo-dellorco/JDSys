@@ -1,4 +1,4 @@
-package main
+package impl
 
 import (
 	"progetto-sdcc/client/impl"
@@ -24,10 +24,10 @@ type Args2 struct {
 /*
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
-func TestGet(key string) time.Duration {
+func TestGet(key string, print bool) time.Duration {
 	start := utils.GetTimestamp()
 
-	impl.GetRPC(key)
+	impl.GetRPC(key, print)
 
 	end := utils.GetTimestamp()
 
@@ -37,10 +37,10 @@ func TestGet(key string) time.Duration {
 /*
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
-func TestPut(key string, value string) time.Duration {
+func TestPut(key string, value string, print bool) time.Duration {
 	start := utils.GetTimestamp()
 
-	impl.PutRPC(key, value)
+	impl.PutRPC(key, value, print)
 
 	end := utils.GetTimestamp()
 
@@ -50,10 +50,10 @@ func TestPut(key string, value string) time.Duration {
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
-func TestAppend(key string, value string) time.Duration {
+func TestAppend(key string, value string, print bool) time.Duration {
 	start := utils.GetTimestamp()
 
-	impl.AppendRPC(key, value)
+	impl.AppendRPC(key, value, print)
 
 	end := utils.GetTimestamp()
 
@@ -63,10 +63,10 @@ func TestAppend(key string, value string) time.Duration {
 /*
 Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
-func TestDelete(key string) time.Duration {
+func TestDelete(key string, print bool) time.Duration {
 	start := utils.GetTimestamp()
 
-	impl.DeleteRPC(key)
+	impl.DeleteRPC(key, print)
 
 	end := utils.GetTimestamp()
 

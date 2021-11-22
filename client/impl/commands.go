@@ -3,23 +3,10 @@ package impl
 import (
 	"bufio"
 	"fmt"
-	"net/rpc"
 	"os"
 	"progetto-sdcc/utils"
 	"strings"
 )
-
-/*
-Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
-*/
-func HttpConnect() (*rpc.Client, error) {
-	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
-	if err != nil {
-		utils.PrintTs("HTTP Connect error " + err.Error())
-		os.Exit(1)
-	}
-	return client, err
-}
 
 /*
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
@@ -31,7 +18,7 @@ func Get() {
 	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the desired entry")
 	utils.PrintLineL1()
-	GetRPC(key)
+	GetRPC(key, true)
 	EnterToContinue()
 }
 
@@ -46,7 +33,7 @@ func Put() {
 	key := SecScanln("> Insert the Entry Key")
 	value := SecScanln("> Insert the Entry Value")
 	utils.PrintLineL1()
-	PutRPC(key, value)
+	PutRPC(key, value, true)
 	EnterToContinue()
 }
 
@@ -61,7 +48,7 @@ func Append() {
 	key := SecScanln("> Insert the Key of the Entry to Update")
 	newValue := SecScanln("> Insert the Value to Append")
 	utils.PrintLineL1()
-	AppendRPC(key, newValue)
+	AppendRPC(key, newValue, true)
 	EnterToContinue()
 }
 
@@ -75,7 +62,7 @@ func Delete() {
 	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the Entry to Delete")
 	utils.PrintLineL1()
-	DeleteRPC(key)
+	DeleteRPC(key, true)
 	EnterToContinue()
 }
 
