@@ -118,9 +118,9 @@ Il processo permette di raggiungere la consistenza finale se non si verificano a
 // TODO calcolare bene il valore della finestra temporale per la relazione
 func startPeriodicUpdates() {
 	utils.PrintHeaderL2("Starting periodic updates for reconciliation Routine")
-retry:
 	for {
 		time.Sleep(utils.START_CONSISTENCY_INTERVAL)
+	retry:
 		nodes := checkActiveNodes()
 		if len(nodes) == 0 || len(nodes) == 1 {
 			utils.PrintTs("Wait the correct construction of the DHT to start the updates routine of the ring")
