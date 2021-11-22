@@ -20,8 +20,10 @@ func StartReceiver(fileChannel chan string, mode string) {
 	switch mode {
 	case "update":
 		port = utils.FILETR_TERMINATING_PORT
+		utils.PrintHeaderL3("A node wants to send his updates via TCP")
 	case "reconciliation":
 		port = utils.FILETR_RECONCILIATION_PORT
+		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 	}
 
 	server, err := net.Listen("tcp", port)
@@ -66,8 +68,6 @@ Utility per ricevere un file tramite la connessione
 func receiveFile(connection net.Conn, fileChannel chan string) {
 	var receivedBytes int64
 	bufferFileSize := make([]byte, 10)
-
-	utils.PrintTs("A node wants to send his updates via TCP")
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
