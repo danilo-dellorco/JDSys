@@ -3,9 +3,6 @@ package main
 // TODO fare i testing per i due carichi di lavoro visti
 // TODO verificare il comportamento con la concorrenza. RPC dovrebbe gestirla già da sola, Bisonga vedere Mongo in locale
 // come si comporta rispetto ad esempio a due PUT sullo stesso dato.
-// TODO migliorare leggibilità del codice
-// TODO fare RPC DropDatabase su tutti i nodi per poter fare sempre un test pulito
-// TODO testare migrazione e GET da S3
 // TODO vedere se si puo dispatchare un nuovo thread ad ogni connessione tcp di file transfer perche cosi non abbiamo concorrenza.
 // o comunque vedere se resta in coda e non muore
 

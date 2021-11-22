@@ -39,6 +39,9 @@ func (n *Node) GetRPC(args *Args, reply *string) error {
 	entry := n.MongoClient.GetEntry(args.Key)
 	if entry != nil {
 		*reply = entry.FormatClient()
+		utils.PrintTs("Generating RPC Reply:")
+		fmt.Println(*reply)
+		utils.PrintTs("Finished. Replying to caller")
 		return nil
 	} else {
 		utils.PrintTs("Key not found on local storage.")
@@ -132,7 +135,7 @@ func (n *Node) GetImpl(args Args, reply *string) error {
 		*reply = entry.FormatClient()
 	}
 	utils.PrintTs("Generating RPC Reply:")
-	fmt.Print(*reply)
+	fmt.Println(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 	return nil
 }
@@ -156,7 +159,7 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 		ok = false
 	}
 	utils.PrintTs("Generating RPC Reply:")
-	fmt.Print(*reply)
+	fmt.Println(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 
 	// Inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
@@ -183,7 +186,7 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 		ok = false
 	}
 	utils.PrintTs("Generating RPC Reply:")
-	fmt.Print(*reply)
+	fmt.Println(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 
 	// Inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
@@ -252,7 +255,7 @@ retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor, wait for the reconstruction...")
-		time.Sleep(10 * time.Second)
+		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
@@ -299,7 +302,7 @@ retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor, wait for the reconstruction of the DHT")
-		time.Sleep(2 * time.Second)
+		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
 
