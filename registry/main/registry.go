@@ -115,7 +115,7 @@ func sendTerminatingSignalRPC(ip string) {
 Avvia periodicamente il processo iterativo di scambio di aggiornamenti tra un nodo e il suo successore per la riconciliazione.
 Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
 */
-// TODO calcolare bene il valore della finestra temporale
+// TODO calcolare bene il valore della finestra temporale per la relazione
 func startPeriodicUpdates() {
 	utils.PrintHeaderL2("Starting periodic updates for reconciliation Routine")
 	for {

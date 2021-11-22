@@ -203,7 +203,6 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 Ottiene gli ID di tutte le istanze che sono nello stato di terminazione
 */
 func GetTerminatingInstances() []Instance {
-	utils.PrintTs("Retrieving terminating instances")
 
 	activityList := getScalingActivities()
 

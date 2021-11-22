@@ -68,8 +68,15 @@ func PrintHeaderL3(message string) {
 /*
 Stampa una stringa per chiudere l'Header di Livello 1
 */
-func PrintTailerL1() {
+func PrintLineL1() {
 	fmt.Println(strings.Repeat("═", HL))
+}
+
+/*
+Stampa una stringa per chiudere l'Header di Livello 1
+*/
+func PrintLineL2() {
+	fmt.Println(strings.Repeat("—", HL))
 }
 
 func StringInBox(message string) string {
@@ -79,11 +86,11 @@ func StringInBox(message string) string {
 	return top + middle
 }
 
-func PrintInBox(message string) string {
+func PrintInBox(message string) {
 	line := "+" + strings.Repeat("—", len(message)+2) + "+\n"
 	middle := "| " + message + " |\n"
 
-	return line + middle + line
+	fmt.Print(line + middle + line)
 }
 
 func StringInBoxL2(msg1 string, msg2 string) string {
@@ -105,4 +112,29 @@ func StringInBoxL2(msg1 string, msg2 string) string {
 	bottom := "+" + strings.Repeat("—", lenght+2) + "+"
 
 	return top + middle1 + middle2 + bottom
+}
+
+func PrintClientCommandsList() {
+	fmt.Print(StringInBox("COMMANDS LIST"))
+
+	get := "Get"
+	put := "Put"
+	del := "Delete"
+	app := "Append"
+	ext := "Exit"
+
+	top := "+" + strings.Repeat("—", 15) + "+\n"
+	row1 := "| 1 |  " + get + strings.Repeat(" ", 3) + "   |\n"
+	row2 := "| 2 |  " + put + strings.Repeat(" ", 3) + "   |\n"
+	row3 := "| 3 |  " + del + strings.Repeat(" ", 0) + "   |\n"
+	row4 := "| 4 |  " + app + strings.Repeat(" ", 0) + "   |\n"
+	row5 := "| 5 |  " + ext + strings.Repeat(" ", 2) + "   |\n"
+	bottom := "+" + strings.Repeat("—", 15) + "+"
+
+	fmt.Println(top + row1 + row2 + row3 + row4 + row5 + bottom)
+	PrintLineL1()
+}
+
+func PrintClientTitlebar() {
+	PrintHeaderL1("SDCC Distributed Key-Value Storage")
 }

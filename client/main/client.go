@@ -9,24 +9,21 @@ package main
 // TODO vedere se si puo dispatchare un nuovo thread ad ogni connessione tcp di file transfer perche cosi non abbiamo concorrenza.
 // o comunque vedere se resta in coda e non muore
 
-// TODO print refactoring vedere perche non stampa l'entry formattata al GET
 import (
 	"fmt"
-	"io"
 	"progetto-sdcc/client/impl"
 	"progetto-sdcc/utils"
-	"strings"
+	"time"
 )
 
 func main() {
-Loop:
 	for {
 		utils.ClearScreen()
-		PrintCommandsList()
+		utils.PrintClientTitlebar()
+		utils.PrintClientCommandsList()
 		var cmd string
 
-		fmt.Printf("Insert a Command: ")
-		_, err := fmt.Scan(&cmd)
+		cmd = impl.SecScanln("Insert a Command")
 		switch {
 		case cmd == "1":
 			impl.Get()
@@ -38,33 +35,9 @@ Loop:
 			impl.Append()
 		case cmd == "5":
 			impl.Exit()
-		case err == io.EOF:
-			break Loop
 		default:
 			fmt.Println("Command not recognized. Retry.")
+			time.Sleep(1 * time.Second)
 		}
 	}
-}
-
-func PrintCommandsList() {
-	utils.PrintHeaderL1("SDCC Distributed Key-Value Storage")
-	utils.PrintTailerL1()
-	fmt.Print(utils.StringInBox("COMMANDS LIST"))
-
-	get := "Get"
-	put := "Put"
-	del := "Delete"
-	app := "Append"
-	ext := "Exit"
-
-	top := "+" + strings.Repeat("—", 15) + "+\n"
-	row1 := "| 1 |  " + get + strings.Repeat(" ", 3) + "   |\n"
-	row2 := "| 2 |  " + put + strings.Repeat(" ", 3) + "   |\n"
-	row3 := "| 3 |  " + del + strings.Repeat(" ", 0) + "   |\n"
-	row4 := "| 4 |  " + app + strings.Repeat(" ", 0) + "   |\n"
-	row5 := "| 5 |  " + ext + strings.Repeat(" ", 2) + "   |\n"
-	bottom := "+" + strings.Repeat("—", 15) + "+"
-
-	fmt.Println(top + row1 + row2 + row3 + row4 + row5 + bottom)
-	utils.PrintTailerL1()
 }

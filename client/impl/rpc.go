@@ -2,6 +2,7 @@ package impl
 
 import (
 	"errors"
+	"fmt"
 	"net/rpc"
 	"os"
 	"progetto-sdcc/utils"
@@ -133,7 +134,7 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 		os.Exit(1)
 	} else {
 		c <- errors.New("Success")
-		utils.PrintTs(*reply)
+		fmt.Println(*reply)
 		return
 	}
 }

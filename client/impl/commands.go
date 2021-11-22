@@ -26,10 +26,11 @@ Permette al client di recuperare il valore associato ad una precisa chiave conta
 */
 func Get() {
 	utils.ClearScreen()
-	fmt.Print(utils.PrintInBox("GET"))
-	utils.PrintTailerL1()
+	utils.PrintClientTitlebar()
+	utils.PrintInBox("GET")
+	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the desired entry")
-	utils.PrintTailerL1()
+	utils.PrintLineL1()
 	GetRPC(key)
 	EnterToContinue()
 }
@@ -39,11 +40,12 @@ Permette al client di inserire una coppia key-value nel sistema di storage conta
 */
 func Put() {
 	utils.ClearScreen()
-	fmt.Print(utils.PrintInBox("PUT"))
-	utils.PrintTailerL1()
+	utils.PrintClientTitlebar()
+	utils.PrintInBox("PUT")
+	utils.PrintLineL1()
 	key := SecScanln("> Insert the Entry Key")
 	value := SecScanln("> Insert the Entry Value")
-	utils.PrintTailerL1()
+	utils.PrintLineL1()
 	PutRPC(key, value)
 	EnterToContinue()
 }
@@ -53,11 +55,12 @@ Permette al client di aggiornare una coppia key-value presente nel sistema di st
 */
 func Append() {
 	utils.ClearScreen()
-	fmt.Print(utils.PrintInBox("APPEND"))
-	utils.PrintTailerL1()
+	utils.PrintClientTitlebar()
+	utils.PrintInBox("APPEND")
+	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the Entry to Update")
 	newValue := SecScanln("> Insert the Value to Append")
-	utils.PrintTailerL1()
+	utils.PrintLineL1()
 	AppendRPC(key, newValue)
 	EnterToContinue()
 }
@@ -67,10 +70,11 @@ Permette al client di eliminare una coppia key-value dal sistema di storage cont
 */
 func Delete() {
 	utils.ClearScreen()
-	fmt.Print(utils.PrintInBox("DELETE"))
-	utils.PrintTailerL1()
+	utils.PrintClientTitlebar()
+	utils.PrintInBox("DELETE")
+	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the Entry to Delete")
-	utils.PrintTailerL1()
+	utils.PrintLineL1()
 	DeleteRPC(key)
 	EnterToContinue()
 }
@@ -79,8 +83,11 @@ func Delete() {
 Termina il programma client.
 */
 func Exit() {
-	fmt.Println("Closing Client...")
-	fmt.Println("Goodbye.")
+	utils.PrintLineL1()
+	fmt.Println("> Closing Client...")
+	fmt.Println("> Goodbye.")
+	utils.PrintLineL1()
+	fmt.Println("")
 	os.Exit(0)
 }
 
@@ -96,6 +103,7 @@ func SecScanln(message string) string {
 		if strings.ContainsAny(arg, "[]{},:./*()\\#") {
 			fmt.Println("Inserted value contains not allowed characters []{},:./*()\\#")
 			fmt.Println("Retry")
+		} else if arg == "\n" {
 		} else {
 			break
 		}
@@ -104,6 +112,8 @@ func SecScanln(message string) string {
 }
 
 func EnterToContinue() {
+	utils.PrintLineL2()
+	fmt.Println("")
 	fmt.Println("Press the Enter Key to continue...")
 	fmt.Scanln()
 }

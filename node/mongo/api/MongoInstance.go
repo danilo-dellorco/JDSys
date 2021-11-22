@@ -107,7 +107,6 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 
 	update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: LAST_ACC, Value: lastaccess}}}}
 	cli.Collection.UpdateOne(context.TODO(), entry, update)
-	utils.PrintFormattedTimestamp()
 	utils.PrintTs("Found: " + entry.Format())
 	return &entry
 }
@@ -163,7 +162,6 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 				utils.PrintTs(err.Error())
 				return err
 			}
-			utils.PrintFormattedTimestamp()
 			utils.PrintTs("Update: Entry for key " + key + ", updated into " + entry)
 			return errors.New("Updated")
 
