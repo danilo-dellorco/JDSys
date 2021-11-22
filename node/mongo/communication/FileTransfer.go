@@ -1,6 +1,7 @@
 package communication
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"os"
@@ -39,6 +40,7 @@ func StartReceiver(fileChannel chan string, mode string) {
 		if mode == "update" {
 			utils.PrintHeaderL3("A node wants to send his updates via TCP")
 		} else {
+			fmt.Println("mode:", mode)
 			utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 		}
 		receiveFile(connection, fileChannel)
