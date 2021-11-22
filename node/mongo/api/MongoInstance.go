@@ -224,7 +224,6 @@ func (cli *MongoInstance) DeleteEntry(key string) error {
 Cancella un database e tutte le sue collezioni
 */
 func (cli *MongoInstance) DropDatabase() {
-	utils.PrintHeaderL3("Mongo Drop Database")
 	err := cli.Database.Drop(context.TODO())
 	if err != nil {
 		utils.PrintTs(err.Error())

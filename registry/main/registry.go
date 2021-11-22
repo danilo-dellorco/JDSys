@@ -132,6 +132,7 @@ func startPeriodicUpdates() {
 		for i := 0; i < len(nodes); i++ {
 			list[i] = nodes[i].PrivateIP
 		}
+		utils.PrintHeaderL3("Reconciliation Routine")
 		utils.PrintTs("Choosing random node to start the reconciliation")
 		startReconciliationRPC(list[rand.Intn(len(list))])
 	}

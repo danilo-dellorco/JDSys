@@ -11,7 +11,7 @@ func main() {
 	utils.ClearScreen()
 	node := new(nodesys.Node)
 	nodesys.InitNode(node)
-	utils.PrintHeaderL1("NODE SYSTEM")
+	utils.PrintHeaderL1("NODE  SYSTEM")
 
 	// Ciclo in cui è possibile stampare lo stato attuale del nodo.
 Loop:
