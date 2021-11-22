@@ -7,6 +7,7 @@ import (
 
 /*
 Permette di instaurare una connessione HTTP con il server all'indirizzo e porta specificati.
+Utilizzato per connettersi al Load Balancer
 */
 func HttpConnect(addr string, port string) (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", addr+port)

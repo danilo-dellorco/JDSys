@@ -26,7 +26,7 @@ func InitNode(node *Node) {
 	InitListeningServices(node)
 	time.Sleep(1 * time.Millisecond)
 
-	utils.PrintTailerL1()
+	utils.PrintLineL1()
 }
 
 /*

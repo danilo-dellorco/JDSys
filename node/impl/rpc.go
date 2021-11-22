@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"fmt"
 	chord "progetto-sdcc/node/chord/api"
 	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/utils"
@@ -130,7 +131,8 @@ func (n *Node) GetImpl(args Args, reply *string) error {
 	} else {
 		*reply = entry.FormatClient()
 	}
-	utils.PrintTs(*reply)
+	utils.PrintTs("Generating RPC Reply:")
+	fmt.Print(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 	return nil
 }
@@ -153,7 +155,8 @@ func (n *Node) PutImpl(args Args, reply *string) error {
 		*reply = err.Error()
 		ok = false
 	}
-	utils.PrintTs(*reply)
+	utils.PrintTs("Generating RPC Reply:")
+	fmt.Print(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 
 	// Inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
@@ -179,7 +182,8 @@ func (n *Node) AppendImpl(args *Args, reply *string) error {
 		*reply = "Entry not found"
 		ok = false
 	}
-	utils.PrintTs(*reply)
+	utils.PrintTs("Generating RPC Reply:")
+	fmt.Print(*reply)
 	utils.PrintTs("Finished. Replying to caller")
 
 	// Inserimento avvenuto correttamente, procediamo con l'invio della replica al successore
