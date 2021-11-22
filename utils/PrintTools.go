@@ -114,6 +114,27 @@ func StringInBoxL2(msg1 string, msg2 string) string {
 	return top + middle1 + middle2 + bottom
 }
 
+func PrintStringInBoxL2(msg1 string, msg2 string) {
+	var lenght int
+	var diff1 int
+	var diff2 int
+	if len(msg1) >= len(msg2) {
+		lenght = len(msg1)
+		diff1 = 0
+		diff2 = lenght - len(msg2)
+	} else {
+		lenght = len(msg2)
+		diff2 = 0
+		diff1 = lenght - len(msg1)
+	}
+	top := "+" + strings.Repeat("—", lenght+2) + "+\n"
+	middle1 := "| " + msg1 + strings.Repeat(" ", diff1) + " |\n"
+	middle2 := "| " + msg2 + strings.Repeat(" ", diff2) + " |\n"
+	bottom := "+" + strings.Repeat("—", lenght+2) + "+"
+
+	fmt.Println(top + middle1 + middle2 + bottom)
+}
+
 func PrintClientCommandsList() {
 	fmt.Print(StringInBox("COMMANDS LIST"))
 

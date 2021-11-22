@@ -28,7 +28,7 @@ type Args struct {
 /*
 Effettua la RPC per la GET
 */
-func GetRPC(key string) {
+func GetRPC(key string, print bool) {
 	args := Args{}
 	args.Key = key
 
@@ -37,14 +37,14 @@ func GetRPC(key string) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
-	go CallRPC(GET, client, args, reply, c)
-	rr1_timeout(GET, client, args, reply, c)
+	go CallRPC(GET, client, args, reply, c, print)
+	rr1_timeout(GET, client, args, reply, c, print)
 }
 
 /*
 Effettua la RPC per il PUT
 */
-func PutRPC(key string, value string) {
+func PutRPC(key string, value string, print bool) {
 	args := Args{}
 	args.Key = key
 	args.Value = value
@@ -54,14 +54,14 @@ func PutRPC(key string, value string) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
-	go CallRPC(PUT, client, args, reply, c)
-	rr1_timeout(PUT, client, args, reply, c)
+	go CallRPC(PUT, client, args, reply, c, print)
+	rr1_timeout(PUT, client, args, reply, c, print)
 }
 
 /*
 Effettua la RPC per l'APPEND
 */
-func AppendRPC(key string, value string) {
+func AppendRPC(key string, value string, print bool) {
 	args := Args{}
 	args.Key = key
 	args.Value = value
@@ -71,14 +71,14 @@ func AppendRPC(key string, value string) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
-	go CallRPC(APP, client, args, reply, c)
-	rr1_timeout(APP, client, args, reply, c)
+	go CallRPC(APP, client, args, reply, c, print)
+	rr1_timeout(APP, client, args, reply, c, print)
 }
 
 /*
 Effettua la RPC per il DELETE
 */
-func DeleteRPC(key string) {
+func DeleteRPC(key string, print bool) {
 	args := Args{}
 	args.Key = key
 
@@ -87,15 +87,15 @@ func DeleteRPC(key string) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
-	go CallRPC(DEL, client, args, reply, c)
-	rr1_timeout(DEL, client, args, reply, c)
+	go CallRPC(DEL, client, args, reply, c, print)
+	rr1_timeout(DEL, client, args, reply, c, print)
 }
 
 /*
 Goroutine per l'implementazione della semantica at-least-once.
 La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
 */
-func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
+func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error, print bool) {
 	signal := make(chan bool)
 	res := errors.New("Timeout")
 	check := 0
@@ -107,7 +107,7 @@ restart_timer:
 		case <-signal:
 			check++
 			utils.PrintTs("Timeout elapsed, send new request n°" + strconv.Itoa(check) + "...")
-			go CallRPC(rpc, client, args, reply, c)
+			go CallRPC(rpc, client, args, reply, c, print)
 
 		// arriva risposta dal server
 		case res = <-c:
@@ -125,16 +125,20 @@ restart_timer:
 /*
 Effettua una generica RPC, utilizzata per implementare il meccanismo RR1 per la semantica at-least-once
 */
-func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan error) {
+func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan error, print bool) {
 	err := client.Call(rpc, args, &reply)
 	defer client.Close()
 	if err != nil {
 		c <- err
-		utils.PrintTs("RPC error " + err.Error())
+		if print {
+			utils.PrintTs("RPC error " + err.Error())
+		}
 		os.Exit(1)
 	} else {
 		c <- errors.New("Success")
-		fmt.Println(*reply)
+		if print {
+			fmt.Println(*reply)
+		}
 		return
 	}
 }
@@ -142,4 +146,16 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 func check_timeout(check chan bool) {
 	time.Sleep(utils.RR1_TIMEOUT)
 	check <- true
+}
+
+/*
+Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
+*/
+func HttpConnect() (*rpc.Client, error) {
+	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
+	if err != nil {
+		utils.PrintTs("HTTP Connect error " + err.Error())
+		os.Exit(1)
+	}
+	return client, err
 }
