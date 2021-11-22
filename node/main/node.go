@@ -9,7 +9,6 @@ import (
 
 func main() {
 	utils.ClearScreen()
-	fmt.Print(utils.StringInBox("Porcoddio"))
 	node := new(nodesys.Node)
 	nodesys.InitNode(node)
 

@@ -43,7 +43,7 @@ Stampa un messaggio formattandolo come Header di Livello 1
 func PrintHeaderL1(message string) {
 	center := (HL-len(message))/2 - 2
 	before := strings.Repeat("═", center) + "╣ "
-	after := " ╠" + strings.Repeat("═", center)
+	after := " ╠" + strings.Repeat("═", center) + "\n"
 	fmt.Print(before + message + after)
 }
 
@@ -69,15 +69,14 @@ func PrintHeaderL3(message string) {
 Stampa una stringa per chiudere l'Header di Livello 1
 */
 func PrintTailerL1() {
-	fmt.Println(strings.Repeat("═", HL) + "\n")
+	fmt.Println(strings.Repeat("═", HL))
 }
 
 func StringInBox(message string) string {
 	top := "+" + strings.Repeat("—", len(message)+2) + "+\n"
 	middle := "| " + message + " |\n"
-	bottom := top
 
-	return top + middle + bottom
+	return top + middle
 }
 
 func StringInBoxL2(msg1 string, msg2 string) string {

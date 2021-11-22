@@ -153,7 +153,7 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "E11000") {
 			utils.PrintTs("An entry for key " + key + " is already present on local storage")
-			fmt.Println("Updating Entry Value")
+			utils.PrintTs("Updating Entry Value")
 			old := bson.D{primitive.E{Key: ID, Value: key}}
 			timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 			update := bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: VALUE, Value: strVal},
@@ -172,7 +172,7 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 		}
 		return err
 	}
-	fmt.Println("Entry " + entry + " succesfully inserted into local storage")
+	utils.PrintTs("Entry " + entry + " succesfully inserted into local storage")
 	return nil
 }
 
@@ -194,7 +194,7 @@ func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 		primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: timestamp}}}}
 	_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 	if err != nil {
-		fmt.Println(err)
+		utils.PrintTs(err.Error())
 		return err
 	}
 	utils.PrintTs("Append: inserted " + arg1 + " to key " + key)
@@ -215,7 +215,7 @@ func (cli *MongoInstance) DeleteEntry(key string) error {
 	}
 
 	if result.DeletedCount == 1 {
-		fmt.Println("Deleted", key)
+		utils.PrintTs("Deleted " + key)
 		return nil
 	}
 	utils.PrintTs("Delete Error: No entry found with key " + key)
@@ -229,10 +229,10 @@ func (cli *MongoInstance) DropDatabase() {
 	utils.PrintHeaderL3("Mongo Drop Database")
 	err := cli.Database.Drop(context.TODO())
 	if err != nil {
-		fmt.Print(err)
+		utils.PrintTs(err.Error())
 		return
 	}
-	utils.PrintTs("Local storage dropped succesfully")
+	utils.PrintTs("Local storage cleaned succesfully")
 }
 
 /*
@@ -319,7 +319,7 @@ func (cli *MongoInstance) uploadToS3(key string) {
 		Body:   f,
 	})
 	if err != nil {
-		fmt.Println(err)
+		utils.PrintTs(err.Error())
 		return
 	}
 	utils.PrintTs("Entry succesfully uploaded to cloud storage")
@@ -391,12 +391,12 @@ func (cli *MongoInstance) CheckRarelyAccessed() {
 	}
 }
 
-// TODO continuare da qui print refactoring
 /*
 Invocata dalla goroutine ListenUpdates quando un nodo sta inviando le informazioni nel proprio DB
 Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggiorna il DB.
 */
 func (cli *MongoInstance) MergeCollection(exportFile string, receivedFile string) {
+	utils.PrintHeaderL3("Merging mongo local storage")
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
@@ -406,7 +406,7 @@ func (cli *MongoInstance) MergeCollection(exportFile string, receivedFile string
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
-	fmt.Println("Local DB ReceivedCorrectly")
+	utils.PrintTs("Collection merged succesfully")
 }
 
 /*
@@ -414,7 +414,7 @@ Invocato quando si riceve un update di riconciliazione. Si utilizza
 last-write-wins per risolvere i conflitti tra le entry
 */
 func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile string) {
-	utils.PrintTs("Starting Reconciliation")
+	utils.PrintHeaderL3("Resolving conflicts on mongo local storage")
 
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
@@ -425,7 +425,7 @@ func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile
 		cli.PutMongoEntry(entry)
 	}
 	cli.Collection.Find(context.TODO(), nil)
-	utils.PrintTs("Local DB ReceivedCorrectly")
+	utils.PrintTs("Local collection reconciliated correctly")
 }
 
 /*
@@ -436,6 +436,9 @@ func InitLocalSystem() MongoInstance {
 	utils.PrintTs("Starting Mongo Local System")
 	client := MongoInstance{}
 	client.OpenConnection()
+
+	// Inizializza un database vuoto, per eliminare eventuale documenti residui del nodo.
+	client.DropDatabase()
 
 	utils.PrintTs("Mongo is Up & Running")
 	return client

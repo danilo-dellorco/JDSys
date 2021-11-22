@@ -1,7 +1,6 @@
 package amazon
 
 import (
-	"fmt"
 	"progetto-sdcc/utils"
 	"time"
 
@@ -38,7 +37,7 @@ func CreateSession() *session.Session {
 		Region:      aws.String("us-east-1"),
 		Credentials: credentials.NewSharedCredentials(CRS, "default")})
 	if err != nil {
-		fmt.Println(err)
+		utils.PrintTs(err.Error())
 	}
 	return sess
 }
@@ -57,14 +56,14 @@ func getTargetGroup(elbArn string) *elbv2.DescribeTargetGroupsOutput {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case elbv2.ErrCodeLoadBalancerNotFoundException:
-				fmt.Println(elbv2.ErrCodeLoadBalancerNotFoundException, aerr.Error())
+				utils.PrintTs(elbv2.ErrCodeLoadBalancerNotFoundException + " " + aerr.Error())
 			case elbv2.ErrCodeTargetGroupNotFoundException:
-				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+				utils.PrintTs(elbv2.ErrCodeTargetGroupNotFoundException + " " + aerr.Error())
 			default:
-				fmt.Println(aerr.Error())
+				utils.PrintTs(aerr.Error())
 			}
 		} else {
-			fmt.Println(err.Error())
+			utils.PrintTs(err.Error())
 		}
 	}
 	return result
@@ -85,16 +84,16 @@ func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case elbv2.ErrCodeInvalidTargetException:
-				fmt.Println(elbv2.ErrCodeInvalidTargetException, aerr.Error())
+				utils.PrintTs(elbv2.ErrCodeInvalidTargetException + " " + aerr.Error())
 			case elbv2.ErrCodeTargetGroupNotFoundException:
-				fmt.Println(elbv2.ErrCodeTargetGroupNotFoundException, aerr.Error())
+				utils.PrintTs(elbv2.ErrCodeTargetGroupNotFoundException + " " + aerr.Error())
 			case elbv2.ErrCodeHealthUnavailableException:
-				fmt.Println(elbv2.ErrCodeHealthUnavailableException, aerr.Error())
+				utils.PrintTs(elbv2.ErrCodeHealthUnavailableException + " " + aerr.Error())
 			default:
-				fmt.Println(aerr.Error())
+				utils.PrintTs(aerr.Error())
 			}
 		} else {
-			fmt.Println(err.Error())
+			utils.PrintTs(err.Error())
 		}
 	}
 	return result
@@ -134,10 +133,10 @@ func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			default:
-				fmt.Println(aerr.Error())
+				utils.PrintTs(aerr.Error())
 			}
 		} else {
-			fmt.Println(err.Error())
+			utils.PrintTs(err.Error())
 		}
 	}
 	return result
@@ -187,14 +186,14 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case autoscaling.ErrCodeInvalidNextToken:
-				fmt.Println(autoscaling.ErrCodeInvalidNextToken, aerr.Error())
+				utils.PrintTs(autoscaling.ErrCodeInvalidNextToken + " " + aerr.Error())
 			case autoscaling.ErrCodeResourceContentionFault:
-				fmt.Println(autoscaling.ErrCodeResourceContentionFault, aerr.Error())
+				utils.PrintTs(autoscaling.ErrCodeResourceContentionFault + " " + aerr.Error())
 			default:
-				fmt.Println(aerr.Error())
+				utils.PrintTs(aerr.Error())
 			}
 		} else {
-			fmt.Println(err.Error())
+			utils.PrintTs(err.Error())
 		}
 	}
 	return result
@@ -204,6 +203,8 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 Ottiene gli ID di tutte le istanze che sono nello stato di terminazione
 */
 func GetTerminatingInstances() []Instance {
+	utils.PrintTs("Retrieving terminating instances")
+
 	activityList := getScalingActivities()
 
 	var terminatingNodes []Instance
@@ -219,12 +220,9 @@ func GetTerminatingInstances() []Instance {
 			if status == "WaitingForELBConnectionDraining" {
 				nodeId := utils.GetStringInBetween(actual, TERMINATING_START, TERMINATING_END)
 				if utils.StringInSlice(nodeId, activity_cache) {
-					fmt.Println("DEBUG| instance already terminating:", nodeId)
 					continue
 				}
-				fmt.Println("\n__________Found Terminating Instance__________")
-				fmt.Println("Status: ", status)
-				fmt.Println("nodeId: ", nodeId)
+				utils.PrintHeaderL3(nodeId + " is terminating")
 				instanceInfo := getInstanceInfo(nodeId)
 				instance := getInstance(instanceInfo)
 				terminatingNodes = append(terminatingNodes, instance)
@@ -241,7 +239,6 @@ Pulisce periodicamente la cache sulle istanze in terminazione
 func Start_cache_flush_service() {
 	for {
 		time.Sleep(utils.ACTIVITY_CACHE_FLUSH_INTERVAL)
-		fmt.Println("Activity Cache Flushed")
 		activity_cache = nil
 	}
 }

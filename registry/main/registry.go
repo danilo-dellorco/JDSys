@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"net/rpc"
@@ -15,37 +13,6 @@ import (
 	"time"
 )
 
-func main() {
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	server := &http.Server{
-		Addr:    utils.REGISTRY_PORT,
-		Handler: http.DefaultServeMux,
-	}
-
-	go checkTerminatingNodes()
-
-	fmt.Printf("Server Registry Waiting For Incoming Connection... \n")
-	service := InitializeService()
-	rpc.Register(service)
-	rpc.HandleHTTP()
-	go server.ListenAndServe()
-
-	go startPeriodicUpdates()
-
-	//Aspetta segnali per chiudere tutte le connessioni al Ctrl+C
-	<-done
-	log.Print("Server Stopped")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
-	}
-	log.Print("Server Exited Properly")
-}
-
 /*
 Struttura per il passaggio dei parametri alla RPC
 */
@@ -55,10 +22,29 @@ type Args struct {
 }
 
 /*
-Pseudo-Interfaccia che verrà registrata dal server in modo tale che il client possa invocare i metodi tramite RPC
-ciò che si registra realmente è un oggetto che prevede l'implementazione di quei metodi specifici
+Servizio per le RPC del registry
 */
 type DHThandler int
+
+func main() {
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	utils.ClearScreen()
+	server := InitRegistry()
+
+	//Aspetta segnali per chiudere tutte le connessioni al Ctrl+C
+	<-done
+	utils.PrintTs("Server Stopped")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		utils.PrintTs("Server Shutdown Failed: " + err.Error())
+		os.Exit(1)
+	}
+	utils.PrintTs("Server Exited Properly")
+}
 
 /*
 Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
@@ -76,7 +62,7 @@ func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
 /*
 Inizializza il servizio DHT
 */
-func InitializeService() *DHThandler {
+func InitializeDHTService() *DHThandler {
 	service := new(DHThandler)
 	return service
 }
@@ -86,8 +72,6 @@ Restituisce tutte le istanze healthy presenti
 */
 func checkActiveNodes() []amazon.Instance {
 	instances := amazon.GetActiveNodes()
-	//fmt.Println("Healthy Instances:")
-	//fmt.Println(instances)
 	return instances
 }
 
@@ -96,7 +80,7 @@ Controlla periodicamente quali sono le istanze in terminazione. Invia a queste u
 di terminare possano inviare le proprie entry ad un altro nodo
 */
 func checkTerminatingNodes() {
-	fmt.Println("Starting Check Terminating Nodes Routine....")
+	utils.PrintHeaderL2("Starting Checking Terminating Nodes")
 	go amazon.Start_cache_flush_service()
 	for {
 		terminating := amazon.GetTerminatingInstances()
@@ -111,52 +95,56 @@ func checkTerminatingNodes() {
 Invocazione dell'RPC che invia il segnale di terminazione ad un nodo schedulato per la terminazione
 */
 func sendTerminatingSignalRPC(ip string) {
-	fmt.Println("Sending Terminating Message to node:", ip)
+	utils.PrintTs("Sending Terminating Message to node: " + ip)
 	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
 	if err != nil {
-		log.Fatal("dialing:", err)
+		utils.PrintTs("dialing: " + err.Error())
+		os.Exit(1)
 	}
 	var reply string
 	args := Args{}
 	err = client.Call("Node.TerminateInstanceRPC", args, &reply)
 	if err != nil {
-		log.Fatal("TerminateInstanceRPC error:", err)
+		utils.PrintTs("TerminateInstanceRPC error: " + err.Error())
+		os.Exit(1)
 	}
-	fmt.Println("Risposta RPC:", reply)
+	utils.PrintTs(ip + ": " + reply)
 }
 
 /*
-Avvia periodicamento il processo iterativo di scambio di aggiornamenti tra un nodo e il suo successore per la riconciliazione.
+Avvia periodicamente il processo iterativo di scambio di aggiornamenti tra un nodo e il suo successore per la riconciliazione.
 Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
 */
+// TODO calcolare bene il valore della finestra temporale
 func startPeriodicUpdates() {
-	fmt.Println("Starting periodic updates for reconciliation Routine....")
+	utils.PrintHeaderL2("Starting periodic updates for reconciliation Routine")
 retry:
 	for {
 		time.Sleep(utils.START_CONSISTENCY_INTERVAL)
 		nodes := checkActiveNodes()
 		if len(nodes) == 0 || len(nodes) == 1 {
-			fmt.Println("Wait the correct construction of the DHT to start the updates routine of the ring")
+			utils.PrintTs("Wait the correct construction of the DHT to start the updates routine of the ring")
 			time.Sleep(10 * time.Second)
 			goto retry
 		}
-		//recuperate tutte le istanze attive, si invia la richiesta ad un nodo a caso
+		// Recuperate tutte le istanze attive, si invia la richiesta ad un nodo a caso
 		var list = make([]string, len(nodes))
 		for i := 0; i < len(nodes); i++ {
 			list[i] = nodes[i].PrivateIP
 		}
-		startFinalConsistencyRPC(list[rand.Intn(len(list))])
+		utils.PrintTs("Choosing random node to start the reconciliation")
+		startReconciliationRPC(list[rand.Intn(len(list))])
 	}
 }
 
 /*
 Invocazione dell'RPC che avvia lo scambio di aggiornamenti tra i nodi per raggiungere la consistenza finale
 */
-func startFinalConsistencyRPC(ip string) {
-	fmt.Println("Sending signal to start DB exchange to node:", ip)
+func startReconciliationRPC(ip string) {
+	utils.PrintTs("Sending db exchange signal to node: " + ip)
 	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
 	if err != nil {
-		log.Fatal("dialing:", err)
+		utils.PrintTs("dialing: " + err.Error())
 	}
 	var reply string
 	args := Args{}
@@ -164,6 +152,25 @@ func startFinalConsistencyRPC(ip string) {
 	args.Deleted = false
 	err = client.Call("Node.ConsistencyHandlerRPC", args, &reply)
 	if err != nil {
-		log.Fatal("ConsistencyHandlerRPC error:", err)
+		utils.PrintTs("ConsistencyHandlerRPC error: " + err.Error())
 	}
+}
+
+func InitRegistry() *http.Server {
+	utils.PrintHeaderL1("REGISTRY SETUP")
+
+	server := &http.Server{
+		Addr:    utils.REGISTRY_PORT,
+		Handler: http.DefaultServeMux,
+	}
+	service := InitializeDHTService()
+	rpc.Register(service)
+	rpc.HandleHTTP()
+
+	go server.ListenAndServe()
+	utils.PrintTs("Service Registry waiting for incoming connections")
+
+	go checkTerminatingNodes()
+	go startPeriodicUpdates()
+	return server
 }

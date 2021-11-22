@@ -25,7 +25,7 @@ func HttpConnect() (*rpc.Client, error) {
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
 func Get() {
-	key := SecScanln("Insert the Desired Key")
+	key := SecScanln("Insert the Key of the desired entry")
 	GetRPC(key)
 }
 
@@ -35,7 +35,6 @@ Permette al client di inserire una coppia key-value nel sistema di storage conta
 func Put() {
 	key := SecScanln("Insert the Entry Key")
 	value := SecScanln("Insert the Entry Value")
-	fmt.Println("va: ", value)
 	PutRPC(key, value)
 }
 
@@ -74,8 +73,8 @@ func SecScanln(message string) string {
 	for {
 		fmt.Print(message + ": ")
 		arg, _ = bufio.NewReader(os.Stdin).ReadString('\n')
-		if strings.ContainsAny(arg, "[]{},:./*") {
-			fmt.Println("Inserted value contains not allowed characters")
+		if strings.ContainsAny(arg, "[]{},:./*()\\#") {
+			fmt.Println("Inserted value contains not allowed characters []{},:./*()\\#")
 			fmt.Println("Retry")
 		} else {
 			break
