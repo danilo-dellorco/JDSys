@@ -37,6 +37,7 @@ func GetRPC(key string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(GET, client, args, reply, c, print)
 	rr1_timeout(GET, client, args, reply, c, print)
 }
@@ -54,6 +55,7 @@ func PutRPC(key string, value string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(PUT, client, args, reply, c, print)
 	rr1_timeout(PUT, client, args, reply, c, print)
 }
@@ -71,6 +73,7 @@ func AppendRPC(key string, value string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(APP, client, args, reply, c, print)
 	rr1_timeout(APP, client, args, reply, c, print)
 }
@@ -87,6 +90,7 @@ func DeleteRPC(key string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(DEL, client, args, reply, c, print)
 	rr1_timeout(DEL, client, args, reply, c, print)
 }

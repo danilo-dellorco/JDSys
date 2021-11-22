@@ -111,16 +111,24 @@ tra i nodi del sistema.
 func InitRPCService(node *Node) {
 	utils.PrintHeaderL2("Starting RPC Service")
 
+	srv := &http.Server{
+		Addr:        utils.RPC_PORT,
+		Handler:     http.DefaultServeMux,
+		ReadTimeout: 2 * time.Second,
+	}
+
 	rpc.Register(node)
 	rpc.HandleHTTP()
-	l, e := net.Listen("tcp", utils.RPC_PORT)
-	if e != nil {
-		log.Fatal("listen error:", e)
-	}
+
+	//l, e := net.Listen("tcp", utils.RPC_PORT)
+	//if e != nil {
+	//	log.Fatal("listen error:", e)
+	//}
 
 	utils.PrintTs("Start Serving RPC request on port " + utils.RPC_PORT)
 	utils.PrintTs("RPC Service Correctly Started")
-	go http.Serve(l, nil)
+	go srv.ListenAndServe()
+	//go http.Serve(l, nil)
 }
 
 func InitListeningServices(node *Node) {
