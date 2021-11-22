@@ -132,7 +132,7 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 		log.Fatal("RPC error: ", err)
 	} else {
 		c <- errors.New("Success")
-		fmt.Println("Risposta RPC:", *reply)
+		fmt.Println(*reply)
 		return
 	}
 }

@@ -2,8 +2,8 @@ package mongo
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
+	"progetto-sdcc/utils"
 	"time"
 )
 
@@ -11,10 +11,10 @@ import (
 Ottiene una lista di Entry partendo da un file CSV
 */
 func ParseCSV(file string) []MongoEntry {
-	fmt.Println("\n\nParsing CSV:", file)
+	utils.PrintTs("Parsing CSV: " + file)
 	csvFile, err := os.Open(file)
 	if err != nil {
-		fmt.Println("ParseCSV Error:", err)
+		utils.PrintTs("ParseCSV Error: " + err.Error())
 	}
 
 	csvr := csv.NewReader(csvFile)
@@ -24,7 +24,7 @@ func ParseCSV(file string) []MongoEntry {
 	csvr.FieldsPerRecord = -1
 	csvLines, err := csvr.ReadAll()
 	if err != nil {
-		fmt.Println("ReadCSV Error:", err)
+		utils.PrintTs("ReadCSV Error: " + err.Error())
 	}
 
 	var entryList []MongoEntry
@@ -34,10 +34,11 @@ func ParseCSV(file string) []MongoEntry {
 			i++
 			continue
 		}
-		//trascuriamo record con meno campi del previsto
+		// Trascuriamo record corrotti con meno campi del previsto
 		if len(line) < 4 {
 			continue
 		}
+
 		timeString := line[2]
 		tVal, _ := time.Parse(time.RFC3339, timeString)
 		accessString := line[3]
@@ -46,7 +47,7 @@ func ParseCSV(file string) []MongoEntry {
 		entryList = append(entryList, entry)
 	}
 	defer csvFile.Close()
-	fmt.Println("CSV Parsed correctly")
+	utils.PrintTs("CSV Parsed correctly")
 	return entryList
 }
 
@@ -54,7 +55,7 @@ func ParseCSV(file string) []MongoEntry {
 Unisce le Entry tenendo in caso di conflitti sempre quella piu recente
 */
 func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
-	fmt.Println("Merging Database Entries...")
+	utils.PrintTs("Merging Database Entries")
 
 	var mergedEntries []MongoEntry
 
@@ -85,7 +86,6 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 			mergedEntries = append(mergedEntries, u)
 		}
 	}
-	fmt.Println("Entries:")
 	return mergedEntries
 }
 
@@ -93,7 +93,7 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 Risolve i conflitti secondo Last Write Wins
 */
 func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
-	fmt.Println("\n\nMerging Database Entries...")
+	utils.PrintTs("Reconciliating database entries")
 
 	var reconEntries []MongoEntry
 
@@ -112,8 +112,6 @@ func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 				// Appendo l'entry con conflict a false.
 				temp := latestEntry
 				temp.Conflict = false
-				fmt.Println(temp)
-				fmt.Println(latestEntry)
 				reconEntries = append(reconEntries, temp)
 			}
 		}
@@ -123,7 +121,5 @@ func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 			reconEntries = append(reconEntries, u)
 		}
 	}
-	fmt.Print("Entries:")
-	fmt.Println(reconEntries)
 	return reconEntries
 }

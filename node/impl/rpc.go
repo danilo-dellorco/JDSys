@@ -35,10 +35,10 @@ Effettua la RPC per la Get di una Key.
 */
 func (n *Node) GetRPC(args *Args, reply *string) error {
 	utils.PrintHeaderL2("Received Get RPC for key " + args.Key)
-	utils.PrintTs("Checking value on local storage...")
+	utils.PrintTs("Checking value on local storage")
 	entry := n.MongoClient.GetEntry(args.Key)
 	if entry != nil {
-		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
+		*reply = entry.FormatClient()
 		return nil
 	} else {
 		utils.PrintTs("Key not found on local storage.")
@@ -130,7 +130,7 @@ func (n *Node) GetImpl(args Args, reply *string) error {
 	if entry == nil {
 		*reply = "Entry not found"
 	} else {
-		*reply = fmt.Sprintf("Key: %s\nValue: %s", entry.Key, entry.Value)
+		*reply = entry.FormatClient()
 	}
 	utils.PrintTs(*reply)
 	utils.PrintTs("Finished. Replying to caller")
@@ -206,7 +206,7 @@ func (n *Node) DeleteHandling(args *Args, reply *string) error {
 	} else {
 		// Entry non è presente nel DB del nodo gestore, quindi non esiste
 		if err.Error() == "EntryNotFound" {
-			*reply = "the key searched for the deletion does not exist"
+			*reply = "The key searched for deletion does not exist"
 			utils.PrintTs(*reply)
 			return nil
 		}
