@@ -216,6 +216,7 @@ func ListenReconciliationMessages(node *Node) {
 		retry:
 			if node.ChordClient.GetSuccessor().String() == "" {
 				utils.PrintTs("Node hasn't a successor, wait for the reconstruction...")
+				time.Sleep(utils.WAIT_SUCC_TIME)
 				goto retry
 			}
 
@@ -265,7 +266,7 @@ retry:
 	succ := node.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor yet, data will be replicated later")
-		time.Sleep(15 * time.Second)
+		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
 	node.MongoClient.ExportDocument(key, utils.UPDATES_EXPORT_FILE)
@@ -282,7 +283,7 @@ retry:
 	succ := node.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor yet, replicas will be deleted later")
-		// TODO forse uno sleeppetto ci va qui
+		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)

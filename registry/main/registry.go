@@ -124,7 +124,7 @@ func startPeriodicUpdates() {
 		nodes := checkActiveNodes()
 		if len(nodes) == 0 || len(nodes) == 1 {
 			utils.PrintTs("Wait the correct construction of the DHT to start the updates routine of the ring")
-			time.Sleep(10 * time.Second)
+			time.Sleep(utils.WAIT_SUCC_TIME)
 			goto retry
 		}
 		// Recuperate tutte le istanze attive, si invia la richiesta ad un nodo a caso

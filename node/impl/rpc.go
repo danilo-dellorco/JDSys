@@ -255,7 +255,7 @@ retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor, wait for the reconstruction...")
-		time.Sleep(10 * time.Second)
+		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
@@ -302,7 +302,7 @@ retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
 		utils.PrintTs("Node hasn't a successor, wait for the reconstruction of the DHT")
-		time.Sleep(2 * time.Second)
+		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
 
