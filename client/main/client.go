@@ -16,14 +16,13 @@ import (
 	"progetto-sdcc/client/impl"
 	"progetto-sdcc/utils"
 	"strings"
-	"time"
 )
 
 func main() {
-	utils.ClearScreen()
 Loop:
 	for {
-		PrintMethodList()
+		utils.ClearScreen()
+		PrintCommandsList()
 		var cmd string
 
 		fmt.Printf("Insert a Command: ")
@@ -44,14 +43,10 @@ Loop:
 		default:
 			fmt.Println("Command not recognized. Retry.")
 		}
-
-		// Aspettiamo per far stampare prima la risposta se arriva in ritardo, per poi pulire lo schermo
-		time.Sleep(3 * time.Second)
-		utils.ClearScreen()
 	}
 }
 
-func PrintMethodList() {
+func PrintCommandsList() {
 	utils.PrintHeaderL1("SDCC Distributed Key-Value Storage")
 	utils.PrintTailerL1()
 	fmt.Print(utils.StringInBox("COMMANDS LIST"))
@@ -68,7 +63,8 @@ func PrintMethodList() {
 	row3 := "| 3 |  " + del + strings.Repeat(" ", 0) + "   |\n"
 	row4 := "| 4 |  " + app + strings.Repeat(" ", 0) + "   |\n"
 	row5 := "| 5 |  " + ext + strings.Repeat(" ", 2) + "   |\n"
-	bottom := top
+	bottom := "+" + strings.Repeat("—", 15) + "+"
 
 	fmt.Println(top + row1 + row2 + row3 + row4 + row5 + bottom)
+	utils.PrintTailerL1()
 }

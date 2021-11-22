@@ -2,10 +2,10 @@ package impl
 
 import (
 	"errors"
-	"fmt"
-	"log"
 	"net/rpc"
+	"os"
 	"progetto-sdcc/utils"
+	"strconv"
 	"time"
 )
 
@@ -105,7 +105,7 @@ restart_timer:
 		// scade timer per la ritrasmissione
 		case <-signal:
 			check++
-			fmt.Println("Timeout elapsed, send new request n°", check, "...")
+			utils.PrintTs("Timeout elapsed, send new request n°" + strconv.Itoa(check) + "...")
 			go CallRPC(rpc, client, args, reply, c)
 
 		// arriva risposta dal server
@@ -117,7 +117,7 @@ restart_timer:
 	}
 	//effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
 	if check == utils.RR1_RETRIES && res.Error() != "Success" {
-		fmt.Println("Server unreachable!")
+		utils.PrintTs("Server unreachable!")
 	}
 }
 
@@ -129,10 +129,11 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 	defer client.Close()
 	if err != nil {
 		c <- err
-		log.Fatal("RPC error: ", err)
+		utils.PrintTs("RPC error " + err.Error())
+		os.Exit(1)
 	} else {
 		c <- errors.New("Success")
-		fmt.Println(*reply)
+		utils.PrintTs(*reply)
 		return
 	}
 }

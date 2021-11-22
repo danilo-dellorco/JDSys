@@ -93,7 +93,7 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 	entry := MongoEntry{}
 
 	if err != nil {
-		fmt.Println("Get Error:", err)
+		utils.PrintTs("Get Error: " + err.Error())
 		return nil
 	}
 	id := result[ID].(string)
@@ -160,7 +160,7 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 				primitive.E{Key: TIME, Value: timestamp}, primitive.E{Key: LAST_ACC, Value: timestamp}}}}
 			_, err := cli.Collection.UpdateOne(context.TODO(), old, update)
 			if err != nil {
-				fmt.Println(err)
+				utils.PrintTs(err.Error())
 				return err
 			}
 			utils.PrintFormattedTimestamp()
@@ -357,7 +357,7 @@ func (cli *MongoInstance) downloadEntryFromS3(key string) {
 		utils.PrintTs(fmt.Sprintf("failed to download file, %v", err))
 		return
 	}
-	fmt.Printf("Entry succesfully retrieved form cloud storage")
+	utils.PrintTs("Entry succesfully retrieved form cloud storage")
 }
 
 /*

@@ -1,7 +1,6 @@
 package communication
 
 import (
-	"fmt"
 	"progetto-sdcc/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -17,7 +16,7 @@ func CreateSession() *session.Session {
 		Region:      aws.String("us-east-1"),
 		Credentials: credentials.NewSharedCredentials(utils.AWS_CRED_PATH, "default")})
 	if err != nil {
-		fmt.Println(err)
+		utils.PrintTs(err.Error())
 	}
 	return sess
 }

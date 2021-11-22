@@ -215,21 +215,20 @@ func ListenReconciliationMessages(node *Node) {
 			// completato l'aggiornamento dell'anello
 		retry:
 			if node.ChordClient.GetSuccessor().String() == "" {
-				fmt.Println("Node hasn't a successor, wait for the reconstruction...")
+				utils.PrintTs("Node hasn't a successor, wait for the reconstruction...")
 				goto retry
 			}
 
 			// Il nodo effettua export del DB e lo invia al successore
 			addr := node.ChordClient.GetSuccessor().GetIpAddr()
-			fmt.Print("DB forwarded to successor:", addr, "\n\n")
+			utils.PrintTs("DB forwarded to successor: " + addr)
 
 			// Solamente per il nodo che ha iniziato l'aggiornamento incrementiamo il contatore che ci permette
 			// di interrompere dopo 2 giri non effettuando la SendCollectionMsg
 			if node.Handler {
 				node.Round++
 				if node.Round == 2 {
-					fmt.Println("Request returned to the node invoked by the registry two times, ring updates correctly")
-					fmt.Print("========================================================\n\n\n")
+					utils.PrintTs("Request returned to the node invoked by the registry two times, ring updated correctly")
 					// Ripristiniamo le variabili per le future riconciliazioni
 					node.Handler = false
 					node.Round = 0
@@ -282,7 +281,8 @@ func DeleteReplicas(node *Node, args *Args, reply *string) {
 retry:
 	succ := node.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
-		fmt.Println("Node hasn't a successor yet, replicas will be deleted later")
+		utils.PrintTs("Node hasn't a successor yet, replicas will be deleted later")
+		// TODO forse uno sleeppetto ci va qui
 		goto retry
 	}
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
