@@ -20,10 +20,8 @@ func StartReceiver(fileChannel chan string, mode string) {
 	switch mode {
 	case "update":
 		port = utils.FILETR_TERMINATING_PORT
-		utils.PrintHeaderL3("A node wants to send his updates via TCP")
 	case "reconciliation":
 		port = utils.FILETR_RECONCILIATION_PORT
-		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 	}
 
 	server, err := net.Listen("tcp", port)
@@ -37,6 +35,11 @@ func StartReceiver(fileChannel chan string, mode string) {
 		if err != nil {
 			utils.PrintTs("Error: " + err.Error())
 			os.Exit(1)
+		}
+		if mode == "update" {
+			utils.PrintHeaderL3("A node wants to send his updates via TCP")
+		} else {
+			utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 		}
 		receiveFile(connection, fileChannel)
 	}
