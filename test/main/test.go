@@ -52,7 +52,7 @@ func localGetTest(mongo mongo.MongoInstance) {
 }
 
 /*
-Effettua una richiesta di Put, una di Update, una di
+Effettua una richiesta di Put, una di Update, una di Get, una di Append e una di Delete, misurando poi il tempo medio di risposta
 */
 func measureResponseTime() {
 	rt1 := TestPut("rt_key", "rt_value")
