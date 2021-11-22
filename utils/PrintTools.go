@@ -79,6 +79,13 @@ func StringInBox(message string) string {
 	return top + middle
 }
 
+func PrintInBox(message string) string {
+	line := "+" + strings.Repeat("—", len(message)+2) + "+\n"
+	middle := "| " + message + " |\n"
+
+	return line + middle + line
+}
+
 func StringInBoxL2(msg1 string, msg2 string) string {
 	var lenght int
 	var diff1 int
@@ -95,7 +102,7 @@ func StringInBoxL2(msg1 string, msg2 string) string {
 	top := "+" + strings.Repeat("—", lenght+2) + "+\n"
 	middle1 := "| " + msg1 + strings.Repeat(" ", diff1) + " |\n"
 	middle2 := "| " + msg2 + strings.Repeat(" ", diff2) + " |\n"
-	bottom := top
+	bottom := "+" + strings.Repeat("—", lenght+2) + "+"
 
 	return top + middle1 + middle2 + bottom
 }

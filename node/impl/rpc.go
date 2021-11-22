@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"fmt"
 	chord "progetto-sdcc/node/chord/api"
 	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/utils"
@@ -113,7 +112,7 @@ func (n *Node) DeleteRPC(args Args, reply *string) error {
 
 	client, _ := utils.HttpConnect(utils.RemovePort(handlerNode), utils.RPC_PORT)
 	utils.PrintTs("Checking Key Handling")
-	fmt.Println("Delete request forwarded to handling node:", utils.ParseAddrRPC(handlerNode))
+	utils.PrintTs("Delete request forwarded to handling node: " + utils.ParseAddrRPC(handlerNode))
 	client.Call("Node.DeleteHandling", args, &reply)
 	return nil
 }
@@ -125,7 +124,6 @@ non è stata trovata restituisce un messaggio di errore.
 func (n *Node) GetImpl(args Args, reply *string) error {
 	utils.PrintHeaderL2("Received Get RPC for key " + args.Key)
 	utils.PrintTs("I'm the handling node")
-	fmt.Println(args.Key)
 	entry := n.MongoClient.GetEntry(args.Key)
 	if entry == nil {
 		*reply = "Entry not found"

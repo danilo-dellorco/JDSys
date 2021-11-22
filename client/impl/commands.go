@@ -3,7 +3,6 @@ package impl
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net/rpc"
 	"os"
 	"progetto-sdcc/utils"
@@ -16,7 +15,8 @@ Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
 func HttpConnect() (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
 	if err != nil {
-		log.Fatal("Connection error: ", err)
+		utils.PrintTs("HTTP Connect error " + err.Error())
+		os.Exit(1)
 	}
 	return client, err
 }
@@ -25,34 +25,54 @@ func HttpConnect() (*rpc.Client, error) {
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
 func Get() {
-	key := SecScanln("Insert the Key of the desired entry")
+	utils.ClearScreen()
+	fmt.Print(utils.PrintInBox("GET"))
+	utils.PrintTailerL1()
+	key := SecScanln("> Insert the Key of the desired entry")
+	utils.PrintTailerL1()
 	GetRPC(key)
+	EnterToContinue()
 }
 
 /*
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
 func Put() {
-	key := SecScanln("Insert the Entry Key")
-	value := SecScanln("Insert the Entry Value")
+	utils.ClearScreen()
+	fmt.Print(utils.PrintInBox("PUT"))
+	utils.PrintTailerL1()
+	key := SecScanln("> Insert the Entry Key")
+	value := SecScanln("> Insert the Entry Value")
+	utils.PrintTailerL1()
 	PutRPC(key, value)
+	EnterToContinue()
 }
 
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
 func Append() {
-	key := SecScanln("Insert the Key of the Entry to Update")
-	newValue := SecScanln("Insert the Value to Append")
+	utils.ClearScreen()
+	fmt.Print(utils.PrintInBox("APPEND"))
+	utils.PrintTailerL1()
+	key := SecScanln("> Insert the Key of the Entry to Update")
+	newValue := SecScanln("> Insert the Value to Append")
+	utils.PrintTailerL1()
 	AppendRPC(key, newValue)
+	EnterToContinue()
 }
 
 /*
 Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
 func Delete() {
-	key := SecScanln("Insert the Key of the Entry to Delete")
+	utils.ClearScreen()
+	fmt.Print(utils.PrintInBox("DELETE"))
+	utils.PrintTailerL1()
+	key := SecScanln("> Insert the Key of the Entry to Delete")
+	utils.PrintTailerL1()
 	DeleteRPC(key)
+	EnterToContinue()
 }
 
 /*
@@ -81,4 +101,9 @@ func SecScanln(message string) string {
 		}
 	}
 	return arg[:len(arg)-1]
+}
+
+func EnterToContinue() {
+	fmt.Println("Press the Enter Key to continue...")
+	fmt.Scanln()
 }
