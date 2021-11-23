@@ -117,6 +117,7 @@ func InitRPCService(node *Node) {
 	srv := &http.Server{
 		Addr:    utils.RPC_PORT,
 		Handler: http.DefaultServeMux,
+		//ReadTimeout: 2 * time.Second,
 	}
 
 	rpc.Register(node)
