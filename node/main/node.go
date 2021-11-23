@@ -32,6 +32,9 @@ Loop:
 		case cmd == "succ":
 			s = fmt.Sprintf("%s", node.ChordClient.ShowSucc())
 			utils.PrintTs(s)
+
+		case cmd == "clear":
+			utils.ClearScreen()
 		// Errore
 		case err == io.EOF:
 			break Loop

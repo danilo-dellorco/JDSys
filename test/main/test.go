@@ -111,7 +111,7 @@ func runGetQueries(num int) {
 		key := "test_key_" + strconv.Itoa(id)
 		if impl.WORKLOAD_GET[id] != 1 {
 			fmt.Printf("Thread GET #%d is idle, starting...\n", id)
-			go impl.TestGet(key, true, id)
+			go impl.TestGet(key, false, id)
 		}
 		id++
 	}
@@ -122,7 +122,6 @@ func runPutQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			fmt.Scanln("")
 			time.Sleep(10 * time.Second)
 			id = 0
 		}
@@ -130,7 +129,7 @@ func runPutQueries(num int) {
 		value := "test_value_" + strconv.Itoa(id)
 		if impl.WORKLOAD_PUT[id] != 1 {
 			fmt.Printf("Thread PUT #%d is idle, starting...\n", id)
-			go impl.TestPut(key, value, true, id)
+			go impl.TestPut(key, value, false, id)
 		}
 		id++
 	}
