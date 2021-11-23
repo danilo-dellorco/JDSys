@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+var mu *sync.Mutex
+
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
 */
@@ -121,15 +123,9 @@ func InitRPCService(node *Node) {
 	rpc.Register(node)
 	rpc.HandleHTTP()
 
-	//l, e := net.Listen("tcp", utils.RPC_PORT)
-	//if e != nil {
-	//	log.Fatal("listen error:", e)
-	//}
-
 	utils.PrintTs("Start Serving RPC request on port " + utils.RPC_PORT)
 	utils.PrintTs("RPC Service Correctly Started")
 	go srv.ListenAndServe()
-	//go http.Serve(l, nil)
 }
 
 /*
@@ -137,7 +133,7 @@ Inizializza i servizi per il listening dei messaggi di update e reconciliation
 */
 func InitListeningServices(node *Node) {
 	utils.PrintHeaderL2("Starting Listening Services")
-
+	mu = new(sync.Mutex)
 	go ListenReplicationMessages(node)
 	node.Handler = false
 	node.Round = 0
@@ -195,7 +191,6 @@ schedulati per la terminazione
 */
 func ListenReplicationMessages(node *Node) {
 	fileChannel := make(chan string)
-	mu := new(sync.Mutex)
 
 	go communication.StartReceiver(fileChannel, mu, "replication")
 	utils.PrintTs("Started Update Message listening Service")
@@ -203,7 +198,7 @@ func ListenReplicationMessages(node *Node) {
 		received := <-fileChannel
 		if received == "rcvd" {
 			node.MongoClient.MergeCollection(utils.REPLICATION_EXPORT_FILE, utils.REPLICATION_RECEIVE_FILE)
-			//utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
+			utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
 			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
 			mu.Unlock()
 		}
@@ -216,7 +211,6 @@ risolti i conflitti aggiornando il database
 */
 func ListenReconciliationMessages(node *Node) {
 	fileChannel := make(chan string)
-	mu := new(sync.Mutex)
 
 	go communication.StartReceiver(fileChannel, mu, "reconciliation")
 	utils.PrintTs("Started Reconciliation Message listening Service")
@@ -252,13 +246,11 @@ func ListenReconciliationMessages(node *Node) {
 					node.Handler = false
 					node.Round = 0
 				} else {
-					node.MongoClient.ExportCollection(utils.RECONCILIATION_EXPORT_FILE)
-					SendUpdateMsg(node, addr, "reconciliation")
+					SendUpdateMsg(node, addr, "reconciliation", "")
 				}
 				// Se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
 			} else {
-				node.MongoClient.ExportCollection(utils.RECONCILIATION_EXPORT_FILE)
-				SendUpdateMsg(node, addr, "reconciliation")
+				SendUpdateMsg(node, addr, "reconciliation", "")
 			}
 		}
 	}
@@ -268,25 +260,35 @@ func ListenReconciliationMessages(node *Node) {
 Esporta il file CSV e lo invia al nodo remoto. Con mode specifichiamo se il nodo remoto dovrà fare il merge delle
 entry ricevute o solo la riconciliazione
 */
-func SendUpdateMsg(node *Node, address string, mode string) error {
+func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	var file string
 	var path string
+	var err error
 
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
+	mu.Lock()
 	switch mode {
 	case "reconciliation":
 		file = utils.RECONCILIATION_EXPORT_FILE
 		path = utils.RECONCILIATION_EXPORT_PATH
+		err = node.MongoClient.ExportCollection(file)
 	case "replication":
 		file = utils.REPLICATION_EXPORT_FILE
 		path = utils.REPLICATION_EXPORT_PATH
+		err = node.MongoClient.ExportDocument(key, file)
+	case "migration":
+		file = utils.REPLICATION_EXPORT_FILE
+		path = utils.REPLICATION_EXPORT_PATH
+		err = node.MongoClient.ExportCollection(file)
 	}
-	err := communication.StartSender(file, address, mode)
+
+	err = communication.StartSender(file, address, mode)
 	if err != nil {
 		return err
 	}
 	utils.ClearDir(path)
 	utils.PrintTs("Message sent correctly.")
+	mu.Unlock()
 	return nil
 }
 
@@ -300,10 +302,7 @@ retry:
 		goto retry
 	}
 	err := node.MongoClient.ExportDocument(key, utils.REPLICATION_EXPORT_FILE)
-	if err != nil {
-		return
-	}
-	err = SendUpdateMsg(node, succ, "replication")
+	err = SendUpdateMsg(node, succ, "replication", key)
 	if err != nil {
 		return
 	}
