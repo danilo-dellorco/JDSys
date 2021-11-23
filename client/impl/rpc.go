@@ -154,9 +154,16 @@ func check_timeout(check chan bool) {
 Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
 */
 func HttpConnect() (*rpc.Client, error) {
+	i := 0
+retry:
 	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
 	if err != nil {
-		utils.PrintTs("HTTP Connect error " + err.Error())
+		i++
+		if i < 10 {
+			goto retry
+		} else {
+			fmt.Println("Connection error: " + err.Error())
+		}
 	}
 	return client, err
 }
