@@ -58,9 +58,9 @@ Effettua una richiesta di Put, una di Update, una di Get, una di Append e una di
 */
 func measureResponseTime() {
 	utils.PrintHeaderL2("Starting Measuring Response Time")
-	rt1 := impl.TestPut("rt_key", "rt_value", true)
-	rt2 := impl.TestPut("rt_key", "rt_value_upd", true)
-	rt3 := impl.TestGet("rt_key", true)
+	rt1 := impl.TestPut("rt_key", "rt_value", nil, true)
+	rt2 := impl.TestPut("rt_key", "rt_value_upd", nil, true)
+	rt3 := impl.TestGet("rt_key", nil, true)
 	rt4 := impl.TestAppend("rt_key", "rt_value_app", true)
 	rt5 := impl.TestDelete("rt_key", true)
 
@@ -107,17 +107,19 @@ func workload2(size float32) {
 }
 
 func runGetQueries(num int) {
+	channels := make([]chan bool, num)
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
-		go impl.TestGet(key, false)
+		go impl.TestGet(key, channels[i], false)
 	}
 }
 
 func runPutQueries(num int) {
+	channels := make([]chan bool, num)
 	for i := 0; i < num; i++ {
 		key := "test_key_" + strconv.Itoa(i)
 		value := "test_value_" + strconv.Itoa(i)
-		go impl.TestPut(key, value, false)
+		go impl.TestPut(key, value, channels[i], false)
 	}
 }
 
