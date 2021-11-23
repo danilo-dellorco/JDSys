@@ -1,7 +1,6 @@
 package impl
 
 import (
-	"fmt"
 	"progetto-sdcc/client/impl"
 	"progetto-sdcc/utils"
 	"time"
@@ -37,8 +36,6 @@ func TestGet(key string, print bool, id int) time.Duration {
 	WORKLOAD_GET[id] = 0
 	end := utils.GetTimestamp()
 
-	channel <- true
-
 	return end.Sub(start)
 }
 
@@ -47,14 +44,11 @@ Permette al client di inserire una coppia key-value nel sistema di storage conta
 */
 func TestPut(key string, value string, print bool, id int) time.Duration {
 	WORKLOAD_PUT[id] = 1
+
 	start := utils.GetTimestamp()
 	impl.PutRPC(key, value, print)
-
 	WORKLOAD_PUT[id] = 0
-
 	end := utils.GetTimestamp()
-
-	channel <- true
 
 	return end.Sub(start)
 }
@@ -66,11 +60,8 @@ func TestAppend(key string, value string, print bool, id int) time.Duration {
 	WORKLOAD_APP[id] = 1
 
 	start := utils.GetTimestamp()
-
 	impl.AppendRPC(key, value, print)
-
 	WORKLOAD_APP[id] = 0
-
 	end := utils.GetTimestamp()
 
 	return end.Sub(start)
@@ -81,29 +72,7 @@ Permette al client di eliminare una coppia key-value dal sistema di storage cont
 */
 func TestDelete(key string, print bool) time.Duration {
 	start := utils.GetTimestamp()
-
 	impl.DeleteRPC(key, print)
-
 	end := utils.GetTimestamp()
-
 	return end.Sub(start)
-}
-
-func CheckGet(key string, channel chan bool, print bool) {
-	for {
-		end := <-channel
-		if end {
-			go TestGet(key, channel, print)
-		}
-	}
-}
-
-func CheckPut(key string, value string, channel chan bool, print bool) {
-	for {
-		end := <-channel
-		if end {
-			fmt.Println("spawn nuovo thread")
-			go TestPut(key, value, channel, print)
-		}
-	}
 }
