@@ -10,12 +10,12 @@ import (
 /*
 Ottiene una lista di Entry partendo da un file CSV
 */
-func ParseCSV(file string) []MongoEntry {
+func ParseCSV(file string) ([]MongoEntry, error) {
 	utils.PrintTs("Parsing CSV: " + file)
 	csvFile, err := os.Open(file)
 	if err != nil {
 		utils.PrintTs("ParseCSV Error: " + err.Error())
-		return nil
+		return nil, err
 	}
 
 	csvr := csv.NewReader(csvFile)
@@ -26,7 +26,7 @@ func ParseCSV(file string) []MongoEntry {
 	csvLines, err := csvr.ReadAll()
 	if err != nil {
 		utils.PrintTs("ReadCSV Error: " + err.Error())
-		return nil
+		return nil, err
 	}
 
 	var entryList []MongoEntry
@@ -50,7 +50,7 @@ func ParseCSV(file string) []MongoEntry {
 	}
 	defer csvFile.Close()
 	utils.PrintTs("CSV Parsed correctly")
-	return entryList
+	return entryList, nil
 }
 
 /*
