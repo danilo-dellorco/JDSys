@@ -6,7 +6,6 @@ import (
 	"progetto-sdcc/test/impl"
 	"progetto-sdcc/utils"
 	"strconv"
-	"time"
 )
 
 var PERC_75 float32 = 0.75
@@ -104,7 +103,7 @@ func runGetQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			time.Sleep(1 * time.Second)
+			//time.Sleep(1 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
@@ -121,7 +120,7 @@ func runPutQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			time.Sleep(1 * time.Second)
+			//time.Sleep(1 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)

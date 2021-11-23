@@ -265,17 +265,17 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	var path string
 	var err error
 
-	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	mu.Lock()
+	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	switch mode {
-	case "reconciliation":
-		file = utils.RECONCILIATION_EXPORT_FILE
-		path = utils.RECONCILIATION_EXPORT_PATH
-		err = node.MongoClient.ExportCollection(file)
 	case "replication":
 		file = utils.REPLICATION_EXPORT_FILE
 		path = utils.REPLICATION_EXPORT_PATH
 		err = node.MongoClient.ExportDocument(key, file)
+	case "reconciliation":
+		file = utils.RECONCILIATION_EXPORT_FILE
+		path = utils.RECONCILIATION_EXPORT_PATH
+		err = node.MongoClient.ExportCollection(file)
 	case "migration":
 		file = utils.REPLICATION_EXPORT_FILE
 		path = utils.REPLICATION_EXPORT_PATH
