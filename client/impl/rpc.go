@@ -38,7 +38,9 @@ func GetRPC(key string, print bool) {
 	client, _ := HttpConnect()
 	defer client.Close()
 	go CallRPC(GET, client, args, reply, c, print)
-	rr1_timeout(GET, client, args, reply, c, print)
+	if print {
+		rr1_timeout(GET, client, args, reply, c, print)
+	}
 }
 
 /*
