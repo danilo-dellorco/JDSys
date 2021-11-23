@@ -203,7 +203,7 @@ func ListenReplicationMessages(node *Node) {
 		received := <-fileChannel
 		if received == "rcvd" {
 			node.MongoClient.MergeCollection(utils.REPLICATION_EXPORT_FILE, utils.REPLICATION_RECEIVE_FILE)
-			utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
+			//utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
 			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
 			mu.Unlock()
 		}
@@ -227,6 +227,7 @@ func ListenReconciliationMessages(node *Node) {
 			node.MongoClient.ReconciliateCollection(utils.RECONCILIATION_EXPORT_FILE, utils.RECONCILIATION_RECEIVE_FILE)
 			utils.ClearDir(utils.RECONCILIATION_EXPORT_PATH)
 			utils.ClearDir(utils.RECONCILIATION_RECEIVE_PATH)
+			mu.Unlock()
 
 			// Nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			// completato l'aggiornamento dell'anello
