@@ -131,10 +131,13 @@ func InitRPCService(node *Node) {
 	//go http.Serve(l, nil)
 }
 
+/*
+Inizializza i servizi per il listening dei messaggi di update e reconciliation
+*/
 func InitListeningServices(node *Node) {
 	utils.PrintHeaderL2("Starting Listening Services")
 
-	go ListenUpdateMessages(node)
+	go ListenReplicationMessages(node)
 	node.Handler = false
 	node.Round = 0
 	go ListenReconciliationMessages(node)
@@ -189,16 +192,16 @@ func JoinDHT(registryAddr string) []string {
 Resta in ascolto per messaggi di aggiornamento del database. Utilizzato per ricevere i database dai nodi
 schedulati per la terminazione
 */
-func ListenUpdateMessages(node *Node) {
+func ListenReplicationMessages(node *Node) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel, "update")
+	go communication.StartReceiver(fileChannel, "replication")
 	utils.PrintTs("Started Update Message listening Service")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
-			node.MongoClient.MergeCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
-			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
-			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
+			node.MongoClient.MergeCollection(utils.REPLICATION_EXPORT_FILE, utils.REPLICATION_RECEIVE_FILE)
+			utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
+			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
 		}
 	}
 }
@@ -215,9 +218,9 @@ func ListenReconciliationMessages(node *Node) {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
 		received := <-fileChannel
 		if received == "rcvd" {
-			node.MongoClient.ReconciliateCollection(utils.UPDATES_EXPORT_FILE, utils.UPDATES_RECEIVE_FILE)
-			utils.ClearDir(utils.UPDATES_EXPORT_PATH)
-			utils.ClearDir(utils.UPDATES_RECEIVE_PATH)
+			node.MongoClient.ReconciliateCollection(utils.RECONCILIATION_EXPORT_FILE, utils.RECONCILIATION_RECEIVE_FILE)
+			utils.ClearDir(utils.RECONCILIATION_EXPORT_PATH)
+			utils.ClearDir(utils.RECONCILIATION_RECEIVE_PATH)
 
 			// Nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			// completato l'aggiornamento dell'anello
@@ -242,13 +245,13 @@ func ListenReconciliationMessages(node *Node) {
 					node.Handler = false
 					node.Round = 0
 				} else {
-					node.MongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
-					SendReplicationMsg(node, addr, "reconciliation")
+					node.MongoClient.ExportCollection(utils.RECONCILIATION_EXPORT_FILE)
+					SendUpdateMsg(node, addr, "reconciliation")
 				}
 				// Se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
 			} else {
-				node.MongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
-				SendReplicationMsg(node, addr, "reconciliation")
+				node.MongoClient.ExportCollection(utils.RECONCILIATION_EXPORT_FILE)
+				SendUpdateMsg(node, addr, "reconciliation")
 			}
 		}
 	}
@@ -258,14 +261,25 @@ func ListenReconciliationMessages(node *Node) {
 Esporta il file CSV e lo invia al nodo remoto. Con mode specifichiamo se il nodo remoto dovrà fare il merge delle
 entry ricevute o solo la riconciliazione
 */
-func SendReplicationMsg(node *Node, address string, mode string) {
+func SendUpdateMsg(node *Node, address string, mode string) {
+	var file string
+	var path string
+
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
-	file := utils.UPDATES_EXPORT_FILE
-
-	communication.StartSender(file, address, mode)
-	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
+	switch mode {
+	case "reconciliation":
+		file = utils.RECONCILIATION_EXPORT_FILE
+		path = utils.RECONCILIATION_EXPORT_PATH
+	case "replication":
+		file = utils.REPLICATION_EXPORT_FILE
+		path = utils.REPLICATION_EXPORT_PATH
+	}
+	err := communication.StartSender(file, address, mode)
+	if err != nil {
+		return
+	}
+	utils.ClearDir(path)
 	utils.PrintTs("Message sent correctly.")
-
 }
 
 func SendReplicaToSuccessor(node *Node, key string) {
@@ -277,8 +291,8 @@ retry:
 		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
-	node.MongoClient.ExportDocument(key, utils.UPDATES_EXPORT_FILE)
-	SendReplicationMsg(node, succ, "update")
+	node.MongoClient.ExportDocument(key, utils.REPLICATION_EXPORT_FILE)
+	SendUpdateMsg(node, succ, "replication")
 	utils.PrintTs("Replica sent Correctly")
 }
 

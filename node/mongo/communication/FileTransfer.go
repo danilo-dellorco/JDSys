@@ -19,7 +19,7 @@ Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV
 func StartReceiver(fileChannel chan string, mode string) {
 	var port string
 	switch mode {
-	case "update":
+	case "replication":
 		port = utils.FILETR_TERMINATING_PORT
 	case "reconciliation":
 		port = utils.FILETR_RECONCILIATION_PORT
@@ -37,23 +37,23 @@ func StartReceiver(fileChannel chan string, mode string) {
 			utils.PrintTs("Error: " + err.Error())
 			os.Exit(1)
 		}
-		if mode == "update" {
+		if mode == "replication" {
 			utils.PrintHeaderL3("A node wants to send his updates via TCP")
 		} else {
 			fmt.Println("mode:", mode)
 			utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 		}
-		receiveFile(connection, fileChannel)
+		receiveFile(connection, fileChannel, mode)
 	}
 }
 
 /*
 Apre la connessione verso un altro nodo per trasmettere un file
 */
-func StartSender(filename string, address string, mode string) {
+func StartSender(filename string, address string, mode string) error {
 	var addr string
 	switch mode {
-	case "update":
+	case "replication":
 		addr = address + utils.FILETR_TERMINATING_PORT
 	case "reconciliation":
 		addr = address + utils.FILETR_RECONCILIATION_PORT
@@ -64,20 +64,28 @@ func StartSender(filename string, address string, mode string) {
 	}
 	defer connection.Close()
 	utils.PrintTs("Ready to send DB export")
-	sendFile(connection, filename)
+	return sendFile(connection, filename)
 }
 
 /*
 Utility per ricevere un file tramite la connessione
 */
-func receiveFile(connection net.Conn, fileChannel chan string) {
+func receiveFile(connection net.Conn, fileChannel chan string, mode string) {
 	var receivedBytes int64
+	var newFile *os.File
+	var err error
+
 	bufferFileSize := make([]byte, 10)
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
-	newFile, err := os.Create(utils.UPDATES_RECEIVE_FILE)
+	switch mode {
+	case "replication":
+		newFile, err = os.Create(utils.REPLICATION_RECEIVE_FILE)
+	case "reconciliation":
+		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
+	}
 
 	if err != nil {
 		panic(err)
@@ -99,16 +107,16 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 /*
 Utility per inviare un file tramite la connessione
 */
-func sendFile(connection net.Conn, filename string) {
+func sendFile(connection net.Conn, filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		utils.PrintTs(err.Error())
-		return
+		return err
 	}
 	fileInfo, err := file.Stat()
 	if err != nil {
 		utils.PrintTs(err.Error())
-		return
+		return err
 	}
 
 	fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
@@ -123,6 +131,7 @@ func sendFile(connection net.Conn, filename string) {
 		connection.Write(sendBuffer)
 	}
 	utils.PrintTs("File sent correctly!")
+	return nil
 }
 
 /*

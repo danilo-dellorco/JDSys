@@ -394,9 +394,12 @@ Effettua l'export del DB locale, si unisce il CSV con quello ricevuto e si aggio
 */
 func (cli *MongoInstance) MergeCollection(exportFile string, receivedFile string) {
 	utils.PrintHeaderL3("Merging mongo local storage")
-	cli.ExportCollection(exportFile) // Dump del database Locale
-	localExport := ParseCSV(exportFile)
-	receivedUpdate := ParseCSV(receivedFile)
+	cli.ExportCollection(exportFile)
+	localExport, local_err := ParseCSV(exportFile)
+	receivedUpdate, recvd_err := ParseCSV(receivedFile)
+	if local_err != nil || recvd_err != nil {
+		return
+	}
 	mergedEntries := MergeEntries(localExport, receivedUpdate)
 	cli.Collection.Drop(context.TODO())
 	for _, entry := range mergedEntries {
@@ -414,8 +417,11 @@ func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile
 	utils.PrintHeaderL3("Resolving conflicts on mongo local storage")
 
 	cli.ExportCollection(exportFile) // Dump del database Locale
-	localExport := ParseCSV(exportFile)
-	receivedUpdate := ParseCSV(receivedFile)
+	localExport, local_err := ParseCSV(exportFile)
+	receivedUpdate, recvd_err := ParseCSV(receivedFile)
+	if local_err != nil || recvd_err != nil {
+		return
+	}
 	reconEntries := ReconciliateEntries(localExport, receivedUpdate)
 	cli.Collection.Drop(context.TODO())
 	for _, entry := range reconEntries {

@@ -30,7 +30,6 @@ func main() {
 	switch test_type {
 	case "workload1":
 		workload1(test_size)
-		time.Sleep(utils.TEST_STEADY_TIME)
 		utils.PrintHeaderL3("System it's at steady-state")
 		//measureResponseTime()
 	case "workload2":
@@ -105,7 +104,7 @@ func runGetQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
@@ -122,7 +121,7 @@ func runPutQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
