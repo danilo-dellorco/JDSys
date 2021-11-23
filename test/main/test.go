@@ -22,10 +22,12 @@ func main() {
 		fmt.Println("Usage: go run test.go WORKLOAD SIZE")
 		return
 	}
-	fmt.Println("Test PID:", os.Getpid())
 	test_type := os.Args[1]
 	test_size_int, _ := strconv.Atoi(os.Args[2])
 	test_size := float32(test_size_int)
+
+	fmt.Println("Test PID:", os.Getpid())
+	time.Sleep(3 * time.Second)
 
 	switch test_type {
 	case "workload1":
