@@ -268,7 +268,7 @@ func ListenReconciliationMessages(node *Node) {
 Esporta il file CSV e lo invia al nodo remoto. Con mode specifichiamo se il nodo remoto dovrà fare il merge delle
 entry ricevute o solo la riconciliazione
 */
-func SendUpdateMsg(node *Node, address string, mode string) {
+func SendUpdateMsg(node *Node, address string, mode string) error {
 	var file string
 	var path string
 
@@ -283,10 +283,11 @@ func SendUpdateMsg(node *Node, address string, mode string) {
 	}
 	err := communication.StartSender(file, address, mode)
 	if err != nil {
-		return
+		return err
 	}
 	utils.ClearDir(path)
 	utils.PrintTs("Message sent correctly.")
+	return nil
 }
 
 func SendReplicaToSuccessor(node *Node, key string) {
@@ -298,8 +299,14 @@ retry:
 		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
-	node.MongoClient.ExportDocument(key, utils.REPLICATION_EXPORT_FILE)
-	SendUpdateMsg(node, succ, "replication")
+	err := node.MongoClient.ExportDocument(key, utils.REPLICATION_EXPORT_FILE)
+	if err != nil {
+		return
+	}
+	err = SendUpdateMsg(node, succ, "replication")
+	if err != nil {
+		return
+	}
 	utils.PrintTs("Replica sent Correctly")
 }
 

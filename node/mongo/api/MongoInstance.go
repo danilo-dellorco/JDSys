@@ -255,7 +255,7 @@ func (cli *MongoInstance) PutMongoEntry(entry MongoEntry) {
 /*
 Esporta una collezione, scrivendola su un file csv
 */
-func (cli *MongoInstance) ExportCollection(filename string) {
+func (cli *MongoInstance) ExportCollection(filename string) error {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
 	arg2 := "--db=" + DB_NAME
@@ -267,15 +267,16 @@ func (cli *MongoInstance) ExportCollection(filename string) {
 	_, err := cmd.Output()
 	if err != nil {
 		utils.PrintTs(err.Error())
-		return
+		return err
 	}
-	utils.PrintTs("MongoExport successfully: " + filename)
+	utils.PrintTs("Mongo: Collection exported successfully: " + filename)
+	return nil
 }
 
 /*
 Esporta una entry specifica in formato CSV.
 */
-func (cli *MongoInstance) ExportDocument(key string, filename string) {
+func (cli *MongoInstance) ExportDocument(key string, filename string) error {
 	app := "mongoexport"
 	arg1 := "--collection=" + COLL_NAME
 	arg2 := "--db=" + DB_NAME
@@ -288,8 +289,10 @@ func (cli *MongoInstance) ExportDocument(key string, filename string) {
 	_, err := cmd.Output()
 	if err != nil {
 		utils.PrintTs(err.Error())
-		return
+		return err
 	}
+	utils.PrintTs("Mongo: Document exported successfully: " + filename)
+	return nil
 }
 
 /*
