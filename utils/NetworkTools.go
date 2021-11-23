@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"log"
+	"fmt"
 	"net/rpc"
 )
 
@@ -12,7 +12,7 @@ Utilizzato per connettersi al Load Balancer
 func HttpConnect(addr string, port string) (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", addr+port)
 	if err != nil {
-		log.Fatal("Connection error: ", err)
+		fmt.Println("Connection error: " + err.Error())
 	}
 	return client, err
 }
