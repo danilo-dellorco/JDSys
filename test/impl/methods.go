@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+var WORKLOAD_GET []int
+var WORKLOAD_PUT []int
+var WORKLOAD_APP []int
+
 /*
 Parametri per le operazioni di Get e Delete
 */
@@ -24,11 +28,9 @@ type Args2 struct {
 /*
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
-func TestGet(key string, print bool) time.Duration {
+func TestGet(key string, print bool, id int) time.Duration {
 	start := utils.GetTimestamp()
-
 	impl.GetRPC(key, print)
-
 	end := utils.GetTimestamp()
 
 	return end.Sub(start)
@@ -37,7 +39,7 @@ func TestGet(key string, print bool) time.Duration {
 /*
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
-func TestPut(key string, value string, print bool) time.Duration {
+func TestPut(key string, value string, print bool, id int) time.Duration {
 	start := utils.GetTimestamp()
 
 	impl.PutRPC(key, value, print)
@@ -50,11 +52,10 @@ func TestPut(key string, value string, print bool) time.Duration {
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
-func TestAppend(key string, value string, print bool) time.Duration {
+func TestAppend(key string, value string, print bool, id int) time.Duration {
 	start := utils.GetTimestamp()
 
 	impl.AppendRPC(key, value, print)
-
 	end := utils.GetTimestamp()
 
 	return end.Sub(start)
