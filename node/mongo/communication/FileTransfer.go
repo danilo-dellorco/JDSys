@@ -1,7 +1,6 @@
 package communication
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"os"
@@ -22,7 +21,7 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	switch mode {
 	case "replication":
 		port = utils.FILETR_TERMINATING_PORT
-	case "reconciliation":
+	default:
 		port = utils.FILETR_RECONCILIATION_PORT
 	}
 
@@ -38,12 +37,6 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 			utils.PrintTs("Error: " + err.Error())
 			os.Exit(1)
 		}
-		if mode == "replication" {
-			utils.PrintHeaderL3("A node wants to send his updates via TCP")
-		} else {
-			fmt.Println("mode:", mode)
-			utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
-		}
 		receiveFile(connection, fileChannel, mutex, mode)
 	}
 }
@@ -56,7 +49,7 @@ func StartSender(filename string, address string, mode string) error {
 	switch mode {
 	case "replication":
 		addr = address + utils.FILETR_TERMINATING_PORT
-	case "reconciliation":
+	default:
 		addr = address + utils.FILETR_RECONCILIATION_PORT
 	}
 	connection, err := net.Dial("tcp", addr)
@@ -79,6 +72,14 @@ func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex
 	bufferFileSize := make([]byte, 10)
 
 	mutex.Lock()
+	switch mode {
+	case "replication":
+		utils.PrintHeaderL3("A node wants to send his replica updates via TCP")
+	case "reconciliation":
+		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
+	case "migration":
+		utils.PrintHeaderL3("A terminating node wants to send his entries")
+	}
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
@@ -87,6 +88,8 @@ func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex
 	case "replication":
 		newFile, err = os.Create(utils.REPLICATION_RECEIVE_FILE)
 	case "reconciliation":
+		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
+	case "migration":
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
 	}
 
