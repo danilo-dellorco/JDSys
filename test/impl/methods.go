@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+var WORKLOAD_GET []int
+var WORKLOAD_PUT []int
+var WORKLOAD_APP []int
+
 /*
 Parametri per le operazioni di Get e Delete
 */
@@ -25,14 +29,12 @@ type Args2 struct {
 /*
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
-func TestGet(key string, channel chan bool, print bool) time.Duration {
-	// per la Get effettiva tramite cui misuriamo il tempo di risposta non abbiamo bisogno del thread che mantiene stabile il carico
-	if channel != nil {
-		go CheckGet(key, channel, print)
-	}
+func TestGet(key string, print bool, id int) time.Duration {
+	WORKLOAD_GET[id] = 1
 
 	start := utils.GetTimestamp()
 	impl.GetRPC(key, print)
+	WORKLOAD_GET[id] = 0
 	end := utils.GetTimestamp()
 
 	channel <- true
@@ -43,15 +45,13 @@ func TestGet(key string, channel chan bool, print bool) time.Duration {
 /*
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
-func TestPut(key string, value string, channel chan bool, print bool) time.Duration {
-	// per la Put effettiva tramite cui misuriamo il tempo di risposta non abbiamo bisogno del thread che mantiene stabile il carico
-	fmt.Println("nuovo thread")
-	if channel != nil {
-		go CheckPut(key, value, channel, print)
-	}
-
+func TestPut(key string, value string, print bool, id int) time.Duration {
+	WORKLOAD_PUT[id] = 1
 	start := utils.GetTimestamp()
 	impl.PutRPC(key, value, print)
+
+	WORKLOAD_PUT[id] = 0
+
 	end := utils.GetTimestamp()
 
 	channel <- true
@@ -62,10 +62,14 @@ func TestPut(key string, value string, channel chan bool, print bool) time.Durat
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
-func TestAppend(key string, value string, print bool) time.Duration {
+func TestAppend(key string, value string, print bool, id int) time.Duration {
+	WORKLOAD_APP[id] = 1
+
 	start := utils.GetTimestamp()
 
 	impl.AppendRPC(key, value, print)
+
+	WORKLOAD_APP[id] = 0
 
 	end := utils.GetTimestamp()
 
