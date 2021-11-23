@@ -12,6 +12,7 @@ import (
 	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/node/mongo/communication"
 	"progetto-sdcc/utils"
+	"sync"
 	"time"
 )
 
@@ -194,7 +195,9 @@ schedulati per la terminazione
 */
 func ListenReplicationMessages(node *Node) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel, "replication")
+	mu := new(sync.Mutex)
+
+	go communication.StartReceiver(fileChannel, mu, "replication")
 	utils.PrintTs("Started Update Message listening Service")
 	for {
 		received := <-fileChannel
@@ -202,6 +205,7 @@ func ListenReplicationMessages(node *Node) {
 			node.MongoClient.MergeCollection(utils.REPLICATION_EXPORT_FILE, utils.REPLICATION_RECEIVE_FILE)
 			utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
 			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
+			mu.Unlock()
 		}
 	}
 }
@@ -212,7 +216,9 @@ risolti i conflitti aggiornando il database
 */
 func ListenReconciliationMessages(node *Node) {
 	fileChannel := make(chan string)
-	go communication.StartReceiver(fileChannel, "reconciliation")
+	mu := new(sync.Mutex)
+
+	go communication.StartReceiver(fileChannel, mu, "reconciliation")
 	utils.PrintTs("Started Reconciliation Message listening Service")
 	for {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore

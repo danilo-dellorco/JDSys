@@ -8,6 +8,7 @@ import (
 	"progetto-sdcc/utils"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Dimensione del buffer per trasferire il file di aggiornamento
@@ -16,7 +17,7 @@ const BUFFERSIZE = 1024
 /*
 Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi
 */
-func StartReceiver(fileChannel chan string, mode string) {
+func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	var port string
 	switch mode {
 	case "replication":
@@ -43,7 +44,7 @@ func StartReceiver(fileChannel chan string, mode string) {
 			fmt.Println("mode:", mode)
 			utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 		}
-		receiveFile(connection, fileChannel, mode)
+		receiveFile(connection, fileChannel, mutex, mode)
 	}
 }
 
@@ -70,12 +71,14 @@ func StartSender(filename string, address string, mode string) error {
 /*
 Utility per ricevere un file tramite la connessione
 */
-func receiveFile(connection net.Conn, fileChannel chan string, mode string) {
+func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex, mode string) {
 	var receivedBytes int64
 	var newFile *os.File
 	var err error
 
 	bufferFileSize := make([]byte, 10)
+
+	mutex.Lock()
 
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
