@@ -12,6 +12,9 @@ func main() {
 	node := new(nodesys.Node)
 	nodesys.InitNode(node)
 	utils.PrintHeaderL1("NODE  SYSTEM")
+	utils.PrintInBox("Debug Commands")
+	fmt.Println("print\nfingers\nsucc\nclear")
+	utils.PrintLineL1()
 
 	// Ciclo in cui è possibile stampare lo stato attuale del nodo.
 Loop:
@@ -32,7 +35,6 @@ Loop:
 		case cmd == "succ":
 			s = fmt.Sprintf("%s", node.ChordClient.ShowSucc())
 			utils.PrintTs(s)
-
 		case cmd == "clear":
 			utils.ClearScreen()
 		// Errore

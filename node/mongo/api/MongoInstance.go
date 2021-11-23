@@ -269,6 +269,7 @@ func (cli *MongoInstance) ExportCollection(filename string) {
 		utils.PrintTs(err.Error())
 		return
 	}
+	utils.PrintTs("MongoExport successfully: " + filename)
 }
 
 /*
