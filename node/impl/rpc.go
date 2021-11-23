@@ -283,8 +283,8 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	n.Handler = true
 
 	// Effettuo l' export del DB e lo invio al successore
-	n.MongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
-	SendReplicationMsg(n, succ, "reconciliation")
+	n.MongoClient.ExportCollection(utils.RECONCILIATION_EXPORT_FILE)
+	SendUpdateMsg(n, succ, "reconciliation")
 	return nil
 }
 
@@ -306,8 +306,8 @@ retry:
 		goto retry
 	}
 
-	n.MongoClient.ExportCollection(utils.UPDATES_EXPORT_FILE)
-	SendReplicationMsg(n, succ, "update")
+	n.MongoClient.ExportCollection(utils.REPLICATION_EXPORT_FILE)
+	SendUpdateMsg(n, succ, "replication")
 	*reply = "Instance can safely terminate"
 	utils.PrintTs(*reply)
 	return nil

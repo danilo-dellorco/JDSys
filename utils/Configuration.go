@@ -2,17 +2,29 @@ package utils
 
 import "time"
 
-// MongoDB Settings
+/*
+MongoDB Settings
+*/
 var CSV string = ".csv"
 var CLOUD_EXPORT_PATH string = "../mongo/communication/cloud/export/"
 var CLOUD_RECEIVE_PATH string = "../mongo/communication/cloud/receive/"
-var UPDATES_EXPORT_PATH string = "../mongo/communication/updates/export/"
-var UPDATES_RECEIVE_PATH string = "../mongo/communication/updates/receive/"
-var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
-var UPDATES_EXPORT_FILE string = UPDATES_EXPORT_PATH + "exported.csv"
-var UPDATES_RECEIVE_FILE string = UPDATES_RECEIVE_PATH + "received.csv"
 
-// AWS SDK Settings
+// Replication Path
+var REPLICATION_EXPORT_PATH string = "../mongo/communication/repl/export/"
+var REPLICATION_RECEIVE_PATH string = "../mongo/communication/repl/receive/"
+var REPLICATION_EXPORT_FILE string = REPLICATION_EXPORT_PATH + "exported.csv"
+var REPLICATION_RECEIVE_FILE string = REPLICATION_RECEIVE_PATH + "received.csv"
+
+// Reconciliation Path
+var RECONCILIATION_EXPORT_PATH string = "../mongo/communication/recon/export/"
+var RECONCILIATION_RECEIVE_PATH string = "../mongo/communication/recon/receive/"
+var RECONCILIATION_EXPORT_FILE string = RECONCILIATION_EXPORT_PATH + "exported.csv"
+var RECONCILIATION_RECEIVE_FILE string = RECONCILIATION_RECEIVE_PATH + "received.csv"
+var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
+
+/*
+AWS SDK Settings
+*/
 var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
 var AUTOSCALING_NAME string = "sdcc-autoscaling"
@@ -20,7 +32,9 @@ var BUCKET_NAME string = "sdcc-cloud-resources"
 var LB_DNS_NAME string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
 var REGISTRY_IP string = "10.0.0.64"
 
-// Time Settings
+/*
+Time Settings
+*/
 // TODO impostare questi parametri a valori reali
 var RARELY_ACCESSED_TIME time.Duration = 30 * time.Minute           // Dopo quanto tempo un'entry viene migrata sul cloud
 var RARELY_ACCESSED_CHECK_INTERVAL time.Duration = 15 * time.Minute // Ogni quanto controlliamo entry vecchie
@@ -35,7 +49,9 @@ var RR1_RETRIES = 5                                                 // Numero di
 var TEST_STEADY_TIME = 5 * time.Second                              // Tempo per inizializzare il workload nei test
 var WAIT_SUCC_TIME = 10 * time.Second                               // Tempo che il nodo attende prima di provare a ricontattare il suo successore
 
-// Port Settings
+/*
+Port Settings
+*/
 var HEARTBEAT_PORT string = ":8888"             // Porta su cui il nodo ascolta i segnali da load balancer e registry
 var FILETR_TERMINATING_PORT string = ":7777"    // Porta su cui il nodo ascolta l'update mongo da altri nodi
 var FILETR_RECONCILIATION_PORT string = ":6666" // Porta su cui il nodo ascolta l'update mongo per reconciliation da altri nodi
