@@ -35,7 +35,7 @@ func GetRPC(key string, print bool) {
 
 	c := make(chan error)
 
-	client, _ := HttpConnect()
+	client, _ := utils.HttpConnect(utils.LB_DNS_NAME, utils.RPC_PORT)
 	defer client.Close()
 	go CallRPC(GET, client, args, reply, c, print)
 	if print {
@@ -55,7 +55,7 @@ func PutRPC(key string, value string, print bool) {
 
 	c := make(chan error)
 
-	client, _ := HttpConnect()
+	client, _ := utils.HttpConnect(utils.LB_DNS_NAME, utils.RPC_PORT)
 	defer client.Close()
 	go CallRPC(PUT, client, args, reply, c, print)
 	rr1_timeout(PUT, client, args, reply, c, print)
@@ -73,7 +73,7 @@ func AppendRPC(key string, value string, print bool) {
 
 	c := make(chan error)
 
-	client, _ := HttpConnect()
+	client, _ := utils.HttpConnect(utils.LB_DNS_NAME, utils.RPC_PORT)
 	defer client.Close()
 	go CallRPC(APP, client, args, reply, c, print)
 	rr1_timeout(APP, client, args, reply, c, print)
@@ -90,7 +90,7 @@ func DeleteRPC(key string, print bool) {
 
 	c := make(chan error)
 
-	client, _ := HttpConnect()
+	client, _ := utils.HttpConnect(utils.LB_DNS_NAME, utils.RPC_PORT)
 	defer client.Close()
 	go CallRPC(DEL, client, args, reply, c, print)
 	rr1_timeout(DEL, client, args, reply, c, print)
@@ -150,22 +150,4 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 func check_timeout(check chan bool) {
 	time.Sleep(utils.RR1_TIMEOUT)
 	check <- true
-}
-
-/*
-Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
-*/
-func HttpConnect() (*rpc.Client, error) {
-	i := 0
-retry:
-	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
-	if err != nil {
-		i++
-		if i < 10 {
-			goto retry
-		} else {
-			fmt.Println("Connection error: " + err.Error())
-		}
-	}
-	return client, err
 }

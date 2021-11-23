@@ -19,7 +19,7 @@ Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV
 func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	var port string
 	switch mode {
-	case "replication":
+	case utils.REPLN:
 		port = utils.FILETR_TERMINATING_PORT
 	default:
 		port = utils.FILETR_RECONCILIATION_PORT
@@ -47,7 +47,7 @@ Apre la connessione verso un altro nodo per trasmettere un file
 func StartSender(filename string, address string, mode string) error {
 	var addr string
 	switch mode {
-	case "replication":
+	case utils.REPLN:
 		addr = address + utils.FILETR_TERMINATING_PORT
 	default:
 		addr = address + utils.FILETR_RECONCILIATION_PORT
@@ -73,11 +73,11 @@ func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex
 
 	mutex.Lock()
 	switch mode {
-	case "replication":
+	case utils.REPLN:
 		utils.PrintHeaderL3("A node wants to send his replica updates via TCP")
-	case "reconciliation":
+	case utils.RECON:
 		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
-	case "migration":
+	case utils.MIGRN:
 		utils.PrintHeaderL3("A terminating node wants to send his entries")
 	}
 
@@ -85,11 +85,11 @@ func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
 	switch mode {
-	case "replication":
+	case utils.REPLN:
 		newFile, err = os.Create(utils.REPLICATION_RECEIVE_FILE)
-	case "reconciliation":
+	case utils.RECON:
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
-	case "migration":
+	case utils.MIGRN:
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
 	}
 

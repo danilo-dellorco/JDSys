@@ -6,6 +6,7 @@ import (
 	"progetto-sdcc/test/impl"
 	"progetto-sdcc/utils"
 	"strconv"
+	"time"
 )
 
 var PERC_75 float32 = 0.75
@@ -21,10 +22,12 @@ func main() {
 		fmt.Println("Usage: go run test.go WORKLOAD SIZE")
 		return
 	}
-	fmt.Println("Test PID:", os.Getpid())
 	test_type := os.Args[1]
 	test_size_int, _ := strconv.Atoi(os.Args[2])
 	test_size := float32(test_size_int)
+
+	fmt.Println("Test PID:", os.Getpid())
+	time.Sleep(3 * time.Second)
 
 	switch test_type {
 	case "workload1":
@@ -103,7 +106,7 @@ func runGetQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			//time.Sleep(1 * time.Second)
+			time.Sleep(1 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
@@ -120,7 +123,7 @@ func runPutQueries(num int) {
 	for {
 		if id == num {
 			fmt.Println("Maximum Size Reached:", id)
-			//time.Sleep(1 * time.Second)
+			time.Sleep(1 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)

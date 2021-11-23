@@ -48,6 +48,7 @@ var RR1_TIMEOUT time.Duration = 30 * time.Second                    // Tempo dop
 var RR1_RETRIES = 5                                                 // Numero di ritrasmissioni RR1
 var TEST_STEADY_TIME = 5 * time.Second                              // Tempo per inizializzare il workload nei test
 var WAIT_SUCC_TIME = 10 * time.Second                               // Tempo che il nodo attende prima di provare a ricontattare il suo successore
+var DIAL_RETRY = 3 * time.Second                                    // Tempo prima di effettuare un retry sulla Dial Http
 
 /*
 Port Settings
@@ -58,3 +59,10 @@ var FILETR_RECONCILIATION_PORT string = ":6666" // Porta su cui il nodo ascolta 
 var RPC_PORT string = ":80"                     // Porta su cui il nodo ascolta le chiamate RPC
 var REGISTRY_PORT string = ":4444"              // Porta tramite cui il nodo instaura una connessione con il Service Registry
 var CHORD_PORT string = ":3333"                 // Porta tramite cui il nodo riceve ed invia i messaggi necessari ad aggiornare la DHT Chord
+
+/*
+Update Messages
+*/
+var RECON string = "reconciliation"
+var REPLN string = "replication"
+var MIGRN string = "migration"
