@@ -36,6 +36,7 @@ func GetRPC(key string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(GET, client, args, reply, c, print)
 	rr1_timeout(GET, client, args, reply, c, print)
 }
@@ -53,6 +54,7 @@ func PutRPC(key string, value string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(PUT, client, args, reply, c, print)
 	rr1_timeout(PUT, client, args, reply, c, print)
 }
@@ -70,6 +72,7 @@ func AppendRPC(key string, value string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(APP, client, args, reply, c, print)
 	rr1_timeout(APP, client, args, reply, c, print)
 }
@@ -86,6 +89,7 @@ func DeleteRPC(key string, print bool) {
 	c := make(chan error)
 
 	client, _ := HttpConnect()
+	defer client.Close()
 	go CallRPC(DEL, client, args, reply, c, print)
 	rr1_timeout(DEL, client, args, reply, c, print)
 }
@@ -150,9 +154,16 @@ func check_timeout(check chan bool) {
 Permette di instaurare una connessione HTTP con il LB tramite il suo nome DNS.
 */
 func HttpConnect() (*rpc.Client, error) {
+	i := 0
+retry:
 	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
 	if err != nil {
-		utils.PrintTs("HTTP Connect error " + err.Error())
+		i++
+		if i < 10 {
+			goto retry
+		} else {
+			fmt.Println("Connection error: " + err.Error())
+		}
 	}
 	return client, err
 }
