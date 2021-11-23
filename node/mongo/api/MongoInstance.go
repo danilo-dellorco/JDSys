@@ -397,6 +397,9 @@ func (cli *MongoInstance) MergeCollection(exportFile string, receivedFile string
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
+	if localExport == nil || receivedUpdate == nil {
+		return
+	}
 	mergedEntries := MergeEntries(localExport, receivedUpdate)
 	cli.Collection.Drop(context.TODO())
 	for _, entry := range mergedEntries {
@@ -416,6 +419,9 @@ func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile
 	cli.ExportCollection(exportFile) // Dump del database Locale
 	localExport := ParseCSV(exportFile)
 	receivedUpdate := ParseCSV(receivedFile)
+	if localExport == nil || receivedUpdate == nil {
+		return
+	}
 	reconEntries := ReconciliateEntries(localExport, receivedUpdate)
 	cli.Collection.Drop(context.TODO())
 	for _, entry := range reconEntries {

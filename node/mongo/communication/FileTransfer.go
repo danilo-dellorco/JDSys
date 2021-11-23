@@ -50,7 +50,7 @@ func StartReceiver(fileChannel chan string, mode string) {
 /*
 Apre la connessione verso un altro nodo per trasmettere un file
 */
-func StartSender(filename string, address string, mode string) {
+func StartSender(filename string, address string, mode string) error {
 	var addr string
 	switch mode {
 	case "update":
@@ -64,7 +64,7 @@ func StartSender(filename string, address string, mode string) {
 	}
 	defer connection.Close()
 	utils.PrintTs("Ready to send DB export")
-	sendFile(connection, filename)
+	return sendFile(connection, filename)
 }
 
 /*
@@ -99,16 +99,16 @@ func receiveFile(connection net.Conn, fileChannel chan string) {
 /*
 Utility per inviare un file tramite la connessione
 */
-func sendFile(connection net.Conn, filename string) {
+func sendFile(connection net.Conn, filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		utils.PrintTs(err.Error())
-		return
+		return err
 	}
 	fileInfo, err := file.Stat()
 	if err != nil {
 		utils.PrintTs(err.Error())
-		return
+		return err
 	}
 
 	fileSize := fillString(strconv.FormatInt(fileInfo.Size(), 10), 10)
@@ -123,6 +123,7 @@ func sendFile(connection net.Conn, filename string) {
 		connection.Write(sendBuffer)
 	}
 	utils.PrintTs("File sent correctly!")
+	return nil
 }
 
 /*
