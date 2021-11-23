@@ -262,10 +262,12 @@ func SendReplicationMsg(node *Node, address string, mode string) {
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	file := utils.UPDATES_EXPORT_FILE
 
-	communication.StartSender(file, address, mode)
+	err := communication.StartSender(file, address, mode)
+	if err != nil {
+		return
+	}
 	utils.ClearDir(utils.UPDATES_EXPORT_PATH)
 	utils.PrintTs("Message sent correctly.")
-
 }
 
 func SendReplicaToSuccessor(node *Node, key string) {

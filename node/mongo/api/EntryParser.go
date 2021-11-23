@@ -15,6 +15,7 @@ func ParseCSV(file string) []MongoEntry {
 	csvFile, err := os.Open(file)
 	if err != nil {
 		utils.PrintTs("ParseCSV Error: " + err.Error())
+		return nil
 	}
 
 	csvr := csv.NewReader(csvFile)
@@ -25,6 +26,7 @@ func ParseCSV(file string) []MongoEntry {
 	csvLines, err := csvr.ReadAll()
 	if err != nil {
 		utils.PrintTs("ReadCSV Error: " + err.Error())
+		return nil
 	}
 
 	var entryList []MongoEntry
