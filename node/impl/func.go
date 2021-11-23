@@ -192,7 +192,7 @@ schedulati per la terminazione
 func ListenReplicationMessages(node *Node) {
 	fileChannel := make(chan string)
 
-	go communication.StartReceiver(fileChannel, mu, "replication")
+	go communication.StartReceiver(fileChannel, mu, utils.REPLN)
 	utils.PrintTs("Started Update Message listening Service")
 	for {
 		received := <-fileChannel
@@ -212,7 +212,7 @@ risolti i conflitti aggiornando il database
 func ListenReconciliationMessages(node *Node) {
 	fileChannel := make(chan string)
 
-	go communication.StartReceiver(fileChannel, mu, "reconciliation")
+	go communication.StartReceiver(fileChannel, mu, utils.RECON)
 	utils.PrintTs("Started Reconciliation Message listening Service")
 	for {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
@@ -246,11 +246,11 @@ func ListenReconciliationMessages(node *Node) {
 					node.Handler = false
 					node.Round = 0
 				} else {
-					SendUpdateMsg(node, addr, "reconciliation", "")
+					SendUpdateMsg(node, addr, utils.RECON, "")
 				}
 				// Se il nodo è uno di quelli intermedi, si limita a propagare l'aggiornamento
 			} else {
-				SendUpdateMsg(node, addr, "reconciliation", "")
+				SendUpdateMsg(node, addr, utils.RECON, "")
 			}
 		}
 	}
@@ -268,15 +268,15 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	mu.Lock()
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	switch mode {
-	case "replication":
+	case utils.REPLN:
 		file = utils.REPLICATION_EXPORT_FILE
 		path = utils.REPLICATION_EXPORT_PATH
 		err = node.MongoClient.ExportDocument(key, file)
-	case "reconciliation":
+	case utils.RECON:
 		file = utils.RECONCILIATION_EXPORT_FILE
 		path = utils.RECONCILIATION_EXPORT_PATH
 		err = node.MongoClient.ExportCollection(file)
-	case "migration":
+	case utils.MIGRN:
 		file = utils.REPLICATION_EXPORT_FILE
 		path = utils.REPLICATION_EXPORT_PATH
 		err = node.MongoClient.ExportCollection(file)
@@ -302,7 +302,7 @@ retry:
 		goto retry
 	}
 	err := node.MongoClient.ExportDocument(key, utils.REPLICATION_EXPORT_FILE)
-	err = SendUpdateMsg(node, succ, "replication", key)
+	err = SendUpdateMsg(node, succ, utils.REPLN, key)
 	if err != nil {
 		return
 	}
