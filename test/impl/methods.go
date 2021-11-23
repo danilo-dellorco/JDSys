@@ -29,8 +29,11 @@ type Args2 struct {
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
 func TestGet(key string, print bool, id int) time.Duration {
+	WORKLOAD_GET[id] = 1
+
 	start := utils.GetTimestamp()
 	impl.GetRPC(key, print)
+	WORKLOAD_GET[id] = 0
 	end := utils.GetTimestamp()
 
 	return end.Sub(start)
@@ -40,9 +43,12 @@ func TestGet(key string, print bool, id int) time.Duration {
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
 func TestPut(key string, value string, print bool, id int) time.Duration {
+	WORKLOAD_PUT[id] = 1
 	start := utils.GetTimestamp()
 
 	impl.PutRPC(key, value, print)
+
+	WORKLOAD_PUT[id] = 0
 
 	end := utils.GetTimestamp()
 
@@ -53,9 +59,14 @@ func TestPut(key string, value string, print bool, id int) time.Duration {
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
 func TestAppend(key string, value string, print bool, id int) time.Duration {
+	WORKLOAD_APP[id] = 1
+
 	start := utils.GetTimestamp()
 
 	impl.AppendRPC(key, value, print)
+
+	WORKLOAD_APP[id] = 0
+
 	end := utils.GetTimestamp()
 
 	return end.Sub(start)

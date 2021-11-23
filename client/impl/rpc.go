@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/rpc"
-	"os"
 	"progetto-sdcc/utils"
 	"strconv"
 	"time"
@@ -133,7 +132,6 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 		if print {
 			utils.PrintTs("RPC error " + err.Error())
 		}
-		os.Exit(1)
 	} else {
 		c <- errors.New("Success")
 		if print {
@@ -155,7 +153,6 @@ func HttpConnect() (*rpc.Client, error) {
 	client, err := rpc.DialHTTP("tcp", utils.LB_DNS_NAME+utils.RPC_PORT)
 	if err != nil {
 		utils.PrintTs("HTTP Connect error " + err.Error())
-		os.Exit(1)
 	}
 	return client, err
 }
