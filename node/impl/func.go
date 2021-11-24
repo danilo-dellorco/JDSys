@@ -27,9 +27,11 @@ func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
 	InitChordDHT(node)
+
+	InitListeningServices(node)
+
 	GetPredecessorEntries(node)
 	InitRPCService(node)
-	InitListeningServices(node)
 	time.Sleep(1 * time.Millisecond)
 
 	utils.PrintLineL1()
