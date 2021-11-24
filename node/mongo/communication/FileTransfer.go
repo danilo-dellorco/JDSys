@@ -24,18 +24,17 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	default:
 		port = utils.FILETR_RECONCILIATION_PORT
 	}
-
 	server, err := net.Listen("tcp", port)
 	if err != nil {
 		utils.PrintTs("Listening Error: " + err.Error())
 	}
-	defer server.Close()
 	for {
 		connection, err := server.Accept()
 		if err != nil {
 			utils.PrintTs("Accept Error: " + err.Error())
 		}
 		receiveFile(connection, fileChannel, mutex, mode)
+		connection.Close()
 	}
 }
 

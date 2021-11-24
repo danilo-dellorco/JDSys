@@ -283,17 +283,18 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	}
 
 	if err != nil {
-		mu.Unlock()
-		utils.PrintTs("File not exported. Message not sent.")
 		utils.ClearDir(path)
+		utils.PrintTs("File not exported. Message not sent.")
+		mu.Unlock()
 		return err
 	}
 
 	err = communication.StartSender(file, address, mode)
+
 	if err != nil {
-		mu.Unlock()
-		utils.PrintTs("Message not sent.")
 		utils.ClearDir(path)
+		utils.PrintTs("Message not sent.")
+		mu.Unlock()
 		return err
 	}
 
