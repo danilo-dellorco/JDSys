@@ -87,7 +87,7 @@ func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
 
 	case utils.MIGRN:
-		utils.PrintHeaderL2("A terminating node wants to send his entries")
+		utils.PrintHeaderL2("A node wants to send his entries via TCP")
 		newFile, err = os.Create(utils.MIGRATION_RECEIVE_FILE)
 	}
 
