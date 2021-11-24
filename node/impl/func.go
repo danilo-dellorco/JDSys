@@ -142,6 +142,8 @@ func InitListeningServices(node *Node) {
 	utils.PrintHeaderL2("Starting Listening Services")
 	recvMutex = new(sync.Mutex)
 	sendMutex = new(sync.Mutex)
+	migrMutex = new(sync.Mutex)
+
 	go ListenReplicationMessages(node)
 	node.Handler = false
 	node.Round = 0
