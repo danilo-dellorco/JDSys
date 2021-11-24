@@ -16,7 +16,8 @@ import (
 	"time"
 )
 
-var mu *sync.Mutex
+var sendMutex *sync.Mutex
+var recMutex *sync.Mutex
 
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
@@ -133,7 +134,8 @@ Inizializza i servizi per il listening dei messaggi di update e reconciliation
 */
 func InitListeningServices(node *Node) {
 	utils.PrintHeaderL2("Starting Listening Services")
-	mu = new(sync.Mutex)
+	recMutex = new(sync.Mutex)
+	sendMutex = new(sync.Mutex)
 	go ListenReplicationMessages(node)
 	node.Handler = false
 	node.Round = 0
@@ -192,7 +194,7 @@ schedulati per la terminazione
 func ListenReplicationMessages(node *Node) {
 	fileChannel := make(chan string)
 
-	go communication.StartReceiver(fileChannel, mu, utils.REPLN)
+	go communication.StartReceiver(fileChannel, recMutex, utils.REPLN)
 	utils.PrintTs("Started Update Message listening Service")
 	for {
 		received := <-fileChannel
@@ -200,7 +202,7 @@ func ListenReplicationMessages(node *Node) {
 			node.MongoClient.MergeCollection(utils.REPLICATION_SEND_FILE, utils.REPLICATION_RECEIVE_FILE)
 			utils.ClearDir(utils.REPLICATION_SEND_PATH)
 			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
-			mu.Unlock()
+			recMutex.Unlock()
 		}
 	}
 }
@@ -212,7 +214,7 @@ risolti i conflitti aggiornando il database
 func ListenReconciliationMessages(node *Node) {
 	fileChannel := make(chan string)
 
-	go communication.StartReceiver(fileChannel, mu, utils.RECON)
+	go communication.StartReceiver(fileChannel, recMutex, utils.RECON)
 	utils.PrintTs("Started Reconciliation Message listening Service")
 	for {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
@@ -221,7 +223,7 @@ func ListenReconciliationMessages(node *Node) {
 			node.MongoClient.ReconciliateCollection(utils.RECONCILIATION_SEND_FILE, utils.RECONCILIATION_RECEIVE_FILE)
 			utils.ClearDir(utils.RECONCILIATION_SEND_PATH)
 			utils.ClearDir(utils.RECONCILIATION_RECEIVE_PATH)
-			mu.Unlock()
+			recMutex.Unlock()
 
 			// Nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			// completato l'aggiornamento dell'anello
@@ -265,7 +267,7 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	var path string
 	var err error
 
-	mu.Lock()
+	sendMutex.Lock()
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	switch mode {
 	case utils.REPLN:
@@ -285,7 +287,7 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	if err != nil {
 		utils.ClearDir(path)
 		utils.PrintTs("File not exported. Message not sent.")
-		mu.Unlock()
+		sendMutex.Unlock()
 		return err
 	}
 
@@ -294,13 +296,13 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	if err != nil {
 		utils.ClearDir(path)
 		utils.PrintTs("Message not sent.")
-		mu.Unlock()
+		sendMutex.Unlock()
 		return err
 	}
 
 	utils.ClearDir(path)
 	utils.PrintTs("Message sent correctly.")
-	mu.Unlock()
+	sendMutex.Unlock()
 	return nil
 }
 
