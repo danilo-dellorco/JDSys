@@ -109,8 +109,20 @@ waitLB:
 		node.ChordClient, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 		first = false
 	}
+
 	utils.PrintTs("My address is: " + *addressPtr)
 	utils.PrintTs("Join address is: " + *joinPtr)
+
+	//se il nodo entra in un anello già esistente, attendiamo il corretto recupero di succ e pred prima di avviare il servizio
+	if !first {
+	retry:
+		pred := node.ChordClient.GetPredecessor().GetIpAddr()
+		if pred == "" {
+			utils.PrintTs("Wait to get successor and predecessor...")
+			time.Sleep(5 * time.Second)
+			goto retry
+		}
+	}
 	utils.PrintTs("Chord Node Started Succesfully!")
 }
 
@@ -378,14 +390,7 @@ func GetPredecessorEntries(node *Node) {
 		return
 	}
 
-retry:
 	pred := node.ChordClient.GetPredecessor().GetIpAddr()
-	if pred == "" {
-		utils.PrintTs("Wait to get predecessor...")
-		time.Sleep(5 * time.Second)
-		goto retry
-	}
-
 	client, _ := utils.HttpConnect(pred, utils.RPC_PORT)
 	err := client.Call("Node.JoinRPC", args, &reply)
 	if err != nil {
