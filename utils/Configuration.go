@@ -54,7 +54,7 @@ var DIAL_RETRY = 3 * time.Second                                    // Tempo pri
 Port Settings
 */
 var HEARTBEAT_PORT string = ":8888"             // Porta su cui il nodo ascolta i segnali da load balancer e registry
-var FILETR_TERMINATING_PORT string = ":7777"    // Porta su cui il nodo ascolta l'update mongo da altri nodi
+var FILETR_REPLICATION_PORT string = ":7777"    // Porta su cui il nodo ascolta l'update mongo da altri nodi
 var FILETR_RECONCILIATION_PORT string = ":6666" // Porta su cui il nodo ascolta l'update mongo per reconciliation da altri nodi
 var RPC_PORT string = ":80"                     // Porta su cui il nodo ascolta le chiamate RPC
 var REGISTRY_PORT string = ":4444"              // Porta tramite cui il nodo instaura una connessione con il Service Registry
