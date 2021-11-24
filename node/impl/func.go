@@ -17,6 +17,7 @@ import (
 	"time"
 )
 
+var first bool
 var sendMutex *sync.Mutex
 var recvMutex *sync.Mutex
 
@@ -26,9 +27,9 @@ Esegue tutte le attività per rendere il nodo UP & Running
 func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
-	InitChordDHT(node)
-
 	InitListeningServices(node)
+
+	InitChordDHT(node)
 
 	GetPredecessorEntries(node)
 	InitRPCService(node)
@@ -90,6 +91,7 @@ waitLB:
 		if result[0] == *addressPtr {
 			utils.PrintTs("Creating Chord Ring")
 			node.ChordClient = chord.Create(*addressPtr + utils.CHORD_PORT)
+			first = true
 		} else {
 			goto waitLB
 		}
@@ -105,11 +107,10 @@ waitLB:
 			}
 		}
 		node.ChordClient, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
+		first = false
 	}
 	utils.PrintTs("My address is: " + *addressPtr)
 	utils.PrintTs("Join address is: " + *joinPtr)
-	utils.PrintTs("Finalizing...")
-	time.Sleep(utils.CHORD_STEADY_TIME)
 	utils.PrintTs("Chord Node Started Succesfully!")
 }
 
@@ -350,11 +351,16 @@ func GetPredecessorEntries(node *Node) {
 	args.Value = node.ChordClient.GetIpAddress()
 
 	utils.PrintHeaderL2("Asking Predecessor for his entries")
-	pred := node.ChordClient.GetPredecessor().GetIpAddr()
-
-	if pred == "" {
-		utils.PrintTs("This is the only node of chord ring!")
+	if first {
 		return
+	}
+
+retry:
+	pred := node.ChordClient.GetPredecessor().GetIpAddr()
+	if pred == "" {
+		utils.PrintTs("Wait to get predecessor...")
+		time.Sleep(5 * time.Second)
+		goto retry
 	}
 
 	client, _ := utils.HttpConnect(pred, utils.RPC_PORT)
