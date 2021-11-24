@@ -28,13 +28,12 @@ Esegue tutte le attività per rendere il nodo UP & Running
 func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
-	InitMigrationService(node)
+	InitListeningServices(node)
 	time.Sleep(1 * time.Millisecond)
 
 	InitChordDHT(node)
 
 	GetPredecessorEntries(node)
-	InitListeningServices(node)
 	InitRPCService(node)
 	utils.PrintLineL1()
 }
@@ -139,17 +138,13 @@ func InitRPCService(node *Node) {
 /*
 Inizializza i servizi per il listening dei messaggi di update e reconciliation
 */
-func InitMigrationService(node *Node) {
-	utils.PrintHeaderL2("Starting Migration Service")
-	migrMutex = new(sync.Mutex)
-	go ListenMigrationMessages(node)
-}
-
 func InitListeningServices(node *Node) {
 	utils.PrintHeaderL2("Starting Listening Services")
 	recvMutex = new(sync.Mutex)
 	sendMutex = new(sync.Mutex)
+	migrMutex = new(sync.Mutex)
 
+	go ListenMigrationMessages(node)
 	go ListenReplicationMessages(node)
 	node.Handler = false
 	node.Round = 0

@@ -49,8 +49,10 @@ func StartSender(filename string, address string, mode string) error {
 	switch mode {
 	case utils.REPLN:
 		addr = address + utils.FILETR_REPLICATION_PORT
-	default:
+	case utils.RECON:
 		addr = address + utils.FILETR_RECONCILIATION_PORT
+	case utils.MIGRN:
+		addr = address + utils.FILETR_MIGRATION_PORT
 	}
 	// TODO dimensionare t/o o toglierlo
 	connection, err := net.DialTimeout("tcp", addr, 20*time.Second)
