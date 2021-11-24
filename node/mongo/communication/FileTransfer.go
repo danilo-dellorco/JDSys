@@ -20,7 +20,7 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	var port string
 	switch mode {
 	case utils.REPLN:
-		port = utils.FILETR_TERMINATING_PORT
+		port = utils.FILETR_REPLICATION_PORT
 	default:
 		port = utils.FILETR_RECONCILIATION_PORT
 	}
@@ -46,7 +46,7 @@ func StartSender(filename string, address string, mode string) error {
 	var addr string
 	switch mode {
 	case utils.REPLN:
-		addr = address + utils.FILETR_TERMINATING_PORT
+		addr = address + utils.FILETR_REPLICATION_PORT
 	default:
 		addr = address + utils.FILETR_RECONCILIATION_PORT
 	}
