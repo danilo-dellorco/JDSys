@@ -146,6 +146,7 @@ func InitListeningServices(node *Node) {
 	node.Handler = false
 	node.Round = 0
 	go ListenReconciliationMessages(node)
+	go ListenMigrationMessages(node)
 }
 
 /*
