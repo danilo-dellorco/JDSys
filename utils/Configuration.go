@@ -45,7 +45,7 @@ Time Settings
 // TODO impostare questi parametri a valori reali
 var RARELY_ACCESSED_TIME time.Duration = 30 * time.Minute           // Dopo quanto tempo un'entry viene migrata sul cloud
 var RARELY_ACCESSED_CHECK_INTERVAL time.Duration = 15 * time.Minute // Ogni quanto controlliamo entry vecchie
-var NODE_HEALTHY_TIME time.Duration = 30 * time.Second              // Tempo di attesa di un nodo prima che diventi healthy
+var NODE_HEALTHY_TIME time.Duration = 20 * time.Second              // Tempo di attesa di un nodo prima che diventi healthy
 var SEND_UPDATES_TIME time.Duration = time.Minute                   // Ogni quanto effettuare l'invio del backup del DB al nodo successore
 var CHECK_TERMINATING_INTERVAL time.Duration = time.Minute          // Ogni quanto effettuare il controllo sulle istanze in terminazione
 var START_CONSISTENCY_INTERVAL time.Duration = 10 * time.Minute     // Ogni quanto avviare il processo di scambio di aggiornamenti tra i nodi per la consistenza finale
@@ -56,7 +56,7 @@ var RR1_RETRIES = 5                                                 // Numero di
 var TEST_STEADY_TIME = 5 * time.Second                              // Tempo per inizializzare il workload nei test
 var WAIT_SUCC_TIME = 10 * time.Second                               // Tempo che il nodo attende prima di provare a ricontattare il suo successore
 var DIAL_RETRY = 3 * time.Second                                    // Tempo prima di effettuare un retry sulla Dial Http
-var CHORD_STEADY_TIME = 10 * time.Second                            // Tempo necessario a chord per aggiornare tutte le finger table
+var CHORD_STEADY_TIME = 20 * time.Second                            // Tempo necessario a chord per aggiornare tutte le finger table
 
 /*
 Port Settings
