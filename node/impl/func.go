@@ -269,12 +269,12 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	switch mode {
 	case utils.REPLN:
-		file = utils.REPLICATION_EXPORT_FILE
-		path = utils.REPLICATION_RECEIVE_PATH
+		file = utils.REPLICATION_SEND_FILE
+		path = utils.REPLICATION_SEND_PATH
 		err = node.MongoClient.ExportDocument(key, file)
 	default:
-		file = utils.RECONCILIATION_EXPORT_FILE
-		path = utils.RECONCILIATION_RECEIVE_PATH
+		file = utils.RECONCILIATION_SEND_FILE
+		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
 	}
 
