@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"os"
 	chord "progetto-sdcc/node/chord/api"
 	mongo "progetto-sdcc/node/mongo/api"
 	"progetto-sdcc/node/mongo/communication"
@@ -26,6 +27,7 @@ func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
 	InitChordDHT(node)
+	GetPredecessorEntries(node)
 	InitRPCService(node)
 	InitListeningServices(node)
 	time.Sleep(1 * time.Millisecond)
@@ -119,7 +121,6 @@ func InitRPCService(node *Node) {
 	srv := &http.Server{
 		Addr:    utils.RPC_PORT,
 		Handler: http.DefaultServeMux,
-		//ReadTimeout: 2 * time.Second,
 	}
 
 	rpc.Register(node)
@@ -280,7 +281,7 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
 	case utils.MIGRN:
-		utils.PrintHeaderL2("Sending migration entries to successor " + address + " via TCP")
+		utils.PrintHeaderL3("Sending migration entries to: " + address)
 		file = utils.RECONCILIATION_SEND_FILE
 		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
@@ -338,4 +339,26 @@ retry:
 	client, _ := utils.HttpConnect(succ, utils.RPC_PORT)
 	utils.PrintTs("Delete request forwarded to replication node: " + succ + utils.RPC_PORT)
 	client.Call("Node.DeleteReplicating", args, &reply)
+}
+
+func GetPredecessorEntries(node *Node) {
+	var reply string
+	args := Args{}
+	args.Value = node.ChordClient.GetIpAddress()
+
+	utils.PrintHeaderL2("Asking Predecessor for his Entries")
+	pred := node.ChordClient.GetPredecessor().GetIpAddr()
+
+	if pred == "" {
+		utils.PrintTs("This is the only node of chord ring!")
+		return
+	}
+
+	client, _ := utils.HttpConnect(pred, utils.RPC_PORT)
+	err := client.Call("Node.JoinRPC", args, &reply)
+	if err != nil {
+		utils.PrintTs("JoinRPC error: " + err.Error())
+		os.Exit(1)
+	}
+	utils.PrintTs(pred + ": " + reply)
 }
