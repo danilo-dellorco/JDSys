@@ -102,6 +102,7 @@ waitLB:
 		}
 		node.ChordClient, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 	}
+	time.Sleep(utils.CHORD_STEADY_TIME)
 	utils.PrintTs("My address is: " + *addressPtr)
 	utils.PrintTs("Join address is: " + *joinPtr)
 	utils.PrintTs("Chord Node Started Succesfully!")
@@ -269,17 +270,17 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 
 	switch mode {
 	case utils.REPLN:
-		utils.PrintHeaderL3("Sending replica to successor " + address)
+		utils.PrintHeaderL2("Sending replica to successor " + address + " via TCP")
 		file = utils.REPLICATION_SEND_FILE
 		path = utils.REPLICATION_SEND_PATH
 		err = node.MongoClient.ExportDocument(key, file)
 	case utils.RECON:
-		utils.PrintHeaderL3("Sending reconciliation message to successor " + address)
+		utils.PrintHeaderL2("Sending reconciliation message to successor " + address + " via TCP")
 		file = utils.RECONCILIATION_SEND_FILE
 		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
 	case utils.MIGRN:
-		utils.PrintHeaderL3("Sending migration entries to successor " + address)
+		utils.PrintHeaderL2("Sending migration entries to successor " + address + " via TCP")
 		file = utils.RECONCILIATION_SEND_FILE
 		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
