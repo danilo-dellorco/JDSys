@@ -20,12 +20,12 @@ var AUS = utils.AUTOSCALING_NAME
 /*
 Struttura contenente tutte le informazioni riguardanti un'istanza EC2
 */
-type Instance struct {
+type InstanceEC2 struct {
 	ID, PrivateIP string
 }
 
 /*
-Lista che tiene tutte le attività di terminazione già processate
+Lista che mantiene tutte le attività di terminazione già processate
 */
 var activity_cache []string
 
@@ -100,7 +100,7 @@ func getTargetsHealth(targetGroupArn string) *elbv2.DescribeTargetHealthOutput {
 }
 
 /*
-Ottiene gli ID associati a tutte le istanze healthy
+Ottiene gli ID associati a tutte le istanze healthy del target group
 */
 func getHealthyInstancesId(targetHealth *elbv2.DescribeTargetHealthOutput) []string {
 	var healthyNodes []string
@@ -145,25 +145,25 @@ func getInstanceInfo(instanceId string) *ec2.DescribeInstancesOutput {
 /*
 Ottiene ID, Indirizzo Pubblico e Indirizzo Privato di una istanza EC2
 */
-func getInstance(instanceInfo *ec2.DescribeInstancesOutput) Instance {
+func getInstance(instanceInfo *ec2.DescribeInstancesOutput) InstanceEC2 {
 	descriptions := instanceInfo.Reservations
 	actual := descriptions[0].String()
 	id := utils.GetStringInBetween(actual, "InstanceId: \"", "\",")
 	private := utils.GetStringInBetween(actual, "PrivateIpAddress: \"", "\"")
-	return Instance{id, private}
+	return InstanceEC2{id, private}
 }
 
 /*
 Ritorna gli indirizzi IP di tutti i nodi connessi al load balancer
 */
-func GetActiveNodes() []Instance {
-	var nodes []Instance
+func GetActiveNodes() []InstanceEC2 {
+	var nodes []InstanceEC2
 	targetGroup := getTargetGroup(ELB)
 	targetGroupArn := utils.GetStringInBetween(targetGroup.String(), "TargetGroupArn: \"", "\",")
 	targetsHealth := getTargetsHealth(targetGroupArn)
 	healthyInstancesList := getHealthyInstancesId(targetsHealth)
 
-	nodes = make([]Instance, len(healthyInstancesList))
+	nodes = make([]InstanceEC2, len(healthyInstancesList))
 	for i := 0; i < len(healthyInstancesList); i++ {
 		instance := getInstanceInfo(healthyInstancesList[i])
 		nodes[i] = getInstance(instance)
@@ -202,11 +202,11 @@ func getScalingActivities() *autoscaling.DescribeScalingActivitiesOutput {
 /*
 Ottiene gli ID di tutte le istanze che sono nello stato di terminazione
 */
-func GetTerminatingInstances() []Instance {
+func GetTerminatingInstances() []InstanceEC2 {
 
 	activityList := getScalingActivities()
 
-	var terminatingNodes []Instance
+	var terminatingNodes []InstanceEC2
 	activities := activityList.Activities
 	TERMINATING_START := "Description: \"Terminating EC2 instance: "
 	TERMINATING_END := " -"
