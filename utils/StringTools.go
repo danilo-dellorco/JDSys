@@ -86,6 +86,9 @@ func FormatValue(str string) string {
 	return "[" + str + "]"
 }
 
+/*
+Restituisce la stringa contenuta tra due parentesi quadre
+*/
 func RemoveBrackets(str string) string {
 	if strings.Contains(str, "[") && strings.Contains(str, "]") {
 		return str[1 : len(str)-1]
@@ -102,18 +105,22 @@ func AppendValue(str string, arg1 string) string {
 	return FormatValue(append)
 }
 
-//toglie la porta dall'indirizzo ritornato da Lookup di Chord, e aggiunge la porta per effettuare le RPC
+/*
+Rimuove la porta dall'indirizzo di Chord Lookup, e aggiunge la porta per effettuare le RPC.
+*/
 func ParseAddrRPC(addr string) string {
 	return RemovePort(addr) + RPC_PORT
 }
 
-//toglie la porta dall'indirizzo ritornato da Lookup di Chord
+/*
+Rimuove la porta dall'indirizzo di Chord Lookup
+*/
 func RemovePort(addr string) string {
 	return addr[:len(addr)-5]
 }
 
 /*
-Esegue il clear sul terminale
+Esegue il clear del terminale
 */
 func ClearScreen() {
 	fmt.Print("\033[H\033[2J")

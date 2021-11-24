@@ -98,7 +98,7 @@ func DeleteRPC(key string, print bool) {
 
 /*
 Goroutine per l'implementazione della semantica at-least-once.
-La ritrasmissione viene effettuata fino a 5 volte, altrimenti si assume che il server sia crashato.
+Vengono effettuate fino a RR1_RETRIES ritrasmissioni, altrimenti si assume che il server sia crashato.
 */
 func rr1_timeout(rpc string, client *rpc.Client, args Args, reply *string, c chan error, print bool) {
 	signal := make(chan bool)
@@ -108,27 +108,27 @@ restart_timer:
 	for i := 0; i < utils.RR1_RETRIES; i++ {
 		go check_timeout(signal)
 		select {
-		// scade timer per la ritrasmissione
+		// Scade timer per la ritrasmissione
 		case <-signal:
 			check++
 			utils.PrintTs("Timeout elapsed, send new request n°" + strconv.Itoa(check) + "...")
 			go CallRPC(rpc, client, args, reply, c, print)
 
-		// arriva risposta dal server
+		// Arriva risposta dal server
 		case res = <-c:
 			if res.Error() == "Success" {
 				break restart_timer
 			}
 		}
 	}
-	//effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
+	// Effettuate tutte le ritrasmissioni possibili e non si riceve alcuna risposta
 	if check == utils.RR1_RETRIES && res.Error() != "Success" {
 		utils.PrintTs("Server unreachable!")
 	}
 }
 
 /*
-Effettua una generica RPC, utilizzata per implementare il meccanismo RR1 per la semantica at-least-once
+Effettua una generica chiamata RPC, gestendo anche il meccanismo RR1
 */
 func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan error, print bool) {
 	err := client.Call(rpc, args, &reply)
@@ -147,6 +147,9 @@ func CallRPC(rpc string, client *rpc.Client, args Args, reply *string, c chan er
 	}
 }
 
+/*
+Controlla lo scadere del timeout
+*/
 func check_timeout(check chan bool) {
 	time.Sleep(utils.RR1_TIMEOUT)
 	check <- true

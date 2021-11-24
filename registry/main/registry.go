@@ -47,9 +47,9 @@ func main() {
 }
 
 /*
-Un nodo, per effettuare Create/Join, deve conoscere i nodi presenti nell'anello
+Fornisce la lista dei nodi presenti nell'anello ad un nuovo nodo che vuole effettuare il join
 */
-func (s *DHThandler) JoinRing(args *Args, reply *[]string) error {
+func (s *DHThandler) GetActiveNodes(args *Args, reply *[]string) error {
 	instances := checkActiveNodes()
 	var list = make([]string, len(instances))
 	for i := 0; i < len(instances); i++ {
@@ -70,7 +70,7 @@ func InitializeDHTService() *DHThandler {
 /*
 Restituisce tutte le istanze healthy presenti
 */
-func checkActiveNodes() []amazon.Instance {
+func checkActiveNodes() []amazon.InstanceEC2 {
 	instances := amazon.GetActiveNodes()
 	return instances
 }
@@ -79,7 +79,7 @@ func checkActiveNodes() []amazon.Instance {
 Controlla periodicamente quali sono le istanze in terminazione. Invia a queste un segnale in modo che prima
 di terminare possano inviare le proprie entry ad un altro nodo
 */
-func checkTerminatingNodes() {
+func StartCheckTerminatingNodes() {
 	utils.PrintHeaderL2("Starting Checking Terminating Nodes")
 	go amazon.Start_cache_flush_service()
 	for {
@@ -92,7 +92,7 @@ func checkTerminatingNodes() {
 }
 
 /*
-Invocazione dell'RPC che invia il segnale di terminazione ad un nodo schedulato per la terminazione
+Invoca la RPC che invia il segnale di terminazione ad un nodo schedulato per la terminazione
 */
 func sendTerminatingSignalRPC(ip string) {
 	utils.PrintTs("Sending Terminating Message to node: " + ip)
@@ -112,7 +112,7 @@ Avvia periodicamente il processo iterativo di scambio di aggiornamenti tra un no
 Il processo permette di raggiungere la consistenza finale se non si verificano aggiornamenti in questa finestra temporale
 */
 // TODO calcolare bene il valore della finestra temporale per la relazione
-func startPeriodicUpdates() {
+func StartPeriodicReconciliation() {
 	utils.PrintHeaderL2("Starting periodic updates for reconciliation Routine")
 	for {
 		time.Sleep(utils.START_CONSISTENCY_INTERVAL)
@@ -151,6 +151,9 @@ func startReconciliationRPC(ip string) {
 	}
 }
 
+/*
+Esegue tutte le operazioni per rendere il registry Up & Running
+*/
 func InitRegistry() *http.Server {
 	utils.PrintHeaderL1("REGISTRY SETUP")
 
@@ -165,7 +168,7 @@ func InitRegistry() *http.Server {
 	go server.ListenAndServe()
 	utils.PrintTs("Service Registry waiting for incoming connections")
 
-	go checkTerminatingNodes()
-	go startPeriodicUpdates()
+	go StartCheckTerminatingNodes()
+	go StartPeriodicReconciliation()
 	return server
 }

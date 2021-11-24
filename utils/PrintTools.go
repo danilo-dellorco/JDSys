@@ -23,14 +23,14 @@ func FormatTime(t time.Time) string {
 }
 
 /*
-Stampa un timestamp
+Stampa a schermo un timestamp
 */
 func PrintFormattedTimestamp() {
 	fmt.Print("[" + FormatTime(GetTimestamp()) + "] ")
 }
 
 /*
-Stampa una stringa, includendo un timestamp formattato
+Stampa a schermo un messaggio, includendo un timestamp formattato
 */
 func PrintTs(message string) {
 	ts := "[" + FormatTime(GetTimestamp()) + "] "
@@ -66,19 +66,22 @@ func PrintHeaderL3(message string) {
 }
 
 /*
-Stampa una stringa per chiudere l'Header di Livello 1
+Stampa una linea di Livello 1
 */
 func PrintLineL1() {
 	fmt.Println(strings.Repeat("═", HL))
 }
 
 /*
-Stampa una stringa per chiudere l'Header di Livello 1
+Stampa una linea di Livello 2
 */
 func PrintLineL2() {
 	fmt.Println(strings.Repeat("—", HL))
 }
 
+/*
+Ritorna una stringa formattata all'interno di un Box
+*/
 func StringInBox(message string) string {
 	top := "+" + strings.Repeat("—", len(message)+2) + "+\n"
 	middle := "| " + message + " |\n"
@@ -86,6 +89,9 @@ func StringInBox(message string) string {
 	return top + middle
 }
 
+/*
+Stampa una stringa formattata all'interno di un Box
+*/
 func PrintInBox(message string) {
 	line := "+" + strings.Repeat("—", len(message)+2) + "+\n"
 	middle := "| " + message + " |\n"
@@ -93,6 +99,9 @@ func PrintInBox(message string) {
 	fmt.Print(line + middle + line)
 }
 
+/*
+Formatta due messaggi all'interno di un unico Box
+*/
 func StringInBoxL2(msg1 string, msg2 string) string {
 	var lenght int
 	var diff1 int
@@ -114,6 +123,9 @@ func StringInBoxL2(msg1 string, msg2 string) string {
 	return top + middle1 + middle2 + bottom
 }
 
+/*
+Stampa due messaggi, formattandoli all'interno di un unico Box
+*/
 func PrintStringInBoxL2(msg1 string, msg2 string) {
 	var lenght int
 	var diff1 int
@@ -135,6 +147,9 @@ func PrintStringInBoxL2(msg1 string, msg2 string) {
 	fmt.Println(top + middle1 + middle2 + bottom)
 }
 
+/*
+Stampa la lista di comandi disponibili sul client
+*/
 func PrintClientCommandsList() {
 	fmt.Print(StringInBox("COMMANDS LIST"))
 
@@ -156,6 +171,9 @@ func PrintClientCommandsList() {
 	PrintLineL1()
 }
 
+/*
+Stampa la Titlebar sul client
+*/
 func PrintClientTitlebar() {
 	PrintHeaderL1("SDCC Distributed Key-Value Storage")
 }

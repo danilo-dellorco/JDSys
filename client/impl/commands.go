@@ -38,7 +38,7 @@ func Put() {
 }
 
 /*
-Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
+Permette al client di aggiungere un nuovo valore ad una chiave presente nel sistema di storage contattando il LB
 */
 func Append() {
 	utils.ClearScreen()
@@ -80,7 +80,7 @@ func Exit() {
 
 /*
 Prende input da tastiera in modo sicuro, rimuovendo eventuali caratteri che potrebbero
-permettere ad un attaccante di effettuare una Injection su MongoDB
+permettere ad un attaccante di rompere la sintassi MongoDB
 */
 func SecScanln(message string) string {
 	arg := ""
@@ -98,6 +98,9 @@ func SecScanln(message string) string {
 	return arg[:len(arg)-1]
 }
 
+/*
+Mette in pausa il programma fino alla pressione del tasto 'Enter'
+*/
 func EnterToContinue() {
 	utils.PrintLineL2()
 	fmt.Println("")
