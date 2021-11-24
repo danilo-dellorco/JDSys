@@ -77,17 +77,16 @@ func receiveFile(connection net.Conn, fileChannel chan string, recvMutex *sync.M
 
 	switch mode {
 	case utils.REPLN:
-		utils.PrintHeaderL3("A node wants to send his replica updates via TCP")
+		utils.PrintHeaderL2("A node wants to send his replica updates via TCP")
 		newFile, err = os.Create(utils.REPLICATION_RECEIVE_FILE)
 
 	case utils.RECON:
-		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
+		utils.PrintHeaderL2("A node wants to send a Reconciliation message via TCP")
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
 
 	case utils.MIGRN:
-		utils.PrintHeaderL3("A terminating node wants to send his entries")
+		utils.PrintHeaderL2("A terminating node wants to send his entries")
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
-
 	}
 
 	if err != nil {

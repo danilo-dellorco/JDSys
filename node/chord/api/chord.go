@@ -168,7 +168,7 @@ func (node *ChordNode) GetSuccessor() *NodeInfo {
 /*
 Restituisce il predecessore del nodo
 */
-func (node *ChordNode) GetPedecessor() *NodeInfo {
+func (node *ChordNode) GetPredecessor() *NodeInfo {
 	return node.predecessor
 }
 

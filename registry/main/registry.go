@@ -96,16 +96,12 @@ Invocazione dell'RPC che invia il segnale di terminazione ad un nodo schedulato 
 */
 func sendTerminatingSignalRPC(ip string) {
 	utils.PrintTs("Sending Terminating Message to node: " + ip)
-	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
-	if err != nil {
-		utils.PrintTs("dialing: " + err.Error())
-		os.Exit(1)
-	}
+	client, _ := utils.HttpConnect(ip, utils.RPC_PORT)
 	var reply string
 	args := Args{}
-	err = client.Call("Node.TerminateInstanceRPC", args, &reply)
+	err := client.Call("Node.LeaveRPC", args, &reply)
 	if err != nil {
-		utils.PrintTs("TerminateInstanceRPC error: " + err.Error())
+		utils.PrintTs("LeaveRPC error: " + err.Error())
 		os.Exit(1)
 	}
 	utils.PrintTs(ip + ": " + reply)
@@ -142,16 +138,14 @@ func startPeriodicUpdates() {
 Invocazione dell'RPC che avvia lo scambio di aggiornamenti tra i nodi per raggiungere la consistenza finale
 */
 func startReconciliationRPC(ip string) {
-	utils.PrintTs("Sending db exchange signal to node: " + ip)
-	client, err := rpc.DialHTTP("tcp", ip+utils.RPC_PORT)
-	if err != nil {
-		utils.PrintTs("dialing: " + err.Error())
-	}
 	var reply string
 	args := Args{}
 	args.Handler = ""
 	args.Deleted = false
-	err = client.Call("Node.ConsistencyHandlerRPC", args, &reply)
+
+	utils.PrintTs("Sending db exchange signal to node: " + ip)
+	client, _ := utils.HttpConnect(ip, utils.RPC_PORT)
+	err := client.Call("Node.ConsistencyHandlerRPC", args, &reply)
 	if err != nil {
 		utils.PrintTs("ConsistencyHandlerRPC error: " + err.Error())
 	}

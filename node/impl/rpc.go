@@ -294,9 +294,10 @@ Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo l
 aggiornare altri dati obsoleti mantenuti dal successore.
 */
 
-func (n *Node) TerminateInstanceRPC(args *Args, reply *string) error {
-	utils.PrintHeaderL2("Terminating Node")
+func (n *Node) LeaveRPC(args *Args, reply *string) error {
+	utils.PrintHeaderL2("Node Leaving")
 	utils.PrintTs("Instance Scheduled to Terminating")
+	utils.PrintTs("Sending entries to successor")
 retry:
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {
@@ -306,7 +307,33 @@ retry:
 	}
 
 	SendUpdateMsg(n, succ, utils.MIGRN, "")
-	*reply = "Instance can safely terminate"
+	*reply = "Instance can now safely leave the chord ring"
+	utils.PrintTs(*reply)
+	return nil
+}
+
+/*
+Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per la terminazione
+Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati.
+Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo la possibilità di
+aggiornare altri dati obsoleti mantenuti dal successore.
+*/
+
+func (n *Node) JoinRPC(args *Args, reply *string) error {
+	succ := args.Value
+	utils.PrintHeaderL2("Node Joining")
+	utils.PrintTs("Instance is joining chord DHT")
+	utils.PrintTs("Sending entries to new successor node")
+
+retry:
+	if succ == "" {
+		utils.PrintTs("Node hasn't a successor, wait for the reconstruction of the DHT")
+		time.Sleep(utils.WAIT_SUCC_TIME)
+		goto retry
+	}
+
+	SendUpdateMsg(n, succ, utils.MIGRN, "")
+	*reply = "Instance succesfully inserted in chord ring"
 	utils.PrintTs(*reply)
 	return nil
 }
