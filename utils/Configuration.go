@@ -56,7 +56,7 @@ var RR1_RETRIES = 5                                                 // Numero di
 var TEST_STEADY_TIME = 5 * time.Second                              // Tempo per inizializzare il workload nei test
 var WAIT_SUCC_TIME = 10 * time.Second                               // Tempo che il nodo attende prima di provare a ricontattare il suo successore
 var DIAL_RETRY = 3 * time.Second                                    // Tempo prima di effettuare un retry sulla Dial Http
-var CHORD_STEADY_TIME = 5 * time.Second                             // Tempo necessario a chord per aggiornare tutte le finger table
+var CHORD_STEADY_TIME = 10 * time.Second                            // Tempo necessario a chord per aggiornare tutte le finger table
 
 /*
 Port Settings
