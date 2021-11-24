@@ -6,19 +6,24 @@ import "time"
 MongoDB Settings
 */
 var CSV string = ".csv"
+
+/*
+Cloud Path
+*/
 var CLOUD_EXPORT_PATH string = "../mongo/communication/cloud/export/"
 var CLOUD_RECEIVE_PATH string = "../mongo/communication/cloud/receive/"
 
 // Replication Path
-var REPLICATION_EXPORT_PATH string = "../mongo/communication/repl/export/"
+// TODO cambiare il path export file eccetera
+var REPLICATION_SEND_PATH string = "../mongo/communication/repl/export/"
 var REPLICATION_RECEIVE_PATH string = "../mongo/communication/repl/receive/"
-var REPLICATION_EXPORT_FILE string = REPLICATION_EXPORT_PATH + "exported.csv"
+var REPLICATION_SEND_FILE string = REPLICATION_SEND_PATH + "exported.csv"
 var REPLICATION_RECEIVE_FILE string = REPLICATION_RECEIVE_PATH + "received.csv"
 
 // Reconciliation Path
-var RECONCILIATION_EXPORT_PATH string = "../mongo/communication/recon/export/"
+var RECONCILIATION_SEND_PATH string = "../mongo/communication/recon/export/"
 var RECONCILIATION_RECEIVE_PATH string = "../mongo/communication/recon/receive/"
-var RECONCILIATION_EXPORT_FILE string = RECONCILIATION_EXPORT_PATH + "exported.csv"
+var RECONCILIATION_SEND_FILE string = RECONCILIATION_SEND_PATH + "exported.csv"
 var RECONCILIATION_RECEIVE_FILE string = RECONCILIATION_RECEIVE_PATH + "received.csv"
 var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
 

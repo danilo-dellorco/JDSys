@@ -199,8 +199,8 @@ func ListenReplicationMessages(node *Node) {
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
-			node.MongoClient.MergeCollection(utils.REPLICATION_EXPORT_FILE, utils.REPLICATION_RECEIVE_FILE)
-			utils.ClearDir(utils.REPLICATION_EXPORT_PATH)
+			node.MongoClient.MergeCollection(utils.REPLICATION_SEND_FILE, utils.REPLICATION_RECEIVE_FILE)
+			utils.ClearDir(utils.REPLICATION_SEND_PATH)
 			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
 			recMutex.Unlock()
 		}
@@ -220,8 +220,8 @@ func ListenReconciliationMessages(node *Node) {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
 		received := <-fileChannel
 		if received == "rcvd" {
-			node.MongoClient.ReconciliateCollection(utils.RECONCILIATION_EXPORT_FILE, utils.RECONCILIATION_RECEIVE_FILE)
-			utils.ClearDir(utils.RECONCILIATION_EXPORT_PATH)
+			node.MongoClient.ReconciliateCollection(utils.RECONCILIATION_SEND_FILE, utils.RECONCILIATION_RECEIVE_FILE)
+			utils.ClearDir(utils.RECONCILIATION_SEND_PATH)
 			utils.ClearDir(utils.RECONCILIATION_RECEIVE_PATH)
 			recMutex.Unlock()
 
@@ -271,16 +271,16 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
 	switch mode {
 	case utils.REPLN:
-		file = utils.REPLICATION_EXPORT_FILE
-		path = utils.REPLICATION_EXPORT_PATH
+		file = utils.REPLICATION_SEND_FILE
+		path = utils.REPLICATION_SEND_PATH
 		err = node.MongoClient.ExportDocument(key, file)
 	case utils.RECON:
-		file = utils.RECONCILIATION_EXPORT_FILE
-		path = utils.RECONCILIATION_EXPORT_PATH
+		file = utils.RECONCILIATION_SEND_FILE
+		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
 	case utils.MIGRN:
-		file = utils.REPLICATION_EXPORT_FILE
-		path = utils.REPLICATION_EXPORT_PATH
+		file = utils.REPLICATION_SEND_FILE
+		path = utils.REPLICATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
 	}
 
