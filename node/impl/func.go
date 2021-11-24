@@ -306,8 +306,8 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 		err = node.MongoClient.ExportCollection(file)
 	case utils.MIGRN:
 		utils.PrintHeaderL3("Sending migration entries to: " + address)
-		file = utils.RECONCILIATION_SEND_FILE
-		path = utils.RECONCILIATION_SEND_PATH
+		file = utils.MIGRATION_SEND_FILE
+		path = utils.MIGRATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
 	}
 
