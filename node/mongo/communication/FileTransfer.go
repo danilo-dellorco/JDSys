@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Dimensione del buffer per trasferire il file di aggiornamento
@@ -49,7 +50,7 @@ func StartSender(filename string, address string, mode string) error {
 	default:
 		addr = address + utils.FILETR_RECONCILIATION_PORT
 	}
-	connection, err := net.Dial("tcp", addr)
+	connection, err := net.DialTimeout("tcp", addr, 10*time.Second)
 	if err != nil {
 		utils.PrintTs(err.Error())
 		return err
