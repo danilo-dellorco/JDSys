@@ -17,6 +17,8 @@ var PERC_20 float32 = 0.20
 var WORKLOAD []int
 
 func main() {
+	utils.ClearScreen()
+	utils.PrintHeaderL1("TEST CLIENT")
 	if len(os.Args) != 3 {
 		fmt.Println("You need to specify the workload type to test.")
 		fmt.Println("Usage: go run test.go WORKLOAD SIZE")
