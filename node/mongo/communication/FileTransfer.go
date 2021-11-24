@@ -28,14 +28,12 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	server, err := net.Listen("tcp", port)
 	if err != nil {
 		utils.PrintTs("Listening Error: " + err.Error())
-		os.Exit(1)
 	}
 	defer server.Close()
 	for {
 		connection, err := server.Accept()
 		if err != nil {
-			utils.PrintTs("Error: " + err.Error())
-			os.Exit(1)
+			utils.PrintTs("Accept Error: " + err.Error())
 		}
 		receiveFile(connection, fileChannel, mutex, mode)
 	}
@@ -56,7 +54,9 @@ func StartSender(filename string, address string, mode string) error {
 	if err != nil {
 		utils.PrintTs(err.Error())
 	}
-	defer connection.Close()
+	if connection != nil {
+		defer connection.Close()
+	}
 	utils.PrintTs("Ready to send DB export")
 	return sendFile(connection, filename)
 }
