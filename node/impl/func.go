@@ -291,7 +291,7 @@ func ListenMigrationMessages(node *Node) {
 		if received == "rcvd" {
 			node.MongoClient.MergeCollection(utils.MIGRATION_EXPORT_FILE, utils.MIGRATION_RECEIVE_FILE)
 			utils.ClearDir(utils.MIGRATION_RECEIVE_PATH)
-			recvMutex.Unlock()
+			migrMutex.Unlock()
 		}
 	}
 }
