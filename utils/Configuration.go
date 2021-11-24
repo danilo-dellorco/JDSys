@@ -12,9 +12,9 @@ Cloud Path
 */
 var CLOUD_EXPORT_PATH string = "../mongo/communication/cloud/export/"
 var CLOUD_RECEIVE_PATH string = "../mongo/communication/cloud/receive/"
+var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
 
 // Replication Path
-// TODO cambiare il path export file eccetera
 var REPLICATION_SEND_PATH string = "../mongo/communication/repl/send/"
 var REPLICATION_RECEIVE_PATH string = "../mongo/communication/repl/receive/"
 var REPLICATION_SEND_FILE string = REPLICATION_SEND_PATH + "exported.csv"
@@ -27,7 +27,13 @@ var RECONCILIATION_RECEIVE_PATH string = "../mongo/communication/recon/receive/"
 var RECONCILIATION_SEND_FILE string = RECONCILIATION_SEND_PATH + "exported.csv"
 var RECONCILIATION_RECEIVE_FILE string = RECONCILIATION_RECEIVE_PATH + "received.csv"
 var RECONCILIATION_EXPORT_FILE string = RECONCILIATION_RECEIVE_PATH + "exported.csv"
-var CLOUD_EXPORT_FILE string = CLOUD_EXPORT_PATH + "exported.csv"
+
+// Migration Path
+var MIGRATION_SEND_PATH string = "../mongo/communication/migr/send/"
+var MIGRATION_RECEIVE_PATH string = "../mongo/communication/migr/receive/"
+var MIGRATION_SEND_FILE string = MIGRATION_SEND_PATH + "exported.csv"
+var MIGRATION_RECEIVE_FILE string = MIGRATION_RECEIVE_PATH + "received.csv"
+var MIGRATION_EXPORT_FILE string = MIGRATION_RECEIVE_PATH + "exported.csv"
 
 /*
 AWS SDK Settings
@@ -64,6 +70,7 @@ Port Settings
 var HEARTBEAT_PORT string = ":8888"             // Porta su cui il nodo ascolta i segnali da load balancer e registry
 var FILETR_REPLICATION_PORT string = ":7777"    // Porta su cui il nodo ascolta l'update mongo da altri nodi
 var FILETR_RECONCILIATION_PORT string = ":6666" // Porta su cui il nodo ascolta l'update mongo per reconciliation da altri nodi
+var FILETR_MIGRATION_PORT string = ":5555"      // Porta su cui il nodo ascolta l'update mongo per migration da altri nodi
 var RPC_PORT string = ":80"                     // Porta su cui il nodo ascolta le chiamate RPC
 var REGISTRY_PORT string = ":4444"              // Porta tramite cui il nodo instaura una connessione con il Service Registry
 var CHORD_PORT string = ":3333"                 // Porta tramite cui il nodo riceve ed invia i messaggi necessari ad aggiornare la DHT Chord

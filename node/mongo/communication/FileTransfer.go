@@ -22,8 +22,10 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	switch mode {
 	case utils.REPLN:
 		port = utils.FILETR_REPLICATION_PORT
-	default:
+	case utils.RECON:
 		port = utils.FILETR_RECONCILIATION_PORT
+	case utils.MIGRN:
+		port = utils.FILETR_MIGRATION_PORT
 	}
 	server, err := net.Listen("tcp", port)
 	if err != nil {
@@ -64,14 +66,14 @@ func StartSender(filename string, address string, mode string) error {
 /*
 Utility per ricevere un file tramite la connessione
 */
-func receiveFile(connection net.Conn, fileChannel chan string, recvMutex *sync.Mutex, mode string) {
+func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex, mode string) {
 	var receivedBytes int64
 	var newFile *os.File
 	var err error
 
 	bufferFileSize := make([]byte, 10)
 
-	recvMutex.Lock()
+	mutex.Lock()
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
@@ -86,7 +88,7 @@ func receiveFile(connection net.Conn, fileChannel chan string, recvMutex *sync.M
 
 	case utils.MIGRN:
 		utils.PrintHeaderL2("A terminating node wants to send his entries")
-		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
+		newFile, err = os.Create(utils.MIGRATION_RECEIVE_FILE)
 	}
 
 	if err != nil {

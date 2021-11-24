@@ -20,6 +20,7 @@ import (
 var first bool
 var sendMutex *sync.Mutex
 var recvMutex *sync.Mutex
+var migrMutex *sync.Mutex
 
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
@@ -28,13 +29,12 @@ func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
 	InitHealthyNode(node)
 	InitListeningServices(node)
+	time.Sleep(1 * time.Millisecond)
 
 	InitChordDHT(node)
 
 	GetPredecessorEntries(node)
 	InitRPCService(node)
-	time.Sleep(1 * time.Millisecond)
-
 	utils.PrintLineL1()
 }
 
@@ -263,6 +263,25 @@ func ListenReconciliationMessages(node *Node) {
 }
 
 /*
+Resta in ascolto per messaggi di aggiornamento del database. Utilizzato per ricevere i database dai nodi
+schedulati per la terminazione
+*/
+func ListenMigrationMessages(node *Node) {
+	fileChannel := make(chan string)
+
+	go communication.StartReceiver(fileChannel, migrMutex, utils.MIGRN)
+	utils.PrintTs("Started Migration listening Service")
+	for {
+		received := <-fileChannel
+		if received == "rcvd" {
+			node.MongoClient.MergeCollection(utils.MIGRATION_EXPORT_FILE, utils.MIGRATION_RECEIVE_FILE)
+			utils.ClearDir(utils.MIGRATION_RECEIVE_PATH)
+			recvMutex.Unlock()
+		}
+	}
+}
+
+/*
 Esporta il file CSV e lo invia al nodo remoto. Con mode specifichiamo se il nodo remoto dovrà fare il merge delle
 entry ricevute o solo la riconciliazione
 */
@@ -352,6 +371,7 @@ func GetPredecessorEntries(node *Node) {
 
 	utils.PrintHeaderL2("Asking Predecessor for his entries")
 	if first {
+		utils.PrintTs("First node of the ring, no predecessor!")
 		return
 	}
 
