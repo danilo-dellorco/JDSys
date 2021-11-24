@@ -50,7 +50,7 @@ func StartSender(filename string, address string, mode string) error {
 	default:
 		addr = address + utils.FILETR_RECONCILIATION_PORT
 	}
-	connection, err := net.DialTimeout("tcp", addr, 10*time.Second)
+	connection, err := net.DialTimeout("tcp", addr, 1*time.Second)
 	if err != nil {
 		utils.PrintTs(err.Error())
 		return err
