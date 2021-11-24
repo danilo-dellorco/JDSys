@@ -282,10 +282,21 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 		err = node.MongoClient.ExportCollection(file)
 	}
 
-	err = communication.StartSender(file, address, mode)
 	if err != nil {
+		mu.Unlock()
+		utils.PrintTs("File not exported. Message not sent.")
+		utils.ClearDir(path)
 		return err
 	}
+
+	err = communication.StartSender(file, address, mode)
+	if err != nil {
+		mu.Unlock()
+		utils.PrintTs("Message not sent.")
+		utils.ClearDir(path)
+		return err
+	}
+
 	utils.ClearDir(path)
 	utils.PrintTs("Message sent correctly.")
 	mu.Unlock()
@@ -301,8 +312,7 @@ retry:
 		time.Sleep(utils.WAIT_SUCC_TIME)
 		goto retry
 	}
-	err := node.MongoClient.ExportDocument(key, utils.REPLICATION_EXPORT_FILE)
-	err = SendUpdateMsg(node, succ, utils.REPLN, key)
+	err := SendUpdateMsg(node, succ, utils.REPLN, key)
 	if err != nil {
 		return
 	}

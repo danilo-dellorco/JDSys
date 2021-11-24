@@ -283,7 +283,6 @@ func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
 	n.Handler = true
 
 	// Effettuo l' export del DB e lo invio al successore
-	n.MongoClient.ExportCollection(utils.RECONCILIATION_EXPORT_FILE)
 	SendUpdateMsg(n, succ, utils.RECON, "")
 	return nil
 }

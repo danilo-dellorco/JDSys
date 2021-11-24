@@ -53,10 +53,9 @@ func StartSender(filename string, address string, mode string) error {
 	connection, err := net.Dial("tcp", addr)
 	if err != nil {
 		utils.PrintTs(err.Error())
+		return err
 	}
-	if connection != nil {
-		defer connection.Close()
-	}
+	defer connection.Close()
 	utils.PrintTs("Ready to send DB export")
 	return sendFile(connection, filename)
 }
