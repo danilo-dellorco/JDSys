@@ -54,7 +54,7 @@ func StartSender(filename string, address string, mode string) error {
 	}
 	connection, err := net.Dial("tcp", addr)
 	if err != nil {
-		panic(err)
+		utils.PrintTs(err.Error())
 	}
 	defer connection.Close()
 	utils.PrintTs("Ready to send DB export")
@@ -94,7 +94,7 @@ func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex
 	}
 
 	if err != nil {
-		panic(err)
+		utils.PrintTs(err.Error())
 	}
 	for {
 		if (fileSize - receivedBytes) < BUFFERSIZE {
