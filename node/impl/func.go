@@ -17,7 +17,7 @@ import (
 )
 
 var sendMutex *sync.Mutex
-var recMutex *sync.Mutex
+var recvMutex *sync.Mutex
 
 /*
 Esegue tutte le attività per rendere il nodo UP & Running
@@ -134,7 +134,7 @@ Inizializza i servizi per il listening dei messaggi di update e reconciliation
 */
 func InitListeningServices(node *Node) {
 	utils.PrintHeaderL2("Starting Listening Services")
-	recMutex = new(sync.Mutex)
+	recvMutex = new(sync.Mutex)
 	sendMutex = new(sync.Mutex)
 	go ListenReplicationMessages(node)
 	node.Handler = false
@@ -194,14 +194,14 @@ schedulati per la terminazione
 func ListenReplicationMessages(node *Node) {
 	fileChannel := make(chan string)
 
-	go communication.StartReceiver(fileChannel, recMutex, utils.REPLN)
+	go communication.StartReceiver(fileChannel, recvMutex, utils.REPLN)
 	utils.PrintTs("Started Update Message listening Service")
 	for {
 		received := <-fileChannel
 		if received == "rcvd" {
 			node.MongoClient.MergeCollection(utils.REPLICATION_EXPORT_FILE, utils.REPLICATION_RECEIVE_FILE)
 			utils.ClearDir(utils.REPLICATION_RECEIVE_PATH)
-			recMutex.Unlock()
+			recvMutex.Unlock()
 		}
 	}
 }
@@ -213,7 +213,7 @@ risolti i conflitti aggiornando il database
 func ListenReconciliationMessages(node *Node) {
 	fileChannel := make(chan string)
 
-	go communication.StartReceiver(fileChannel, recMutex, utils.RECON)
+	go communication.StartReceiver(fileChannel, recvMutex, utils.RECON)
 	utils.PrintTs("Started Reconciliation Message listening Service")
 	for {
 		// Si scrive sul canale per attivare la riconciliazione una volta ricevuto correttamente l'update dal predecessore
@@ -221,7 +221,7 @@ func ListenReconciliationMessages(node *Node) {
 		if received == "rcvd" {
 			node.MongoClient.ReconciliateCollection(utils.RECONCILIATION_EXPORT_FILE, utils.RECONCILIATION_RECEIVE_FILE)
 			utils.ClearDir(utils.RECONCILIATION_RECEIVE_PATH)
-			recMutex.Unlock()
+			recvMutex.Unlock()
 
 			// Nodo non ha successore, aspettiamo la ricostruzione della DHT Chord finchè non viene
 			// completato l'aggiornamento dell'anello
@@ -266,13 +266,20 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 	var err error
 
 	sendMutex.Lock()
-	utils.PrintHeaderL3("Sending message to " + address + ": " + mode)
+
 	switch mode {
 	case utils.REPLN:
+		utils.PrintHeaderL3("Sending replica to successor " + address)
 		file = utils.REPLICATION_SEND_FILE
 		path = utils.REPLICATION_SEND_PATH
 		err = node.MongoClient.ExportDocument(key, file)
-	default:
+	case utils.RECON:
+		utils.PrintHeaderL3("Sending reconciliation message to successor " + address)
+		file = utils.RECONCILIATION_SEND_FILE
+		path = utils.RECONCILIATION_SEND_PATH
+		err = node.MongoClient.ExportCollection(file)
+	case utils.MIGRN:
+		utils.PrintHeaderL3("Sending migration entries to successor " + address)
 		file = utils.RECONCILIATION_SEND_FILE
 		path = utils.RECONCILIATION_SEND_PATH
 		err = node.MongoClient.ExportCollection(file)
@@ -301,7 +308,6 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 }
 
 func SendReplicaToSuccessor(node *Node, key string) {
-	utils.PrintTs("Sending replica to successor")
 retry:
 	succ := node.ChordClient.GetSuccessor().GetIpAddr()
 	if succ == "" {

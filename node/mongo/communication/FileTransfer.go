@@ -64,33 +64,30 @@ func StartSender(filename string, address string, mode string) error {
 /*
 Utility per ricevere un file tramite la connessione
 */
-func receiveFile(connection net.Conn, fileChannel chan string, mutex *sync.Mutex, mode string) {
+func receiveFile(connection net.Conn, fileChannel chan string, recvMutex *sync.Mutex, mode string) {
 	var receivedBytes int64
 	var newFile *os.File
 	var err error
 
 	bufferFileSize := make([]byte, 10)
 
-	mutex.Lock()
-	switch mode {
-	case utils.REPLN:
-		utils.PrintHeaderL3("A node wants to send his replica updates via TCP")
-	case utils.RECON:
-		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
-	case utils.MIGRN:
-		utils.PrintHeaderL3("A terminating node wants to send his entries")
-	}
-
+	recvMutex.Lock()
 	connection.Read(bufferFileSize)
 	fileSize, _ := strconv.ParseInt(strings.Trim(string(bufferFileSize), ":"), 10, 64)
 
 	switch mode {
 	case utils.REPLN:
+		utils.PrintHeaderL3("A node wants to send his replica updates via TCP")
 		newFile, err = os.Create(utils.REPLICATION_RECEIVE_FILE)
+
 	case utils.RECON:
+		utils.PrintHeaderL3("A node wants to send a Reconciliation message via TCP")
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
+
 	case utils.MIGRN:
+		utils.PrintHeaderL3("A terminating node wants to send his entries")
 		newFile, err = os.Create(utils.RECONCILIATION_RECEIVE_FILE)
+
 	}
 
 	if err != nil {
