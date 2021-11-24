@@ -104,9 +104,10 @@ waitLB:
 		}
 		node.ChordClient, _ = chord.Join(*addressPtr+utils.CHORD_PORT, *joinPtr+utils.CHORD_PORT)
 	}
-	time.Sleep(utils.CHORD_STEADY_TIME)
 	utils.PrintTs("My address is: " + *addressPtr)
 	utils.PrintTs("Join address is: " + *joinPtr)
+	utils.PrintTs("Finalizing...")
+	time.Sleep(utils.CHORD_STEADY_TIME)
 	utils.PrintTs("Chord Node Started Succesfully!")
 }
 
@@ -346,7 +347,7 @@ func GetPredecessorEntries(node *Node) {
 	args := Args{}
 	args.Value = node.ChordClient.GetIpAddress()
 
-	utils.PrintHeaderL2("Asking Predecessor for his Entries")
+	utils.PrintHeaderL2("Asking Predecessor for his entries")
 	pred := node.ChordClient.GetPredecessor().GetIpAddr()
 
 	if pred == "" {
