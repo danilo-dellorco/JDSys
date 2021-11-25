@@ -69,18 +69,16 @@ func SendUpdateMsg(node *Node, address string, mode string, key string) error {
 Permette ad un nodo di inviare la un'entry al suo successore per la replicazione
 */
 func SendReplicaToSuccessor(node *Node, key string) {
-	//retry:
 	succ := node.ChordClient.GetSuccessor().GetIpAddr()
-	if succ == "" {
+	if succ != "" {
+		err := SendUpdateMsg(node, succ, utils.REPLN, key)
+		if err != nil {
+			return
+		}
+		utils.PrintTs("Replica sent Correctly")
+	} else {
 		utils.PrintTs("Node hasn't a successor yet, data will be replicated later")
-		//time.Sleep(utils.WAIT_SUCC_TIME)
-		//goto retry
 	}
-	err := SendUpdateMsg(node, succ, utils.REPLN, key)
-	if err != nil {
-		return
-	}
-	utils.PrintTs("Replica sent Correctly")
 }
 
 /*
