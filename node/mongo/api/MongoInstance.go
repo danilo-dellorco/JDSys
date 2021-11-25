@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"progetto-sdcc/node/mongo/communication"
-	"progetto-sdcc/registry/amazon"
 	"progetto-sdcc/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -338,7 +337,7 @@ Ottiene la chiave specificata dal bucket S3, salvandola in un file locale
 */
 func (cli *MongoInstance) downloadEntryFromS3(key string) {
 	utils.PrintHeaderL3("Downlaoding Entry from S3")
-	sess := amazon.CreateSession()
+	sess := communication.CreateSession()
 	filename := key + utils.CSV
 	downloader := s3manager.NewDownloader(sess)
 
