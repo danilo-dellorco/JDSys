@@ -60,10 +60,12 @@ func InitChordDHT(node *Node) {
 	joinPtr := flag.String("join", "", "an address of a server in the Chord network to join to")
 	flag.Parse()
 
+	utils.PrintTs("Getting Local Outbound IP")
 	// Ottiene l'indirizzo IP dell'host utilizzato nel VPC
 	*addressPtr = utils.GetOutboundIP()
 	node.ChordClient = new(chord.ChordNode)
 
+	utils.PrintTs("Checking for active nodes in the chord ring")
 	// Controlla le istanze attive contattando il Service Registry per entrare nella rete
 waitLB:
 	nodes := GetNodesDHT(utils.REGISTRY_IP)
@@ -79,7 +81,7 @@ waitLB:
 	// allora significa che non è ancora healthy per il LB e aspettiamo ad entrare nella rete
 	if len(nodes) == 1 {
 		if nodes[0] == *addressPtr {
-			utils.PrintTs("Creating Chord Ring")
+			utils.PrintTs("No other nodes found. Creating Chord Ring")
 			node.ChordClient = chord.Create(*addressPtr + utils.CHORD_PORT)
 			first = true
 		} else {
