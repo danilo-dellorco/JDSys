@@ -5,7 +5,6 @@ package main
 import (
 	"fmt"
 	"progetto-sdcc/client/impl"
-	test "progetto-sdcc/test/impl"
 	"progetto-sdcc/utils"
 	"time"
 )
@@ -27,8 +26,8 @@ func main() {
 			impl.Append()
 		case cmd == "5":
 			impl.Exit()
-		case cmd == "T":
-			test.MeasureResponseTime()
+		case cmd == "T" || cmd == "t":
+			impl.MeasureResponseTime()
 		default:
 			fmt.Println("Command not recognized. Retry.")
 			time.Sleep(1 * time.Second)

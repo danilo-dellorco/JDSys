@@ -18,7 +18,7 @@ func Get() {
 	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the desired entry")
 	utils.PrintLineL1()
-	GetRPC(key, true)
+	GetRPC(key)
 	EnterToContinue()
 }
 
@@ -33,7 +33,7 @@ func Put() {
 	key := SecScanln("> Insert the Entry Key")
 	value := SecScanln("> Insert the Entry Value")
 	utils.PrintLineL1()
-	PutRPC(key, value, true)
+	PutRPC(key, value)
 	EnterToContinue()
 }
 
@@ -48,7 +48,7 @@ func Append() {
 	key := SecScanln("> Insert the Key of the Entry to Update")
 	newValue := SecScanln("> Insert the Value to Append")
 	utils.PrintLineL1()
-	AppendRPC(key, newValue, true)
+	AppendRPC(key, newValue)
 	EnterToContinue()
 }
 
@@ -62,7 +62,7 @@ func Delete() {
 	utils.PrintLineL1()
 	key := SecScanln("> Insert the Key of the Entry to Delete")
 	utils.PrintLineL1()
-	DeleteRPC(key, true)
+	DeleteRPC(key)
 	EnterToContinue()
 }
 

@@ -33,8 +33,6 @@ func main() {
 	switch test_type {
 	case "workload1":
 		workload1(test_size)
-		//utils.PrintHeaderL3("System it's at steady-state")
-		//measureResponseTime()
 	case "workload2":
 		workload2(test_size)
 	}
@@ -94,13 +92,11 @@ func runGetQueries(num int) {
 	id := 0
 	for {
 		if id == num {
-			//fmt.Println("Maximum Size Reached:", id)
 			time.Sleep(10 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
 		if impl.WORKLOAD_GET[id] != 1 {
-			//fmt.Printf("Thread GET #%d is idle, starting...\n", id)
 			go impl.TestGet(key, false, id)
 		}
 		id++
@@ -111,14 +107,12 @@ func runPutQueries(num int) {
 	id := 0
 	for {
 		if id == num {
-			//fmt.Println("Maximum Size Reached:", id)
 			time.Sleep(10 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
 		value := "test_value_" + strconv.Itoa(id)
 		if impl.WORKLOAD_PUT[id] != 1 {
-			//fmt.Printf("Thread PUT #%d is idle, starting...\n", id)
 			go impl.TestPut(key, value, false, id)
 		}
 		id++
