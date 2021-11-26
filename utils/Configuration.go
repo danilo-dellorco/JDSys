@@ -36,11 +36,11 @@ var MIGRATION_EXPORT_FILE string = MIGRATION_RECEIVE_PATH + "exported.csv"
 //—————————————————————————————————————————————
 // AWS SDK Settings
 //—————————————————————————————————————————————
-var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-lb/505f5d098d3c2bc3"
+var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-elb/8172a97eccf5f86b"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
 var AUTOSCALING_NAME string = "sdcc-autoscaling"
 var BUCKET_NAME string = "sdcc-cloud-resources"
-var LB_DNS_NAME string = "sdcc-lb-505f5d098d3c2bc3.elb.us-east-1.amazonaws.com"
+var LB_DNS_NAME string = "sdcc-elb-8172a97eccf5f86b.elb.us-east-1.amazonaws.com"
 var REGISTRY_IP string = "10.0.0.64"
 
 //—————————————————————————————————————————————
