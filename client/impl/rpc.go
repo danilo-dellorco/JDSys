@@ -167,50 +167,63 @@ func MeasureResponseTime() {
 
 	total := rt1 + rt2 + rt3 + rt4 + rt5
 	meanRt := total / 5
+	utils.PrintLineL2()
 	fmt.Println("Mean Response Time:", meanRt)
+	utils.PrintLineL2()
+	EnterToContinue()
 }
 
 /*
 Permette al client di recuperare il valore associato ad una precisa chiave contattando il LB
 */
 func MeasureGet(key string) time.Duration {
+	utils.PrintTs("Measuring Get...")
 	start := utils.GetTimestamp()
 	GetRPC(key)
 	end := utils.GetTimestamp()
-
-	return end.Sub(start)
+	ts := end.Sub(start)
+	utils.PrintTs(fmt.Sprintf("Get Executed in %d", ts))
+	return ts
 }
 
 /*
 Permette al client di inserire una coppia key-value nel sistema di storage contattando il LB
 */
 func MeasurePut(key string, value string) time.Duration {
+	utils.PrintTs("Measuring Put...")
 
 	start := utils.GetTimestamp()
 	PutRPC(key, value)
 	end := utils.GetTimestamp()
-
-	return end.Sub(start)
+	ts := end.Sub(start)
+	utils.PrintTs(fmt.Sprintf("Put Executed in %d", ts))
+	return ts
 }
 
 /*
 Permette al client di aggiornare una coppia key-value presente nel sistema di storage contattando il LB
 */
 func MeasureAppend(key string, value string) time.Duration {
+	utils.PrintTs("Measuring Append...")
 
 	start := utils.GetTimestamp()
 	AppendRPC(key, value)
 	end := utils.GetTimestamp()
 
-	return end.Sub(start)
+	ts := end.Sub(start)
+	utils.PrintTs(fmt.Sprintf("Append Executed in %d", ts))
+	return ts
 }
 
 /*
 Permette al client di eliminare una coppia key-value dal sistema di storage contattando il LB
 */
 func MeasureDelete(key string) time.Duration {
+	utils.PrintTs("Measuring Delete...")
 	start := utils.GetTimestamp()
 	DeleteRPC(key)
 	end := utils.GetTimestamp()
-	return end.Sub(start)
+	ts := end.Sub(start)
+	utils.PrintTs(fmt.Sprintf("Delete Executed in %d", ts))
+	return ts
 }

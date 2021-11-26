@@ -88,48 +88,69 @@ func workload2(size float32) {
 	go runAppendQueries(numApp)
 }
 
+/*
+Mantiene in esecuzione num Thread di Get.
+*/
 func runGetQueries(num int) {
 	id := 0
+	round := 0
 	for {
 		if id == num {
 			time.Sleep(10 * time.Second)
 			id = 0
+			round++
+			utils.PrintTs("Get New Round Started: " + strconv.Itoa(round))
 		}
-		key := "test_key_" + strconv.Itoa(id)
+		key := "test_key_" + strconv.Itoa(round) + "_" + strconv.Itoa(id)
 		if impl.WORKLOAD_GET[id] != 1 {
+			utils.PrintTs(fmt.Sprintf("Get Thread { %d , %d } spawned", round, id))
 			go impl.TestGet(key, false, id)
 		}
 		id++
 	}
 }
 
+/*
+Mantiene in esecuzione num Thread di Put.
+*/
 func runPutQueries(num int) {
 	id := 0
+	round := 0
 	for {
 		if id == num {
 			time.Sleep(10 * time.Second)
 			id = 0
+			round++
+			utils.PrintTs("Put New Round Started: " + strconv.Itoa(round))
 		}
-		key := "test_key_" + strconv.Itoa(id)
-		value := "test_value_" + strconv.Itoa(id)
+		key := "test_key_" + strconv.Itoa(round) + "_" + strconv.Itoa(id)
+		value := "_test_val_" + strconv.Itoa(round) + "_" + strconv.Itoa(id)
 		if impl.WORKLOAD_PUT[id] != 1 {
+			utils.PrintTs(fmt.Sprintf("Put Thread { %d , %d } spawned", round, id))
 			go impl.TestPut(key, value, false, id)
 		}
 		id++
 	}
 }
 
+/*
+Mantiene in esecuzione num Thread di Append.
+*/
 func runAppendQueries(num int) {
 	id := 0
+	round := 0
 	for {
 		if id == num {
 			time.Sleep(10 * time.Second)
 			id = 0
+			round++
+			utils.PrintTs("Put New Round Started: " + strconv.Itoa(round))
 		}
-		key := "test_key_" + strconv.Itoa(id)
-		arg := "_test_arg_" + strconv.Itoa(id)
+		key := "test_key_" + strconv.Itoa(round) + "_" + strconv.Itoa(id)
+		arg := "_test_arg_" + strconv.Itoa(round) + "_" + strconv.Itoa(id)
 
 		if impl.WORKLOAD_GET[id] != 1 {
+			utils.PrintTs(fmt.Sprintf("Append Thread { %d , %d } spawned", round, id))
 			go impl.TestAppend(key, arg, false, id)
 		}
 		id++
