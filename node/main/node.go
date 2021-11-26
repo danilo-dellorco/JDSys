@@ -43,6 +43,5 @@ Loop:
 		}
 
 	}
-	node.ChordClient.Finalize()
 	select {}
 }
