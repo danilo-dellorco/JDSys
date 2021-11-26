@@ -29,33 +29,16 @@ func main() {
 	test_size := float32(test_size_int)
 
 	fmt.Println("Test PID:", os.Getpid())
-	time.Sleep(3 * time.Second)
 
 	switch test_type {
 	case "workload1":
 		workload1(test_size)
-		utils.PrintHeaderL3("System it's at steady-state")
+		//utils.PrintHeaderL3("System it's at steady-state")
 		//measureResponseTime()
 	case "workload2":
 		workload2(test_size)
 	}
 	select {}
-}
-
-/*
-Effettua una richiesta di Put, una di Update, una di Get, una di Append e una di Delete, misurando poi il tempo medio di risposta
-*/
-func measureResponseTime() {
-	utils.PrintHeaderL2("Starting Measuring Response Time")
-	rt1 := impl.TestPut("rt_key", "rt_value", true, 0)
-	rt2 := impl.TestPut("rt_key", "rt_value_upd", true, 0)
-	rt3 := impl.TestGet("rt_key", true, 0)
-	rt4 := impl.TestAppend("rt_key", "rt_value_app", true, 0)
-	rt5 := impl.TestDelete("rt_key", true)
-
-	total := rt1 + rt2 + rt3 + rt4 + rt5
-	meanRt := total / 5
-	fmt.Println("Mean Response Time:", meanRt)
 }
 
 /*
@@ -74,6 +57,8 @@ func workload1(size float32) {
 	utils.PrintHeaderL2("Start Spawning Threads for Workload 1")
 	utils.PrintStringInBoxL2("# Get | "+strconv.Itoa(numGet), "# Put | "+strconv.Itoa(numPut))
 	utils.PrintLineL2()
+	time.Sleep(3 * time.Second)
+
 	go runPutQueries(numPut)
 	go runGetQueries(numGet)
 }
@@ -98,6 +83,8 @@ func workload2(size float32) {
 	utils.PrintStringInBoxL2("# Get | "+strconv.Itoa(numGet), "# Put | "+strconv.Itoa(numPut))
 	utils.PrintLineL2()
 
+	time.Sleep(3 * time.Second)
+
 	go runGetQueries(numGet)
 	go runPutQueries(numPut)
 	go runAppendQueries(numApp)
@@ -107,13 +94,13 @@ func runGetQueries(num int) {
 	id := 0
 	for {
 		if id == num {
-			fmt.Println("Maximum Size Reached:", id)
-			time.Sleep(1 * time.Second)
+			//fmt.Println("Maximum Size Reached:", id)
+			time.Sleep(10 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
 		if impl.WORKLOAD_GET[id] != 1 {
-			fmt.Printf("Thread GET #%d is idle, starting...\n", id)
+			//fmt.Printf("Thread GET #%d is idle, starting...\n", id)
 			go impl.TestGet(key, false, id)
 		}
 		id++
@@ -124,14 +111,14 @@ func runPutQueries(num int) {
 	id := 0
 	for {
 		if id == num {
-			fmt.Println("Maximum Size Reached:", id)
-			time.Sleep(1 * time.Second)
+			//fmt.Println("Maximum Size Reached:", id)
+			time.Sleep(10 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
 		value := "test_value_" + strconv.Itoa(id)
 		if impl.WORKLOAD_PUT[id] != 1 {
-			fmt.Printf("Thread PUT #%d is idle, starting...\n", id)
+			//fmt.Printf("Thread PUT #%d is idle, starting...\n", id)
 			go impl.TestPut(key, value, false, id)
 		}
 		id++
@@ -142,6 +129,7 @@ func runAppendQueries(num int) {
 	id := 0
 	for {
 		if id == num {
+			time.Sleep(10 * time.Second)
 			id = 0
 		}
 		key := "test_key_" + strconv.Itoa(id)
