@@ -36,12 +36,12 @@ var MIGRATION_EXPORT_FILE string = MIGRATION_RECEIVE_PATH + "exported.csv"
 //—————————————————————————————————————————————
 // AWS SDK Settings
 //—————————————————————————————————————————————
-var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-elb/8172a97eccf5f86b"
+var ELB_ARN string = "arn:aws:elasticloadbalancing:us-east-1:786781699181:loadbalancer/net/sdcc-elb/6c29ee787b1a31df"
 var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
 var AUTOSCALING_NAME string = "sdcc-autoscaling"
 var BUCKET_NAME string = "sdcc-cloud-resources"
-var LB_DNS_NAME string = "sdcc-elb-8172a97eccf5f86b.elb.us-east-1.amazonaws.com"
-var REGISTRY_IP string = "10.0.0.64"
+var LB_DNS_NAME string = "sdcc-elb-6c29ee787b1a31df.elb.us-east-1.amazonaws.com"
+var REGISTRY_IP string = "10.0.0.216"
 
 //—————————————————————————————————————————————
 // Time Settings
@@ -49,7 +49,7 @@ var REGISTRY_IP string = "10.0.0.64"
 // TODO impostare questi parametri a valori reali
 var RARELY_ACCESSED_TIME time.Duration = 30 * time.Minute           // Dopo quanto tempo un'entry viene migrata sul cloud
 var RARELY_ACCESSED_CHECK_INTERVAL time.Duration = 15 * time.Minute // Ogni quanto controlliamo entry vecchie
-var NODE_HEALTHY_TIME time.Duration = 20 * time.Second              // Tempo di attesa di un nodo prima che diventi healthy
+var NODE_HEALTHY_TIME time.Duration = 30 * time.Second              // Tempo di attesa di un nodo prima che diventi healthy
 var SEND_UPDATES_TIME time.Duration = time.Minute                   // Ogni quanto effettuare l'invio del backup del DB al nodo successore
 var CHECK_TERMINATING_INTERVAL time.Duration = time.Minute          // Ogni quanto effettuare il controllo sulle istanze in terminazione
 var START_CONSISTENCY_INTERVAL time.Duration = 10 * time.Minute     // Ogni quanto avviare il processo di scambio di aggiornamenti tra i nodi per la consistenza finale

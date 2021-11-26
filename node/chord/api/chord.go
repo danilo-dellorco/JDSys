@@ -572,14 +572,6 @@ func (node *ChordNode) fix(which int) {
 }
 
 /*
-Termina tutte le comunicazioni e rimuove il ChordNode dall'anello
-*/
-func (node *ChordNode) Finalize() {
-	// Send message to all children to terminate
-	utils.PrintHeaderL2("Exiting from Chord Node")
-}
-
-/*
 Funzione ausiliaria che ritorna true se il valore x è compreso tra (min,max)
 */
 func InRange(x [sha256.Size]byte, min [sha256.Size]byte, max [sha256.Size]byte) bool {
