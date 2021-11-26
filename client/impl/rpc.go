@@ -158,7 +158,11 @@ func check_timeout(check chan bool) {
 Effettua una richiesta di Put, una di Update, una di Get, una di Append e una di Delete, misurando poi il tempo medio di risposta
 */
 func MeasureResponseTime() {
-	utils.PrintHeaderL2("Starting Measuring Response Time")
+	utils.ClearScreen()
+	utils.PrintHeaderL1("TESTING SUBSYSTEM")
+	utils.PrintLineL1()
+	fmt.Println("Press enter to start measuring response time")
+	EnterToContinue()
 	rt1 := MeasurePut("rt_key", "rt_value")
 	rt2 := MeasurePut("rt_key", "rt_value_upd")
 	rt3 := MeasureGet("rt_key")
@@ -182,7 +186,7 @@ func MeasureGet(key string) time.Duration {
 	GetRPC(key)
 	end := utils.GetTimestamp()
 	ts := end.Sub(start)
-	utils.PrintTs(fmt.Sprintf("Get Executed in %d", ts))
+	utils.PrintTs(fmt.Sprintf("Get Executed in %f", ts.Seconds()))
 	return ts
 }
 
@@ -196,7 +200,7 @@ func MeasurePut(key string, value string) time.Duration {
 	PutRPC(key, value)
 	end := utils.GetTimestamp()
 	ts := end.Sub(start)
-	utils.PrintTs(fmt.Sprintf("Put Executed in %d", ts))
+	utils.PrintTs(fmt.Sprintf("Put Executed in %f", ts.Seconds()))
 	return ts
 }
 
@@ -211,7 +215,7 @@ func MeasureAppend(key string, value string) time.Duration {
 	end := utils.GetTimestamp()
 
 	ts := end.Sub(start)
-	utils.PrintTs(fmt.Sprintf("Append Executed in %d", ts))
+	utils.PrintTs(fmt.Sprintf("Append Executed in %f", ts.Seconds()))
 	return ts
 }
 
@@ -224,6 +228,6 @@ func MeasureDelete(key string) time.Duration {
 	DeleteRPC(key)
 	end := utils.GetTimestamp()
 	ts := end.Sub(start)
-	utils.PrintTs(fmt.Sprintf("Delete Executed in %d", ts))
+	utils.PrintTs(fmt.Sprintf("Delete Executed in %f", ts.Seconds()))
 	return ts
 }
