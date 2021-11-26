@@ -41,7 +41,7 @@ var AWS_CRED_PATH string = "/home/ec2-user/.aws/credentials"
 var AUTOSCALING_NAME string = "sdcc-autoscaling"
 var BUCKET_NAME string = "sdcc-cloud-resources"
 var LB_DNS_NAME string = "sdcc-elb-8172a97eccf5f86b.elb.us-east-1.amazonaws.com"
-var REGISTRY_IP string = "10.0.0.64"
+var REGISTRY_IP string = "10.0.0.81"
 
 //—————————————————————————————————————————————
 // Time Settings
