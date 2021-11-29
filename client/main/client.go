@@ -1,7 +1,5 @@
 package main
 
-// TODO fare i testing per i due carichi di lavoro visti
-
 import (
 	"fmt"
 	"progetto-sdcc/client/impl"
