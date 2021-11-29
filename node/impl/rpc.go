@@ -289,7 +289,7 @@ func (n *Node) StartReconciliationRPC(args *Args, reply *string) error {
 
 /*
 Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per la terminazione
-Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati.
+Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire persistenza dei dati.
 Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo la possibilità di
 aggiornare altri dati obsoleti mantenuti dal successore.
 */
@@ -313,10 +313,9 @@ retry:
 }
 
 /*
-Metodo invocato dal Service Registry quando l'istanza EC2 viene schedulata per la terminazione
-Effettua il trasferimento del proprio DB al nodo successore nella rete per garantire replicazione dei dati.
-Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo la possibilità di
-aggiornare altri dati obsoleti mantenuti dal successore.
+Metodo invocato dal nodo successore quando si inserisce nell'anello chord.
+Effettua il trasferimento del proprio DB al chiamante in modo da permettere da subito le complete funzionalità del nuovo nodo.
+Inviamo tutto il DB e non solo le entry gestite dal preciso nodo in modo da inviare anche eventuali repliche che questo dovrà gestire.
 */
 
 func (n *Node) JoinRPC(args *Args, reply *string) error {
