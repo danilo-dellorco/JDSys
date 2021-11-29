@@ -146,9 +146,9 @@ func startReconciliationRPC(ip string) {
 	utils.PrintTs("Sending db exchange signal to node: " + ip)
 	client, _ := utils.HttpConnect(ip, utils.RPC_PORT)
 	defer client.Close()
-	err := client.Call("Node.ConsistencyHandlerRPC", args, &reply)
+	err := client.Call("Node.StartReconciliationRPC", args, &reply)
 	if err != nil {
-		utils.PrintTs("ConsistencyHandlerRPC error: " + err.Error())
+		utils.PrintTs("StartReconciliationRPC error: " + err.Error())
 	}
 }
 

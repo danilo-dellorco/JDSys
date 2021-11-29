@@ -268,7 +268,7 @@ retry:
 Metodo invocato dal Service Registry quando le istanze EC2 devono procedere con lo scambio degli aggiornamenti
 Effettua il trasferimento del proprio DB al nodo successore nella rete per realizzare la consistenza finale.
 */
-func (n *Node) ConsistencyHandlerRPC(args *Args, reply *string) error {
+func (n *Node) StartReconciliationRPC(args *Args, reply *string) error {
 	utils.PrintHeaderL2("Reconciliation requested by service registry")
 
 	succ := n.ChordClient.GetSuccessor().GetIpAddr()
