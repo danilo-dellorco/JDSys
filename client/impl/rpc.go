@@ -182,6 +182,7 @@ Permette al client di recuperare il valore associato ad una precisa chiave conta
 */
 func MeasureGet(key string) time.Duration {
 	utils.PrintTs("Measuring Get...")
+
 	start := utils.GetTimestamp()
 	GetRPC(key)
 	end := utils.GetTimestamp()

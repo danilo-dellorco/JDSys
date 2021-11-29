@@ -105,6 +105,7 @@ func runGetQueries(num int) {
 		if impl.WORKLOAD_GET[id] != 1 {
 			utils.PrintTs(fmt.Sprintf("Get Thread { %d , %d } spawned", round, id))
 			go impl.TestGet(key, false, id)
+			time.Sleep(time.Second)
 		}
 		id++
 	}
@@ -128,6 +129,7 @@ func runPutQueries(num int) {
 		if impl.WORKLOAD_PUT[id] != 1 {
 			utils.PrintTs(fmt.Sprintf("Put Thread { %d , %d } spawned", round, id))
 			go impl.TestPut(key, value, false, id)
+			time.Sleep(time.Second)
 		}
 		id++
 	}
