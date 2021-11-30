@@ -311,11 +311,9 @@ func (node *ChordNode) parseMessage(data []byte, c chan []byte) {
 		return
 	case cmd == internal.ChordMessage_Command_value["GetFingers"]:
 		table := make([]NodeInfo, 32*8+1)
-		//utils.PrintTs("Fingers of node %s:\n", node.ipaddr)
 		for i := range table {
 			node.request <- request{false, false, i}
 			f := <-node.finger
-			//utils.PrintTs("\t%s\n", f.String())
 			table[i] = f
 		}
 

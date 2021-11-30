@@ -20,6 +20,7 @@ Esegue tutte le attività per rendere il nodo UP & Running
 */
 func InitNode(node *Node) {
 	utils.PrintHeaderL1("NODE SETUP")
+	node.MongoClient = mongo.InitLocalSystem()
 	InitHealthyNode(node)
 	InitChordDHT(node)
 	JoinChordDHT(node)
@@ -282,8 +283,7 @@ func ListenMigrationMessages(node *Node) {
 }
 
 /*
-Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat del Load Balancer,
-ed i segnali di terminazione dal service registry.
+Inizializza un listener sulla porta 8888, su cui il Nodo riceve gli HeartBeat del Load Balancer.
 */
 func StartHeartBeatListener() {
 	utils.PrintTs("Start Listening Heartbeats from LB on port: " + utils.HEARTBEAT_PORT)

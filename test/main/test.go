@@ -80,7 +80,6 @@ func workload2(size float32) {
 	utils.PrintHeaderL2("Start Spawning Threads for Workload 2")
 	utils.PrintStringInBoxL2("# Get | "+strconv.Itoa(numGet), "# Put | "+strconv.Itoa(numPut))
 	utils.PrintLineL2()
-
 	time.Sleep(3 * time.Second)
 
 	go runGetQueries(numGet)
@@ -96,7 +95,6 @@ func runGetQueries(num int) {
 	round := 0
 	for {
 		if id == num {
-			time.Sleep(10 * time.Second)
 			id = 0
 			round++
 			utils.PrintTs("Get New Round Started: " + strconv.Itoa(round))
@@ -105,7 +103,6 @@ func runGetQueries(num int) {
 		if impl.WORKLOAD_GET[id] != 1 {
 			utils.PrintTs(fmt.Sprintf("Get Thread { %d , %d } spawned", round, id))
 			go impl.TestGet(key, false, id)
-			time.Sleep(time.Second)
 		}
 		id++
 	}
@@ -119,7 +116,6 @@ func runPutQueries(num int) {
 	round := 0
 	for {
 		if id == num {
-			time.Sleep(10 * time.Second)
 			id = 0
 			round++
 			utils.PrintTs("Put New Round Started: " + strconv.Itoa(round))
@@ -129,7 +125,6 @@ func runPutQueries(num int) {
 		if impl.WORKLOAD_PUT[id] != 1 {
 			utils.PrintTs(fmt.Sprintf("Put Thread { %d , %d } spawned", round, id))
 			go impl.TestPut(key, value, false, id)
-			time.Sleep(time.Second)
 		}
 		id++
 	}
@@ -143,7 +138,6 @@ func runAppendQueries(num int) {
 	round := 0
 	for {
 		if id == num {
-			time.Sleep(10 * time.Second)
 			id = 0
 			round++
 			utils.PrintTs("Put New Round Started: " + strconv.Itoa(round))

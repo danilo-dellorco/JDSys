@@ -41,6 +41,22 @@ type MongoInstance struct {
 }
 
 /*
+Inizializza il sistema di storage locale aprendo la connessione a MongoDB e rimuovendo eventuali
+entry residue nel sistema.
+*/
+func InitLocalSystem() MongoInstance {
+	utils.PrintTs("Starting Mongo Local System")
+	client := MongoInstance{}
+	client.OpenConnection()
+
+	// Inizializza un database vuoto, per eliminare eventuale documenti residui del nodo.
+	client.DropDatabase()
+
+	utils.PrintTs("Mongo is Up & Running")
+	return client
+}
+
+/*
 Apre la connessione con il database, inizializzando la collection utilizzata
 */
 func (cli *MongoInstance) OpenConnection() {
@@ -61,19 +77,7 @@ func (cli *MongoInstance) OpenConnection() {
 }
 
 /*
-Chiude la connessione con il database
-*/
-func (cli *MongoInstance) CloseConnection() {
-	err := cli.Client.Disconnect(context.TODO())
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	utils.PrintTs("Connection to MongoDB closed.")
-}
-
-/*
-Ritorna una entry specificando la sua chiave
+Ritorna una entry specificando la sua chiave. Se l'entry è presente nel cloud storage, viene migrata in locale prima di ritornarla.
 */
 func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 	utils.PrintHeaderL3("Mongo Get, Searching for: " + key)
@@ -82,6 +86,7 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 		cli.downloadEntryFromS3(key)
 		cli.MergeCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
 		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
+		cli.deleteEntryFromS3(key)
 		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
 		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
 	}
@@ -111,37 +116,24 @@ func (cli *MongoInstance) GetEntry(key string) *MongoEntry {
 }
 
 /*
-Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per identificare le entry raramente utilizzate
-*/
-func (cli *MongoInstance) ReadEntry(key string) *MongoEntry {
-	coll := cli.Collection
-	var result bson.M
-	err := coll.FindOne(context.TODO(), bson.D{primitive.E{Key: ID, Value: key}}).Decode(&result)
-	if err != nil {
-		utils.PrintTs("Read Error: " + err.Error())
-		return nil
-	}
-	entry := MongoEntry{}
-	id := result[ID].(string)
-	value := result[VALUE].(string)
-	timest := result[TIME].(primitive.DateTime)
-
-	lastAcc := result[LAST_ACC].(primitive.DateTime)
-	entry.Key = id
-	entry.Value = value
-	entry.Timest = timest.Time()
-	entry.LastAcc = lastAcc.Time()
-	utils.PrintTs("Read:" + entry.Format())
-	return &entry
-}
-
-/*
-Inserisce un'entry, specificando la chiave ed il suo valore.
-Al momento del get viene calcolato il timestamp
+Inserisce un'entry, specificando la chiave ed il suo valore. Se l'entry è già presente nello storage locale
+questa viene aggiornata inserendo il nuovo valore specificato. Se la chiave è presente sullo storage cloud, questa viene
+prima migrata in locale, e poi aggiornata eseguendo l'update.
 */
 func (cli *MongoInstance) PutEntry(key string, value string) error {
 	entry := fmt.Sprintf("{ %s , %s }", key, value)
 	utils.PrintHeaderL3("Mongo Put, inserting " + entry)
+
+	if utils.StringInSlice(key, cli.CloudKeys) {
+		utils.PrintTs("Entry on Cloud System. Downloading...\n")
+		cli.downloadEntryFromS3(key)
+		cli.MergeCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
+		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
+		cli.deleteEntryFromS3(key)
+		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
+		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
+	}
+
 	coll := cli.Collection
 	timestamp, _ := ntp.Time("0.beevik-ntp.pool.ntp.org")
 	strVal := utils.FormatValue(value)
@@ -175,10 +167,22 @@ func (cli *MongoInstance) PutEntry(key string, value string) error {
 
 /*
 Aggiorna un'entry del database, specificando la chiave ed il nuovo valore da aggiungere.
-Viene inoltre aggiornato il timestamp di quell'entry
+Viene inoltre aggiornato il timestamp di quell'entry. Se l'entry è presente sul cloud, viene migrata nello
+storage locale ed aggiornata eseguendo l'append
 */
 func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 	utils.PrintHeaderL3("Mongo Append, adding argument " + arg1 + " to key " + key)
+
+	if utils.StringInSlice(key, cli.CloudKeys) {
+		utils.PrintTs("Entry on Cloud System. Downloading...\n")
+		cli.downloadEntryFromS3(key)
+		cli.MergeCollection(utils.CLOUD_EXPORT_FILE, utils.CLOUD_RECEIVE_PATH+key+utils.CSV)
+		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
+		cli.deleteEntryFromS3(key)
+		utils.ClearDir(utils.CLOUD_EXPORT_PATH)
+		utils.ClearDir(utils.CLOUD_RECEIVE_PATH)
+	}
+
 	old := bson.D{primitive.E{Key: ID, Value: key}}
 	oldEntry := cli.GetEntry(key)
 	if oldEntry == nil {
@@ -199,10 +203,18 @@ func (cli *MongoInstance) AppendValue(key string, arg1 string) error {
 }
 
 /*
-Cancella un'entry dal database, specificandone la chiave
+Cancella un'entry dal database, specificando la sua chiave. Se l'entry è presente sul cloud, questa viene eliminata
+invece dal bucket S3
 */
 func (cli *MongoInstance) DeleteEntry(key string) error {
 	utils.PrintHeaderL3("Mongo Delete, removing entry with key " + key)
+
+	if utils.StringInSlice(key, cli.CloudKeys) {
+		utils.PrintTs("Entry on Cloud System. Deleting from S3...\n")
+		cli.CloudKeys = utils.RemoveElement(cli.CloudKeys, key)
+		cli.deleteEntryFromS3(key)
+	}
+
 	coll := cli.Collection
 	entry := bson.D{primitive.E{Key: ID, Value: key}}
 	result, err := coll.DeleteOne(context.TODO(), entry)
@@ -220,20 +232,8 @@ func (cli *MongoInstance) DeleteEntry(key string) error {
 }
 
 /*
-Cancella un database e tutte le sue collezioni
-*/
-func (cli *MongoInstance) DropDatabase() {
-	err := cli.Database.Drop(context.TODO())
-	if err != nil {
-		utils.PrintTs(err.Error())
-		return
-	}
-	utils.PrintTs("Local storage cleaned succesfully")
-}
-
-/*
 Inserisce un oggetto MongoEntry nel db.
-Utilizzata durante l'aggiornamento delle entry del DB locale
+Utilizzata durante l'aggiornamento delle entry del DB locale.
 */
 func (cli *MongoInstance) PutMongoEntry(entry MongoEntry) {
 	coll := cli.Collection
@@ -299,8 +299,15 @@ Carica una chiave sul bucket s3, rimuovendola dal database locale
 */
 func (cli *MongoInstance) uploadToS3(key string) {
 	utils.PrintHeaderL3("Uploading Entry to S3")
-
 	filename := key + ".csv"
+
+	keys := cli.getEntryListFromS3()
+
+	if utils.StringInSlice(key, keys) {
+		utils.PrintTs("Entry on Cloud System. Checking most recent...\n")
+		cli.getLatestEntryCSV(key)
+	}
+
 	utils.PrintTs("Exporting csv " + filename)
 	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+filename)
 	sess := communication.CreateSession()
@@ -358,6 +365,73 @@ func (cli *MongoInstance) downloadEntryFromS3(key string) {
 		return
 	}
 	utils.PrintTs("Entry succesfully retrieved form cloud storage")
+}
+
+/*
+Scarica l'entry richiesta da S3, la confronta con quella locale e mantiene l'export della chiave più recente tra le due
+In questo modo l'upload sul cloud avrà sempre l'entry più aggiornata e riconciliata.
+*/
+func (cli *MongoInstance) getLatestEntryCSV(key string) {
+	cli.downloadEntryFromS3(key)
+	remote, _ := ParseCSV(utils.CLOUD_RECEIVE_PATH + key + utils.CSV)
+
+	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+key+utils.CSV)
+	local, _ := ParseCSV(utils.CLOUD_EXPORT_PATH + key + utils.CSV)
+
+	merged := MergeEntries(local, remote)
+
+	cli.PutMongoEntry(merged[0])
+	cli.ExportDocument(key, utils.CLOUD_EXPORT_PATH+key+utils.CSV)
+
+	utils.PrintTs("Latest CSV created succesfully for key " + key)
+}
+
+/*
+Elimina l'entry specificata dal Bucket S3.
+*/
+func (cli *MongoInstance) deleteEntryFromS3(key string) error {
+	utils.PrintHeaderL3("Downlaoding Entry from S3")
+	sess := communication.CreateSession()
+	svc := s3.New(sess)
+	filename := key + utils.CSV
+
+	_, err := svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(utils.BUCKET_NAME),
+		Key:    aws.String(filename),
+	})
+	if err != nil {
+		return err
+	}
+
+	err = svc.WaitUntilObjectNotExists(&s3.HeadObjectInput{
+		Bucket: aws.String(utils.BUCKET_NAME),
+		Key:    aws.String(filename),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
+Permette al client di ottenere una lista di tutte le entry presenti sul cloud storage
+*/
+func (cli *MongoInstance) getEntryListFromS3() []string {
+	var keys []string
+
+	sess := communication.CreateSession()
+	svc := s3.New(sess)
+
+	params := &s3.ListObjectsInput{
+		Bucket: aws.String(utils.BUCKET_NAME),
+		Prefix: aws.String(""),
+	}
+	resp, _ := svc.ListObjects(params)
+	for _, k := range resp.Contents {
+		keys = append(keys, k.String())
+	}
+	return keys
 }
 
 /*
@@ -435,17 +509,50 @@ func (cli *MongoInstance) ReconciliateCollection(exportFile string, receivedFile
 }
 
 /*
-Inizializza il sistema di storage locale aprendo la connessione a MongoDB e lanciando
-i listener e le routine per la gestione degli updates.
+Legge una entry senza effettuare un accesso effettivo alla risorsa. Utile per identificare le entry raramente utilizzate
 */
-func InitLocalSystem() MongoInstance {
-	utils.PrintTs("Starting Mongo Local System")
-	client := MongoInstance{}
-	client.OpenConnection()
+func (cli *MongoInstance) ReadEntry(key string) *MongoEntry {
+	coll := cli.Collection
+	var result bson.M
+	err := coll.FindOne(context.TODO(), bson.D{primitive.E{Key: ID, Value: key}}).Decode(&result)
+	if err != nil {
+		utils.PrintTs("Read Error: " + err.Error())
+		return nil
+	}
+	entry := MongoEntry{}
+	id := result[ID].(string)
+	value := result[VALUE].(string)
+	timest := result[TIME].(primitive.DateTime)
 
-	// Inizializza un database vuoto, per eliminare eventuale documenti residui del nodo.
-	client.DropDatabase()
+	lastAcc := result[LAST_ACC].(primitive.DateTime)
+	entry.Key = id
+	entry.Value = value
+	entry.Timest = timest.Time()
+	entry.LastAcc = lastAcc.Time()
+	utils.PrintTs("Read:" + entry.Format())
+	return &entry
+}
 
-	utils.PrintTs("Mongo is Up & Running")
-	return client
+/*
+Chiude la connessione con il database
+*/
+func (cli *MongoInstance) CloseConnection() {
+	err := cli.Client.Disconnect(context.TODO())
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	utils.PrintTs("Connection to MongoDB closed.")
+}
+
+/*
+Cancella un database e tutte le sue collezioni
+*/
+func (cli *MongoInstance) DropDatabase() {
+	err := cli.Database.Drop(context.TODO())
+	if err != nil {
+		utils.PrintTs(err.Error())
+		return
+	}
+	utils.PrintTs("Local storage cleaned succesfully")
 }

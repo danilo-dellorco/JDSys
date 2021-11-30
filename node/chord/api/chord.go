@@ -21,14 +21,9 @@ type NodeInfo struct {
 	ipaddr string
 }
 
-func (info *NodeInfo) GetIpAddr() string {
-	if info.ipaddr == "" {
-		return ""
-	} else {
-		return utils.RemovePort(info.ipaddr)
-	}
-}
-
+/*
+Struttura dati utilizzata per l'aggiornamento del nodo
+*/
 type request struct {
 	write bool
 	succ  bool
@@ -121,7 +116,7 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 	}
 	addr = ft[1].ipaddr
 	msg = pingMsg()
-	reply, err = Send(msg, addr)
+	_, err = Send(msg, addr)
 
 	// Chiede al nodo la sua successor list
 	if err != nil {
@@ -144,7 +139,7 @@ func Lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 				break
 			}
 			msg = pingMsg()
-			reply, err = Send(msg, f.ipaddr)
+			_, err = Send(msg, f.ipaddr)
 			if err != nil { //closest next successor that responds
 				addr = f.ipaddr
 				return
@@ -179,8 +174,9 @@ func (node *ChordNode) GetIpAddress() string {
 	return utils.RemovePort(node.ipaddr)
 }
 
-//Lookup returns the address of the ChordNode that is responsible
-//for the key. The procedure begins at the address denoted by start.
+/*
+Ritorna l'indirizzo IP del nodo responsabile della chiave key cercata
+*/
 func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string, err error) {
 
 	addr = start
@@ -224,7 +220,7 @@ func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string,
 	}
 	addr = ft[1].ipaddr
 	msg = pingMsg()
-	reply, err = node.send(msg, addr)
+	_, err = node.send(msg, addr)
 
 	//this code is executed if the id's successor has gone missing
 	if err != nil {
@@ -247,7 +243,7 @@ func (node *ChordNode) lookup(key [sha256.Size]byte, start string) (addr string,
 				break
 			}
 			msg = pingMsg()
-			reply, err = node.send(msg, f.ipaddr)
+			_, err = node.send(msg, f.ipaddr)
 			if err != nil { //closest next successor that responds
 				addr = f.ipaddr
 				return
@@ -346,17 +342,14 @@ func (node *ChordNode) data() {
 					node.successorList[0] = *node.successor
 				} else {
 					prova := <-node.finger
-					//fmt.Println("vicino:", prova)
 					for i = 0; i < len(node.fingerTable); i++ {
 						if prova == node.fingerTable[i] {
-							//fmt.Println("già presente in FT")
 							exist = true
 						} else {
 							continue
 						}
 					}
 					if !exist {
-						//fmt.Println("non ce l'avevo, lo metto in FT")
 						node.fingerTable[req.index] = prova
 					}
 				}
@@ -397,7 +390,6 @@ Esegue periodicamente operazioni di mantenimento
 func (node *ChordNode) maintain() {
 	ctr := 0
 	for {
-		//time.Sleep(time.Duration(rand.Uint32()%3)*time.Minute + time.Duration(rand.Uint32()%60)*time.Second + time.Duration(rand.Uint32()%60)*time.Millisecond)
 		//stabilize
 		node.stabilize()
 		//check predecessor
@@ -421,7 +413,7 @@ func (node *ChordNode) stabilize() {
 	}
 
 	msg := pingMsg()
-	reply, err := node.send(msg, successor.ipaddr)
+	_, err := node.send(msg, successor.ipaddr)
 	if err != nil {
 		//successor failed to respond
 		//check in successor list for next available successor.
@@ -431,7 +423,7 @@ func (node *ChordNode) stabilize() {
 				continue
 			}
 			msg := pingMsg()
-			reply, err = node.send(msg, successor.ipaddr)
+			_, err = node.send(msg, successor.ipaddr)
 			if err == nil {
 				break
 			} else {
@@ -446,7 +438,7 @@ func (node *ChordNode) stabilize() {
 
 	//everything is OK, update successor list
 	msg = getsuccessorsMsg()
-	reply, err = node.send(msg, successor.ipaddr)
+	reply, err := node.send(msg, successor.ipaddr)
 	if err != nil {
 		return
 	}
@@ -644,7 +636,7 @@ func target(me [sha256.Size]byte, which int) []byte {
 }
 
 func (f NodeInfo) String() string {
-	return fmt.Sprintf("%s", f.ipaddr)
+	return f.ipaddr
 }
 
 func (f NodeInfo) zero() bool {
@@ -729,4 +721,15 @@ type ChordApp interface {
 
 	//Message will forward a message that was received through the DHT to the application
 	Message(data []byte) []byte
+}
+
+/*
+Ritorna l'indirizzo IP del nodo senza il suo numero di porta chord
+*/
+func (info *NodeInfo) GetIpAddr() string {
+	if info.ipaddr == "" {
+		return ""
+	} else {
+		return utils.RemovePort(info.ipaddr)
+	}
 }

@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+/*
+Struttura che mantiene tutte le informazioni di un nodo
+*/
 type Node struct {
 	MongoClient mongo.MongoInstance
 	ChordClient *chord.ChordNode
@@ -18,7 +21,7 @@ type Node struct {
 }
 
 /*
-Struttura che mantiene i parametri delle RPC
+Struttura che mantiene i parametri utilizzati nelle RPC
 */
 type Args struct {
 	Key     string
@@ -66,7 +69,7 @@ func (n *Node) GetRPC(args *Args, reply *string) error {
 
 /*
 Effettua la RPC per inserire un'entry nello storage.
- 1) Lookup per trovare il nodo che deve hostare la risorsa
+ 1) Lookup per trovare il nodo che deve gestire la risorsa
  2) RPC effettiva di PUT verso quel nodo chord
 */
 func (n *Node) PutRPC(args Args, reply *string) error {
@@ -293,7 +296,6 @@ Effettua il trasferimento del proprio DB al nodo successore nella rete per garan
 Inviamo tutto il DB e non solo le entry gestite dal preciso nodo così abbiamo la possibilità di
 aggiornare altri dati obsoleti mantenuti dal successore.
 */
-
 func (n *Node) LeaveRPC(args *Args, reply *string) error {
 	utils.PrintHeaderL2("Node Leaving")
 	utils.PrintTs("Instance Scheduled to Terminating")
@@ -317,7 +319,6 @@ Metodo invocato dal nodo successore quando si inserisce nell'anello chord.
 Effettua il trasferimento del proprio DB al chiamante in modo da permettere da subito le complete funzionalità del nuovo nodo.
 Inviamo tutto il DB e non solo le entry gestite dal preciso nodo in modo da inviare anche eventuali repliche che questo dovrà gestire.
 */
-
 func (n *Node) JoinRPC(args *Args, reply *string) error {
 	succ := args.Value
 	utils.PrintHeaderL2("Node Joining")

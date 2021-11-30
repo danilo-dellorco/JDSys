@@ -8,7 +8,7 @@ import (
 
 /*
 Identifica un'entry di tipo {chiave,valore}, includendo il timestamp relativo
-alla sua ultima modifica
+alla sua ultima modifica, ed il timestamp relativo al suo ultimo accesso in lettura/scrittura
 */
 type MongoEntry struct {
 	Key      string
@@ -19,14 +19,14 @@ type MongoEntry struct {
 }
 
 /*
-Stampa l'entry ed il relativo timestamp
+Formatta l'entry includendo il relativo timestamp
 */
 func (me *MongoEntry) Format() string {
 	return fmt.Sprintf("{ %s , %s , %s }", me.Key, me.Value, me.Timest.String())
 }
 
 /*
-Formatta l'entry per essere visualizzata chiaramente dal client.
+Formatta l'entry per essere visualizzata dal client.
 */
 func (me *MongoEntry) FormatClient() string {
 	key := "Key   | " + me.Key

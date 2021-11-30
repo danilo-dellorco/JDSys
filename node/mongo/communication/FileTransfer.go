@@ -15,7 +15,8 @@ import (
 const BUFFERSIZE = 1024
 
 /*
-Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi
+Goroutine in cui ogni nodo è in attesa di connessioni per ricevere l'export CSV del DB di altri nodi. Tramite mode si specifica
+il servizio specifico, e quindi la porta su cui il nodo si metterà in ascolto
 */
 func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 	var port string
@@ -42,7 +43,8 @@ func StartReceiver(fileChannel chan string, mutex *sync.Mutex, mode string) {
 }
 
 /*
-Apre la connessione verso un altro nodo per trasmettere un file
+Apre la connessione verso un altro nodo per trasmettere un file. Mode specifica il servizio su cui si vuole inviare il messaggio, e quindi
+su quale porta inviare il file CSV
 */
 func StartSender(filename string, address string, mode string) error {
 	var addr string

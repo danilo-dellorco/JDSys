@@ -59,7 +59,7 @@ func TestPut(key string, value string, print bool, id int) {
 }
 
 /*
-Esegue una operazione di Append per il testing
+Esegue una operazione di Append per il Workload
 */
 func TestAppend(key string, value string, print bool, id int) {
 	WORKLOAD_APP[id] = 1
@@ -69,7 +69,7 @@ func TestAppend(key string, value string, print bool, id int) {
 }
 
 /*
-Effettua la RPC per la GET
+Effettua la RPC per la GET di Workload
 */
 func GetRPC(key string, print bool) {
 	args := Args{}
@@ -85,7 +85,7 @@ func GetRPC(key string, print bool) {
 }
 
 /*
-Effettua la RPC per il PUT
+Effettua la RPC per il PUT di Workload
 */
 func PutRPC(key string, value string, print bool) {
 	args := Args{}
@@ -102,7 +102,7 @@ func PutRPC(key string, value string, print bool) {
 }
 
 /*
-Effettua la RPC per l'APPEND
+Effettua la RPC per l'APPEND di Workload
 */
 func AppendRPC(key string, value string, print bool) {
 	args := Args{}
@@ -118,7 +118,7 @@ func AppendRPC(key string, value string, print bool) {
 }
 
 /*
-Effettua la RPC per il DELETE
+Effettua la RPC per il DELETE di Workload
 */
 func DeleteRPC(key string, print bool) {
 	args := Args{}

@@ -92,7 +92,7 @@ func MergeEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 }
 
 /*
-Risolve i conflitti secondo Last Write Wins
+Risolve i conflitti tra le due liste di entry secondo Last Write Wins
 */
 func ReconciliateEntries(local []MongoEntry, update []MongoEntry) []MongoEntry {
 	utils.PrintTs("Reconciliating database entries")

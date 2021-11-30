@@ -9,7 +9,7 @@ import (
 )
 
 /*
-Crea una sessione client AWS
+Crea una sessione client AWS per il Nodo.
 */
 func CreateSession() *session.Session {
 	sess, err := session.NewSession(&aws.Config{
