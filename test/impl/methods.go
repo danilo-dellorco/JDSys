@@ -1,8 +1,8 @@
 package impl
 
 import (
+	"JDSys/utils"
 	"net/rpc"
-	"progetto-sdcc/utils"
 )
 
 var WORKLOAD_GET []int

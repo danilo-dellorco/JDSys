@@ -1,9 +1,9 @@
 package api
 
 import (
+	"JDSys/node/chord/internal"
+	"JDSys/utils"
 	"log"
-	"progetto-sdcc/node/chord/internal"
-	"progetto-sdcc/utils"
 
 	"github.com/golang/protobuf/proto"
 )

@@ -1,10 +1,10 @@
 package main
 
 import (
+	"JDSys/test/impl"
+	"JDSys/utils"
 	"fmt"
 	"os"
-	"progetto-sdcc/test/impl"
-	"progetto-sdcc/utils"
 	"strconv"
 	"time"
 )

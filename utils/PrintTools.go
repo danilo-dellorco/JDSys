@@ -175,5 +175,5 @@ func PrintClientCommandsList() {
 Stampa la Titlebar sul client
 */
 func PrintClientTitlebar() {
-	PrintHeaderL1("SDCC Distributed Key-Value Storage")
+	PrintHeaderL1("JDSys Key-Value Storage")
 }

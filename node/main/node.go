@@ -1,10 +1,10 @@
 package main
 
 import (
+	nodesys "JDSys/node/impl"
+	"JDSys/utils"
 	"fmt"
 	"io"
-	nodesys "progetto-sdcc/node/impl"
-	"progetto-sdcc/utils"
 )
 
 func main() {

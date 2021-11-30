@@ -1,14 +1,14 @@
 package main
 
 import (
+	"JDSys/registry/amazon"
+	"JDSys/utils"
 	"context"
 	"math/rand"
 	"net/http"
 	"net/rpc"
 	"os"
 	"os/signal"
-	"progetto-sdcc/registry/amazon"
-	"progetto-sdcc/utils"
 	"syscall"
 	"time"
 )

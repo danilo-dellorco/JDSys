@@ -1,4 +1,4 @@
-module progetto-sdcc
+module JDSys
 
 go 1.17
 

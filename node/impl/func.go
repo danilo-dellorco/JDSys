@@ -1,10 +1,10 @@
 package impl
 
 import (
+	"JDSys/node/mongo/communication"
+	"JDSys/utils"
 	"fmt"
 	"net/http"
-	"progetto-sdcc/node/mongo/communication"
-	"progetto-sdcc/utils"
 	"sync"
 	"time"
 )
@@ -102,5 +102,5 @@ retry:
 Gestisce gli hearthbeat del Load Balancer ed i messaggi di Terminazione dal Service Registry
 */
 func lb_handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "SDCC Distributed Key-Value Storage")
+	fmt.Fprintf(w, "JDSys Key-Value Storage")
 }

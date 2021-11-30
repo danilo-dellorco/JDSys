@@ -1,11 +1,11 @@
 [Unit]
-Description=Simple systemd service for progetto-sdcc application node setup
+Description=Simple systemd service for JDSys application node setup
 
 [Service]
 Type=simple
-EnvironmentFile=/home/ec2-user/go/src/progetto-sdcc/env
+EnvironmentFile=/home/ec2-user/go/src/JDSys/env
 WorkingDirectory=/home/ec2-user/go/src
-ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/node/run.sh
+ExecStart=/bin/bash /home/ec2-user/go/src/JDSys/node/run.sh
 
 [Install]
 WantedBy=multi-user.target

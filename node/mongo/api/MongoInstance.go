@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"progetto-sdcc/node/mongo/communication"
-	"progetto-sdcc/utils"
+	"JDSys/node/mongo/communication"
+	"JDSys/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"

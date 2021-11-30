@@ -1,10 +1,10 @@
 package impl
 
 import (
+	chord "JDSys/node/chord/api"
+	mongo "JDSys/node/mongo/api"
+	"JDSys/utils"
 	"fmt"
-	chord "progetto-sdcc/node/chord/api"
-	mongo "progetto-sdcc/node/mongo/api"
-	"progetto-sdcc/utils"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package communication
 
 import (
-	"progetto-sdcc/utils"
+	"JDSys/utils"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"

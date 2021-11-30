@@ -1,16 +1,16 @@
 package impl
 
 import (
+	chord "JDSys/node/chord/api"
+	mongo "JDSys/node/mongo/api"
+	"JDSys/node/mongo/communication"
+	"JDSys/utils"
 	"flag"
 	"log"
 	"math/rand"
 	"net/http"
 	"net/rpc"
 	"os"
-	chord "progetto-sdcc/node/chord/api"
-	mongo "progetto-sdcc/node/mongo/api"
-	"progetto-sdcc/node/mongo/communication"
-	"progetto-sdcc/utils"
 	"sync"
 	"time"
 )

@@ -1,7 +1,7 @@
 package amazon
 
 import (
-	"progetto-sdcc/utils"
+	"JDSys/utils"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"

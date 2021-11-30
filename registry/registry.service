@@ -1,11 +1,11 @@
 [Unit]
-Description=Simple systemd service for progetto-sdcc application registry setup
+Description=Simple systemd service for JDSys application registry setup
 
 [Service]
 Type=simple
-EnvironmentFile=/home/ec2-user/go/src/progetto-sdcc/env
+EnvironmentFile=/home/ec2-user/go/src/JDSys/env
 WorkingDirectory=/home/ec2-user/go/src
-ExecStart=/bin/bash /home/ec2-user/go/src/progetto-sdcc/registry/run.sh
+ExecStart=/bin/bash /home/ec2-user/go/src/JDSys/registry/run.sh
 
 [Install]
 WantedBy=multi-user.target

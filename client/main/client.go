@@ -1,9 +1,9 @@
 package main
 
 import (
+	"JDSys/client/impl"
+	"JDSys/utils"
 	"fmt"
-	"progetto-sdcc/client/impl"
-	"progetto-sdcc/utils"
 	"time"
 )
 
