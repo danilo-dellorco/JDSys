@@ -22,7 +22,6 @@ func MeasureResponseTimeIteration(iteration int) time.Duration {
 	total := rt1 + rt2 + rt3 + rt4 + rt5
 	meanRt := total / 5
 	return meanRt
-
 }
 
 /*
